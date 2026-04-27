@@ -1,0 +1,16 @@
+{
+  "name": "postroll",
+  "version": "0.1.0",
+  "description": "A system designed to manage and process media files with an efficient and structured approach, ensuring that they are executed in an organized manner.",
+  "author": "Dominik Hryshaiev <domhryshaiev@gmail.com>",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/domhhv/queue-media-processing-platform.git"
+  },
+  "keywords": [],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "packageManager": "pnpm@10.33.2"
+}
