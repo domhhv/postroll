@@ -1,3 +1,24 @@
+# IDE
 .idea/
-node_modules/
+
+# dependencies
+node_modules
+
 .turbo/
+.next/
+
+# misc
+.DS_Store
+
+# typescript
+next-env.d.ts
+*.tsbuildinfo
+
+# logs
+.pnpm-debug.log*
+
+# local env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

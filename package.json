@@ -6,14 +6,17 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "https://github.com/domhhv/queue-media-processing-platform.git"
+    "url": "https://github.com/domhhv/postroll.git"
   },
   "keywords": [],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "check-types": "turbo run check-types"
   },
   "packageManager": "pnpm@10.33.2",
   "devDependencies": {
-    "turbo": "^2.9.6"
+    "turbo": "^2.9.6",
+    "typescript": "^6.0.3"
   }
 }
