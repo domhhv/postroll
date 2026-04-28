@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "exports": {
-    ".": "./base.json"
+    ".": "./base.json",
+    "./nextjs.json": "./nextjs.json"
   }
 }
