@@ -2,13 +2,11 @@
 .idea/
 
 # dependencies
-node_modules
+node_modules/
 
-.turbo/
+# next.js
+.open-next/
 .next/
-
-# misc
-.DS_Store
 
 # typescript
 next-env.d.ts
@@ -16,9 +14,14 @@ next-env.d.ts
 
 # logs
 .pnpm-debug.log*
+.turbo/
+.wrangler/
 
 # local env files
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+# misc
+.DS_Store
