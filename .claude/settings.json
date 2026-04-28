@@ -1,0 +1,11 @@
+{
+  "enabledPlugins": {
+    "cloudflare@cloudflare": true
+  },
+  "permissions": {
+    "allow": [
+      "mcp__plugin_cloudflare_cloudflare-api__search",
+      "mcp__plugin_cloudflare_cloudflare-api__execute"
+    ]
+  }
+}
