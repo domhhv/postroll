@@ -4,9 +4,10 @@
 # dependencies
 node_modules/
 
-# next.js
+# build output
 .open-next/
 .next/
+dist/
 
 # typescript
 next-env.d.ts
