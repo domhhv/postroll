@@ -1,0 +1,9 @@
+{
+  "extends": "@postroll/typescript-config/nestjs.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "types": ["node", "express"]
+  },
+  "include": ["src/**/*"]
+}

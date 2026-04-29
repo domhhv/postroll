@@ -1,0 +1,31 @@
+{
+  "name": "@postroll/gateway",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "nest build",
+    "start": "nest start",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nestjs/core": "^11.1.19",
+    "@nestjs/platform-express": "^11.1.19",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@postroll/typescript-config": "workspace:*",
+    "@nestjs/cli": "^11.0.21",
+    "@nestjs/common": "latest",
+    "@nestjs/schematics": "^11.1.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.12.2",
+    "source-map-support": "^0.5.21",
+    "ts-loader": "^9.5.7",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0"
+  }
+}

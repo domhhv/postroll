@@ -14,7 +14,6 @@
     "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
-    "incremental": true,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
