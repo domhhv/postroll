@@ -5,6 +5,7 @@
   "exports": {
     ".": "./base.json",
     "./nextjs.json": "./nextjs.json",
-    "./nestjs.json": "./nestjs.json"
- }
+    "./nestjs.json": "./nestjs.json",
+    "./prisma.json": "./prisma.json"
+  }
 }

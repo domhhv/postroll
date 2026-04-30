@@ -1,14 +1,26 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
+  "globalEnv": ["DATABASE_URL"],
   "tasks": {
     "build": {
+      "dependsOn": ["^build", "^db:generate"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "check-types": {},
     "biome:check": {},
     "biome:write": {},
     "dev": {
+      "dependsOn": ["^db:generate"],
       "persistent": true,
+      "cache": false
+    },
+    "db:generate": {
+      "cache": false
+    },
+    "db:migrate": {
+      "cache": false
+    },
+    "db:deploy": {
       "cache": false
     }
   }

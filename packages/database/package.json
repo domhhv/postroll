@@ -1,0 +1,28 @@
+{
+  "name": "@postroll/database",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-neon": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "@prisma/client-runtime-utils": "^7.8.0",
+    "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "@postroll/biome-config": "workspace:^",
+    "@postroll/typescript-config": "workspace:*",
+    "@types/node": "^24.12.2",
+    "prisma": "^7.8.0",
+    "tsx": "^4.21.0"
+  }
+}

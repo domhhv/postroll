@@ -23,6 +23,7 @@
   "devDependencies": {
     "@postroll/typescript-config": "workspace:*",
     "@postroll/biome-config": "workspace:^",
+    "@postroll/database": "workspace:*",
     "@tailwindcss/postcss": "^4.2.4",
     "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",

@@ -1,11 +1,12 @@
 {
-  "enabledPlugins": {
-    "cloudflare@cloudflare": true
-  },
   "permissions": {
     "allow": [
       "mcp__plugin_cloudflare_cloudflare-api__search",
-      "mcp__plugin_cloudflare_cloudflare-api__execute"
+      "mcp__plugin_cloudflare_cloudflare-api__execute",
+      "mcp__context7__query-docs"
     ]
+  },
+  "enabledPlugins": {
+    "cloudflare@cloudflare": true
   }
 }

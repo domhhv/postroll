@@ -19,10 +19,14 @@ next-env.d.ts
 .wrangler/
 
 # local env files
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+# prisma
+packages/database/src/generated
 
 # misc
 .DS_Store

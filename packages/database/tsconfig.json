@@ -1,0 +1,8 @@
+{
+  "extends": "@postroll/typescript-config/prisma.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./",
+    "types": ["node"]
+  }
+}

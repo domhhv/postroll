@@ -1,5 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
-import type { AppService } from './app.service';
+// biome-ignore lint/style/useImportType: needed for the decorator
+import { AppService } from './app.service';
 
 @Controller()
 export class AppController {
