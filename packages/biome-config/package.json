@@ -1,0 +1,8 @@
+{
+  "name": "@postroll/biome-config",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    ".": "./biome.json"
+  }
+}

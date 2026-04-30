@@ -8,7 +8,9 @@
     "start": "nest start",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "biome:check": "biome check",
+    "biome:write": "biome check --write"
   },
   "dependencies": {
     "@nestjs/core": "^11.1.19",
@@ -18,6 +20,7 @@
   },
   "devDependencies": {
     "@postroll/typescript-config": "workspace:*",
+    "@postroll/biome-config": "workspace:^",
     "@nestjs/cli": "^11.0.21",
     "@nestjs/common": "latest",
     "@nestjs/schematics": "^11.1.0",

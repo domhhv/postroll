@@ -3,18 +3,16 @@
   "main": ".open-next/worker.js",
   "name": "postroll",
   "compatibility_date": "2026-04-28",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
   "r2_buckets": [
-     {
-       "binding": "NEXT_INC_CACHE_R2_BUCKET",
-       "bucket_name": "next-isr-cache"
-     },
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "next-isr-cache"
+    }
   ],
   "images": {
     "binding": "IMAGES"
