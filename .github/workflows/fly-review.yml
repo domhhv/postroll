@@ -1,0 +1,38 @@
+name: Deploy Gateway Preview App
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+env:
+  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+  FLY_REGION: jnb
+  FLY_ORG: personal
+
+jobs:
+  deploy-gateway-preview:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+    concurrency:
+      group: pr-${{ github.event.number }}
+
+    environment:
+      name: gateway-review
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: Get code
+        uses: actions/checkout@v6
+
+      - name: Deploy Gateway PR App to Fly.io
+        id: deploy
+        uses: superfly/fly-pr-review-apps@1.6.0
+        with:
+          build_secrets: DIRECT_URL=${{ secrets.DIRECT_URL }}
+
+      - name: Comment on Pull Request
+        uses: mshick/add-pr-comment@v3
+        with:
+          message: |
+            Fly Preview URL :balloon: : ${{ steps.deploy.outputs.url }}
