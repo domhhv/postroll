@@ -29,7 +29,7 @@ jobs:
         id: deploy
         uses: superfly/fly-pr-review-apps@1.6.0
         with:
-          build_secrets: DIRECT_URL=${{ secrets.DIRECT_URL }}
+          build_secrets: DATABASE_URL=${{ secrets.DATABASE_URL }}
 
       - name: Comment on Pull Request
         uses: mshick/add-pr-comment@v3

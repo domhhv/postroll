@@ -14,7 +14,9 @@
     "build": "turbo run build",
     "check-types": "turbo run check-types",
     "biome:check": "turbo run biome:check",
-    "biome:write": "turbo run biome:write"
+    "biome:write": "turbo run biome:write",
+    "db:start": "docker compose up -d",
+    "db:stop": "docker compose down"
   },
   "packageManager": "pnpm@10.33.2",
   "devDependencies": {
