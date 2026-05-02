@@ -28,7 +28,7 @@ COPY --link . .
 RUN pnpm install --frozen-lockfile --prod=false
 
 # Build application
-RUN --mount=type=secret,id=DIRECT_URL,env=DIRECT_URL pnpm run build
+RUN --mount=type=secret,id=DIRECT_URL,env=DIRECT_URL pnpm --filter @postroll/gateway... build
 
 
 # Final stage for app image
