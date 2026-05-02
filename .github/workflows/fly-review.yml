@@ -11,6 +11,8 @@ env:
 jobs:
   deploy-gateway-preview:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     outputs:
       url: ${{ steps.deploy.outputs.url }}
     concurrency:
@@ -30,8 +32,7 @@ jobs:
           build_secrets: DIRECT_URL=${{ secrets.DIRECT_URL }}
 
       - name: Comment on Pull Request
-        uses: thollander/actions-comment-pull-request@v3
+        uses: mshick/add-pr-comment@v3
         with:
-          github-token: ${{ secrets.GH_TOKEN }}
           message: |
             Fly Preview URL :balloon: : ${{ steps.deploy.outputs.url }}
