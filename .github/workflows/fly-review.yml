@@ -32,5 +32,6 @@ jobs:
       - name: Comment on Pull Request
         uses: thollander/actions-comment-pull-request@v3
         with:
+          github-token: ${{ secrets.GH_TOKEN }}
           message: |
             Fly Preview URL :balloon: : ${{ steps.deploy.outputs.url }}
