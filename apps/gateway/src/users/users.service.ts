@@ -8,7 +8,7 @@ export class UsersService {
 
   async getCount(): Promise<number> {
     const { rows } = await this.pool.query<{ count: string }>(
-      'SELECT count(*)::text AS count FROM "public"."User"',
+      'SELECT count(*)::text AS count FROM users',
     );
     return Number(rows[0]?.count ?? 0);
   }

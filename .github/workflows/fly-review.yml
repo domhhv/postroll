@@ -17,22 +17,48 @@ jobs:
       url: ${{ steps.deploy.outputs.url }}
     concurrency:
       group: pr-${{ github.event.number }}
-
     environment:
-      name: gateway-review
+      name: gateway-preview
       url: ${{ steps.deploy.outputs.url }}
+
     steps:
       - name: Get code
         uses: actions/checkout@v6
+
+      - name: Install pnpm and dependencies
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      - run: pnpm install
+
+      - name: Get git branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v9
+
+      - id: create-neon-branch
+        uses: neondatabase/create-branch-action@v5
+        with:
+          project_id: ${{ env.NEON_PROJECT_ID }}
+          username: "neondb_owner"
+          parent: production
+          branch_name: preview/${{ steps.branch-name.outputs.current_branch }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+      - run: |
+          echo "DATABASE_URL=${{ steps.create-neon-branch.outputs.db_url_with_pooler }}" >> "$GITHUB_ENV"
+
+      - run: pnpm run db:migrate
 
       - name: Deploy Gateway PR App to Fly.io
         id: deploy
         uses: superfly/fly-pr-review-apps@1.6.0
         with:
-          secrets: DATABASE_URL=${{ secrets.DATABASE_URL }}
+          secrets: DATABASE_URL=$DATABASE_URL
 
       - name: Comment on Pull Request
         uses: mshick/add-pr-comment@v3
         with:
           message: |
             Fly Preview URL :balloon: : ${{ steps.deploy.outputs.url }}
+            Neon branch :elephant: : https://console.neon.tech/app/projects/${{ env.NEON_PROJECT_ID }}/branches/${{ steps.create-neon-branch.outputs.branch_id }}

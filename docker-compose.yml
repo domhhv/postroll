@@ -7,3 +7,14 @@ services:
       NEON_API_KEY: ${NEON_API_KEY}
       NEON_PROJECT_ID: ${NEON_PROJECT_ID}
       PARENT_BRANCH_ID: ${PARENT_BRANCH_ID}
+
+  shadow-db:
+    image: postgres
+    restart: always
+    shm_size: 256mb
+    ports:
+      - '5433:5432'
+    environment:
+      POSTGRES_USER: shadow
+      POSTGRES_PASSWORD: shadow
+      POSTGRES_DB: shadow
