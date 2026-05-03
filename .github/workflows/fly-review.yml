@@ -25,12 +25,19 @@ jobs:
       - name: Get code
         uses: actions/checkout@v6
 
-      - name: Install pnpm and dependencies
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.33.2
+
+      - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: 'pnpm'
-      - run: pnpm install
+
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Get git branch name
         id: branch-name
