@@ -46,7 +46,7 @@ jobs:
       - id: create-neon-branch
         uses: neondatabase/create-branch-action@v5
         with:
-          project_id: ${{ env.NEON_PROJECT_ID }}
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
           username: "neondb_owner"
           parent: production
           branch_name: preview/${{ steps.branch-name.outputs.current_branch }}
