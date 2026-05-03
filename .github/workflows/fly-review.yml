@@ -55,7 +55,7 @@ jobs:
       - run: |
           echo "DATABASE_URL=${{ steps.create-neon-branch.outputs.db_url_with_pooler }}" >> "$GITHUB_ENV"
 
-      - run: pnpm run db:migrate
+      - run: pnpm --filter @postroll/database db:migrate
 
       - name: Deploy Gateway PR App to Fly.io
         id: deploy
