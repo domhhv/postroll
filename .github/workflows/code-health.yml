@@ -40,3 +40,5 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - run: pnpm ${{ matrix.check.command }}
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
