@@ -20,7 +20,7 @@ jobs:
           cache: 'pnpm'
 
       - run: pnpm install
-      - run: pnpm run db:migrate
+      - run: pnpm run db:deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
