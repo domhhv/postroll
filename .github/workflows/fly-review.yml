@@ -65,7 +65,7 @@ jobs:
         id: deploy
         uses: superfly/fly-pr-review-apps@1.6.0
         with:
-          secrets: DATABASE_URL={{ env.DATABASE_URL }}
+          secrets: DATABASE_URL=${{ env.DATABASE_URL }}
 
       - name: Comment on Pull Request
         uses: mshick/add-pr-comment@v3
