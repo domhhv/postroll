@@ -52,9 +52,16 @@ jobs:
     name: ${{ matrix.check.name }}
 
     steps:
-      - uses: actions/checkout@v6
+      - name: Get code
+        uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v6
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.33.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
