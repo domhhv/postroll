@@ -1,17 +1,17 @@
-import { Controller, Get } from "@nestjs/common";
+import { Controller, Get } from '@nestjs/common';
 // biome-ignore lint/style/useImportType: needed for the decorator
-import { UsersService } from "./users.service";
+import { UsersService } from './users.service';
 
-@Controller("users")
+@Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Get("/")
+  @Get('/')
   async getAll() {
     return await this.usersService.getAll();
   }
 
-  @Get("count")
+  @Get('count')
   async getCount(): Promise<{ count: number }> {
     return { count: await this.usersService.getCount() };
   }
