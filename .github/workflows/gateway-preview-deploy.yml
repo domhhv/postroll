@@ -1,4 +1,4 @@
-name: Deploy Gateway Preview App
+name: Gateway Preview App
 on:
   pull_request:
     types: [opened, reopened, synchronize, closed]
@@ -10,6 +10,7 @@ env:
 
 jobs:
   deploy-gateway-preview:
+    name: Deploy to Neon and Fly.io
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -57,7 +58,8 @@ jobs:
         run: |
           echo "DATABASE_URL=${{ steps.create-neon-branch.outputs.db_url_with_pooler }}" >> "$GITHUB_ENV"
 
-      - run: pnpm --filter @postroll/database db:deploy
+      - name: Deploy database migrations to preview branch on Neon
+        run: pnpm --filter @postroll/database db:deploy
         env:
           DIRECT_URL: ${{ env.DATABASE_URL }}
 
@@ -73,3 +75,4 @@ jobs:
           message: |
             Fly Preview URL :balloon: : ${{ steps.deploy.outputs.url }}
             Neon branch :elephant: : https://console.neon.tech/app/projects/${{ secrets.NEON_PROJECT_ID }}/branches/${{ steps.create-neon-branch.outputs.branch_id }}
+          delete-on-status: closed
