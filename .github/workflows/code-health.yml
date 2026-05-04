@@ -1,0 +1,44 @@
+name: Code Health Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+
+env:
+  NODE_VERSION: 24
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        check:
+          - name: Typecheck
+            command: check-types
+          - name: Biome
+            command: biome:check
+      fail-fast: false
+    name: ${{ matrix.check.name }}
+
+    steps:
+      - name: Get code
+        uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.33.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - run: pnpm ${{ matrix.check.command }}
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}

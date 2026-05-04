@@ -6,7 +6,9 @@
       "dependsOn": ["^build", "^db:generate"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
-    "check-types": {},
+    "check-types": {
+      "dependsOn": ["^db:generate"]
+    },
     "biome:check": {},
     "biome:write": {},
     "dev": {
