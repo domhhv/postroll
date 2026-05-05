@@ -14,9 +14,7 @@
     "build": "turbo run build",
     "check-types": "turbo run check-types",
     "biome:check": "turbo run biome:check",
-    "biome:write": "turbo run biome:write",
-    "db:start": "docker compose up -d",
-    "db:stop": "docker compose down"
+    "biome:write": "turbo run biome:write"
   },
   "engines": {
     "node": "^24.15.0"
