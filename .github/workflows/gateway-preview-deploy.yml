@@ -29,12 +29,12 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: 10.33.2
+          version: 11.0.6
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 24.15.0
           cache: 'pnpm'
 
       - name: Install dependencies
