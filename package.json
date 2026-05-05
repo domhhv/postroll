@@ -18,6 +18,9 @@
     "db:start": "docker compose up -d",
     "db:stop": "docker compose down"
   },
+  "engines": {
+    "node": "^24.15.0"
+  },
   "packageManager": "pnpm@10.33.2",
   "devDependencies": {
     "@biomejs/biome": "^2.4.13",
