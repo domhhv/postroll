@@ -14,7 +14,8 @@
     "build": "turbo run build",
     "check-types": "turbo run check-types",
     "biome:check": "turbo run biome:check",
-    "biome:write": "turbo run biome:write"
+    "biome:write": "turbo run biome:write",
+    "prepare": "husky"
   },
   "engines": {
     "node": "^24.15.0"
@@ -22,6 +23,8 @@
   "packageManager": "pnpm@11.0.6",
   "devDependencies": {
     "@biomejs/biome": "^2.4.13",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.2",
     "turbo": "^2.9.6",
     "typescript": "^6.0.3"
   }
