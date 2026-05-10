@@ -6,7 +6,12 @@
       "mcp__context7__query-docs",
       "Bash(pnpm --version)",
       "Bash(pnpm install *)",
-      "Bash(pnpm check-types *)"
+      "Bash(pnpm check-types *)",
+      "Bash(gh search *)",
+      "Bash(gh pr *)",
+      "Bash(gh issue *)",
+      "Bash(gh api *)",
+      "Bash(gh release *)"
     ]
   },
   "enabledPlugins": {

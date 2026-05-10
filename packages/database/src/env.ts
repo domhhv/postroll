@@ -9,7 +9,6 @@ export const dockerEnvSchema = z.object({
 });
 
 export const migrationEnvSchema = z.object({
-  DATABASE_URL: z.url(),
   DIRECT_URL: z.url(),
   SHADOW_DATABASE_URL: z.url().optional(),
 });
