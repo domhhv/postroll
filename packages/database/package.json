@@ -6,21 +6,22 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma migrate deploy",
-    "db:reset": "prisma migrate reset",
-    "db:start": "docker compose up -d",
+    "db:migrate": "postroll-check-env ./src/env.ts migrationEnvSchema && prisma migrate dev",
+    "db:deploy": "postroll-check-env ./src/env.ts migrationEnvSchema && prisma migrate deploy",
+    "db:reset": "postroll-check-env ./src/env.ts migrationEnvSchema && prisma migrate reset",
+    "db:start": "postroll-check-env ./src/env.ts dockerEnvSchema && node ./scripts/check-docker.mjs && docker compose up -d",
     "db:stop": "docker compose down",
-    "studio": "prisma studio"
+    "studio": "postroll-check-env ./src/env.ts migrationEnvSchema && prisma studio"
   },
   "exports": {
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@postroll/env": "workspace:*",
     "@prisma/adapter-neon": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@prisma/client-runtime-utils": "^7.8.0",
-    "dotenv": "^17.4.2"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@postroll/biome-config": "workspace:^",

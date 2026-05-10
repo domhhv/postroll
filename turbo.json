@@ -1,29 +1,57 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
-  "globalEnv": ["DATABASE_URL", "DIRECT_URL"],
+  "globalEnv": [
+    "DATABASE_URL",
+    "DIRECT_URL",
+    "SHADOW_DATABASE_URL",
+    "NEON_API_KEY",
+    "NEON_PROJECT_ID",
+    "PARENT_BRANCH_ID",
+    "PORT",
+    "NODE_ENV"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build", "^db:generate"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "check-types": {
-      "dependsOn": ["^db:generate"]
+      "dependsOn": ["^build", "^db:generate"]
     },
     "biome:check": {},
     "biome:write": {},
     "dev": {
-      "dependsOn": ["^db:generate"],
+      "dependsOn": ["^build", "^db:start", "^db:generate"],
       "persistent": true,
       "cache": false
     },
     "db:generate": {
-      "cache": false
+      "cache": false,
+      "dependsOn": ["^build"]
     },
     "db:migrate": {
-      "cache": false
+      "cache": false,
+      "dependsOn": ["^build"]
     },
     "db:deploy": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "db:start": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "db:stop": {
       "cache": false
+    },
+    "db:reset": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "studio": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["^build"]
     }
   }
 }

@@ -35,6 +35,9 @@ importers:
       '@nestjs/platform-express':
         specifier: ^11.1.19
         version: 11.1.19(@nestjs/common@11.1.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)
+      '@postroll/env':
+        specifier: workspace:*
+        version: link:../../packages/env
       pg:
         specifier: ^8.20.0
         version: 8.20.0
@@ -44,6 +47,9 @@ importers:
       rxjs:
         specifier: ^7.8.2
         version: 7.8.2
+      zod:
+        specifier: ^4.1.12
+        version: 4.4.3
     devDependencies:
       '@nestjs/cli':
         specifier: ^11.0.21
@@ -87,6 +93,9 @@ importers:
       '@opennextjs/cloudflare':
         specifier: ^1.19.4
         version: 1.19.4(next@16.2.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(wrangler@4.86.0)
+      '@postroll/env':
+        specifier: workspace:*
+        version: link:../../packages/env
       next:
         specifier: 16.2.4
         version: 16.2.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -96,6 +105,9 @@ importers:
       react-dom:
         specifier: 19.2.4
         version: 19.2.4(react@19.2.4)
+      zod:
+        specifier: ^4.1.12
+        version: 4.4.3
     devDependencies:
       '@postroll/biome-config':
         specifier: workspace:^
@@ -129,6 +141,9 @@ importers:
 
   packages/database:
     dependencies:
+      '@postroll/env':
+        specifier: workspace:*
+        version: link:../env
       '@prisma/adapter-neon':
         specifier: ^7.8.0
         version: 7.8.0
@@ -138,9 +153,9 @@ importers:
       '@prisma/client-runtime-utils':
         specifier: ^7.8.0
         version: 7.8.0
-      dotenv:
-        specifier: ^17.4.2
-        version: 17.4.2
+      zod:
+        specifier: ^4.1.12
+        version: 4.4.3
     devDependencies:
       '@postroll/biome-config':
         specifier: workspace:^
@@ -157,6 +172,25 @@ importers:
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
+
+  packages/env:
+    dependencies:
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
+      zod:
+        specifier: ^4.1.12
+        version: 4.4.3
+    devDependencies:
+      '@postroll/biome-config':
+        specifier: workspace:^
+        version: link:../biome-config
+      '@postroll/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: ^24.12.2
+        version: 24.12.2
 
   packages/typescript-config: {}
 
@@ -3952,6 +3986,9 @@ packages:
 
   zeptomatch@2.1.0:
     resolution: {integrity: sha512-KiGErG2J0G82LSpniV0CtIzjlJ10E04j02VOudJsPyPwNZgGnRKQy7I1R7GMyg/QswnE4l7ohSGrQbQbjXPPDA==}
+
+  zod@4.4.3:
+    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
 snapshots:
 
@@ -8110,3 +8147,5 @@ snapshots:
     dependencies:
       grammex: 3.1.12
       graphmatch: 1.1.1
+
+  zod@4.4.3: {}

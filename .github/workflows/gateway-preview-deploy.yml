@@ -61,7 +61,7 @@ jobs:
           echo "DATABASE_URL=${{ steps.create-neon-branch.outputs.db_url_with_pooler }}" >> "$GITHUB_ENV"
 
       - name: Deploy database migrations to preview branch on Neon
-        run: pnpm --filter @postroll/database db:deploy
+        run: pnpm turbo run db:deploy --filter @postroll/database
         env:
           DIRECT_URL: ${{ env.DATABASE_URL }}
 
