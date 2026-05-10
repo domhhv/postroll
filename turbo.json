@@ -30,23 +30,28 @@
       "dependsOn": ["^build"]
     },
     "db:migrate": {
-      "cache": false
+      "cache": false,
+      "dependsOn": ["^build"]
     },
     "db:deploy": {
-      "cache": false
+      "cache": false,
+      "dependsOn": ["^build"]
     },
     "db:start": {
-      "cache": false
+      "cache": false,
+      "dependsOn": ["^build"]
     },
     "db:stop": {
       "cache": false
     },
     "db:reset": {
-      "cache": false
+      "cache": false,
+      "dependsOn": ["^build"]
     },
     "studio": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "dependsOn": ["^build"]
     }
   }
 }
