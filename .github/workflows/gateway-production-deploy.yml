@@ -29,7 +29,7 @@ jobs:
         run: pnpm install
 
       - name: Deploy Database Migrations to Production Branch on Neon
-        run: pnpm --filter @postroll/database db:deploy
+        run: pnpm turbo run db:deploy --filter @postroll/database
         env:
           DIRECT_URL: ${{ secrets.DATABASE_URL }}
 
