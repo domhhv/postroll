@@ -1,17 +1,24 @@
 export async function register() {
-  if (process.env['NEXT_RUNTIME'] === 'nodejs') {
-    const { loadEnvFile } = await import('@postroll/env');
-    const { getServerEnv } = await import('./env');
+  const isNodeSsrRuntime = process.env['NEXT_RUNTIME'] === 'nodejs';
+  const isCloudflareWorkerRuntime =
+    typeof (globalThis as { WebSocketPair?: unknown }).WebSocketPair !==
+    'undefined';
 
-    loadEnvFile({
-      importMetaUrl: import.meta.url,
-      relativePath: '../.env.local',
-    });
-    loadEnvFile({
-      importMetaUrl: import.meta.url,
-      relativePath: '../.env',
-    });
-
-    getServerEnv();
+  if (!isNodeSsrRuntime || isCloudflareWorkerRuntime) {
+    return;
   }
+
+  const { loadEnvFile } = await import('@postroll/env');
+  const { getServerEnv } = await import('./env');
+
+  loadEnvFile({
+    importMetaUrl: import.meta.url,
+    relativePath: '../.env.local',
+  });
+  loadEnvFile({
+    importMetaUrl: import.meta.url,
+    relativePath: '../.env',
+  });
+
+  getServerEnv();
 }
