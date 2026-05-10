@@ -16,9 +16,11 @@
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.19.4",
+    "@postroll/env": "workspace:*",
     "next": "16.2.4",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@postroll/typescript-config": "workspace:*",

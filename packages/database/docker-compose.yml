@@ -4,9 +4,9 @@ services:
     ports:
       - '5432:5432'
     environment:
-      NEON_API_KEY: ${NEON_API_KEY}
-      NEON_PROJECT_ID: ${NEON_PROJECT_ID}
-      PARENT_BRANCH_ID: ${PARENT_BRANCH_ID}
+      NEON_API_KEY: ${NEON_API_KEY:?NEON_API_KEY required, see packages/database/.env.example}
+      NEON_PROJECT_ID: ${NEON_PROJECT_ID:?NEON_PROJECT_ID required, see packages/database/.env.example}
+      PARENT_BRANCH_ID: ${PARENT_BRANCH_ID:?PARENT_BRANCH_ID required, see packages/database/.env.example}
 
   shadow-db:
     image: postgres

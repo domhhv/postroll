@@ -1,0 +1,9 @@
+{
+  "extends": "@postroll/typescript-config",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["node"]
+  },
+  "include": ["src/**/*", "scripts/**/*"]
+}

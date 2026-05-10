@@ -1,15 +1,23 @@
-import "dotenv/config";
-import { defineConfig, env } from "prisma/config";
+import { loadEnvFile, validateEnv } from '@postroll/env';
+import { defineConfig } from 'prisma/config';
+import { envExampleHint, migrationEnvSchema } from './src/env';
+
+loadEnvFile({ importMetaUrl: import.meta.url });
+
+const env = validateEnv(migrationEnvSchema, {
+  contextLabel: '@postroll/database (migrations)',
+  exampleHint: envExampleHint,
+});
 
 export default defineConfig({
-  schema: "prisma/schema.prisma",
+  schema: 'prisma/schema.prisma',
   migrations: {
-    path: "prisma/migrations",
+    path: 'prisma/migrations',
   },
   datasource: {
-    url: env("DIRECT_URL"),
-    ...(process.env["SHADOW_DATABASE_URL"] && {
-      shadowDatabaseUrl: process.env["SHADOW_DATABASE_URL"],
+    url: env.DIRECT_URL,
+    ...(env.SHADOW_DATABASE_URL && {
+      shadowDatabaseUrl: env.SHADOW_DATABASE_URL,
     }),
   },
 });
