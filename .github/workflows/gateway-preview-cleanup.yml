@@ -12,6 +12,8 @@ jobs:
     if: >-
       !contains(github.event.pull_request.body, '[Skip CI]')
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       - name: Delete Fly app
         uses: superfly/fly-pr-review-apps@1.6.0
@@ -22,3 +24,12 @@ jobs:
           project_id: ${{ secrets.NEON_PROJECT_ID }}
           branch: preview/${{ github.event.pull_request.head.ref }}
           api_key: ${{ secrets.NEON_API_KEY }}
+
+      - name: Update PR comment with cleanup status
+        uses: marocchino/sticky-pull-request-comment@v3.0.4
+        with:
+          header: deploy-gateway
+          only_update: true
+          skip_unchanged: true
+          message: |
+            :broom: Gateway preview cleaned up — Fly app destroyed, Neon branch deleted.

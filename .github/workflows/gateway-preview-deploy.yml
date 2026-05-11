@@ -28,6 +28,14 @@ jobs:
       - name: Get code
         uses: actions/checkout@v6
 
+      - name: Post starting comment
+        uses: marocchino/sticky-pull-request-comment@v3.0.4
+        with:
+          header: deploy-gateway
+          skip_unchanged: true
+          message: |
+            :rocket: Deploying gateway preview… ([run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}))
+
       - name: Install pnpm
         uses: pnpm/action-setup@v6
         with:
@@ -74,10 +82,20 @@ jobs:
           launch_options: --dockerfile apps/gateway/Dockerfile
           deploy_options: --dockerfile apps/gateway/Dockerfile
 
-      - name: Comment on Pull Request
-        uses: mshick/add-pr-comment@v3
+      - name: Update comment with success
+        uses: marocchino/sticky-pull-request-comment@v3.0.4
         with:
+          header: deploy-gateway
+          skip_unchanged: true
           message: |
             Fly Preview URL :balloon: : ${{ steps.deploy.outputs.url }}
             Neon branch :elephant: : https://console.neon.tech/app/projects/${{ secrets.NEON_PROJECT_ID }}/branches/${{ steps.create-neon-branch.outputs.branch_id }}
-          delete-on-status: closed
+
+      - name: Update comment on failure
+        if: failure()
+        uses: marocchino/sticky-pull-request-comment@v3.0.4
+        with:
+          header: deploy-gateway
+          skip_unchanged: true
+          message: |
+            :x: Gateway preview deploy failed — see [run logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
