@@ -2,6 +2,7 @@
   "$schema": "https://turborepo.dev/schema.json",
   "globalEnv": [
     "DATABASE_URL",
+    "GATEWAY_URL",
     "DIRECT_URL",
     "SHADOW_DATABASE_URL",
     "NEON_API_KEY",

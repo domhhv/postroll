@@ -1,6 +1,18 @@
 # `@postroll/database`
 
-Prisma schema, generated client, and Neon-backed local development stack for the monorepo. Consumers (apps/web, apps/gateway) import `prisma` from `@postroll/database` for typed DB access.
+Prisma schema, generated client, and Neon-backed local development stack for the monorepo.
+
+## Entrypoints
+
+The package exposes three subpaths so consumers can pick exactly what they need without dragging in the Prisma engine where it doesn't belong:
+
+| Import | What you get | Who uses it |
+|---|---|---|
+| `@postroll/database` | **Types only.** `export type *` of the generated client + the `Prisma` namespace (enums, input types). No runtime DB connection, no engine. | `apps/web` — needs `User` etc. for typing gateway responses, but must not bundle the Prisma runtime. |
+| `@postroll/database/prisma` | The raw `PrismaClient` class from the generated client. No singleton, no env loading. | `apps/gateway` — constructs its own client inside NestJS DI so it can own the lifecycle and pick its driver adapter. |
+| `@postroll/database/client` | A pre-built `prisma` singleton wired to [`@prisma/adapter-neon`](https://www.npmjs.com/package/@prisma/adapter-neon), with env loading from `packages/database/.env`. | Currently unused. Kept for one-off scripts that want a ready-to-use client outside an app context. |
+
+The split matters because `@postroll/database/client` has top-level side effects (calls `loadEnvFile`, constructs `PrismaNeon`). If the web app barrel-imported that, every server-side render would pull the Prisma engine into the OpenNext bundle even when only types are used.
 
 ## Scripts
 
@@ -22,7 +34,7 @@ Source of truth: [`src/env.ts`](src/env.ts). Local values: [`.env.example`](.env
 
 ### `DATABASE_URL`
 
-**Required at runtime** (when `prisma` is imported by an app). Pooled Neon connection string. Used by [`src/client.ts`](src/client.ts) to construct the Prisma `Neon` adapter. Not needed for migrations or local dev startup — only for actual query execution.
+**Required only if `@postroll/database/client` is imported.** Pooled Postgres connection string. Used by [`src/client.ts`](src/client.ts) to construct a Neon-adapter Prisma client. Not needed for migrations, local dev startup, or by `apps/gateway` (which constructs its own client from its own validated env). Apps that talk to the DB own their `DATABASE_URL` — this entry is here for completeness of the in-package runtime path.
 
 ### `DIRECT_URL`
 
@@ -55,4 +67,4 @@ See the [`@postroll/env` README](../env/README.md) for the validation model. Thr
 
 - `dockerEnvSchema` — for `db:start`
 - `migrationEnvSchema` — for `db:migrate` / `db:deploy` / `db:reset` / `studio`
-- `runtimeEnvSchema` — used by [`src/client.ts`](src/client.ts) when the Prisma client is imported by an app
+- `runtimeEnvSchema` — used by [`src/client.ts`](src/client.ts) when the in-package `prisma` singleton is imported

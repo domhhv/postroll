@@ -4,5 +4,10 @@
   "extends": ["@postroll/biome-config"],
   "files": {
     "includes": ["**", "!**/node_modules", "!**/dist"]
+  },
+  "javascript": {
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
+    }
   }
 }

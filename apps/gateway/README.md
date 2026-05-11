@@ -21,7 +21,7 @@ Validation runs at NestJS boot via `ConfigModule.forRoot({ validate: validateGat
 
 ### `DATABASE_URL`
 
-**Required at runtime.** Postgres connection string (Neon, pooled). Used by [`src/database/database.module.ts`](src/database/database.module.ts) to construct a `pg` `Pool`. In production this is set as a Fly secret; in CI previews it's set dynamically from the Neon branch URL created earlier in the workflow.
+**Required at runtime.** Postgres connection string. Used by [`src/database/database.module.ts`](src/database/database.module.ts) to construct a `PrismaClient` with the appropriate driver adapter: [`@prisma/adapter-neon`](https://www.npmjs.com/package/@prisma/adapter-neon) for Neon URLs (`*.neon.tech`), [`@prisma/adapter-pg`](https://www.npmjs.com/package/@prisma/adapter-pg) for everything else. The check is on the URL host, not `NODE_ENV` — preview deploys point at Neon branches but run under `NODE_ENV=production`, and local Docker Postgres runs under `NODE_ENV=development`. In production this is set as a Fly secret; in CI previews it's set dynamically from the Neon branch URL created earlier in the workflow.
 
 ### `PORT`
 
@@ -42,6 +42,22 @@ const port = app.get(ConfigService).get<number>('PORT', 8080);
 ```
 
 `config.getOrThrow<string>('DATABASE_URL')` in `DatabaseModule` is safe because `validateGatewayEnv` already guaranteed presence.
+
+## Database access
+
+The gateway is the only process in the monorepo that talks to Postgres directly. The Prisma client is provided by [`@postroll/database`](../../packages/database/README.md) (via the `@postroll/database/prisma` subpath, which exposes the generated client without the package-level `prisma` singleton — Nest owns the lifecycle here). [`DatabaseModule`](src/database/database.module.ts) registers the client under a `PRISMA_CLIENT` symbol token and exports an `InjectPrisma()` decorator for consumers:
+
+```ts
+import { InjectPrisma } from '../database/database.module';
+import type { PrismaClient } from '@postroll/database/prisma';
+
+@Injectable()
+export class UsersService {
+  constructor(@InjectPrisma() private readonly prisma: PrismaClient) {}
+}
+```
+
+A symbol token (rather than the `PrismaClient` class as token) decouples DI from Prisma's generated export shape, which is a runtime factory rather than a stable class reference. `DatabaseModule` is `@Global()`, so importing it once in [`AppModule`](src/app.module.ts) makes `InjectPrisma()` available everywhere.
 
 ## Running locally
 

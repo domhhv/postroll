@@ -22,12 +22,12 @@ Production builds run with `next build --webpack` rather than the Next 16 defaul
 
 Source of truth: [`src/env.ts`](src/env.ts). Local values: [`.env.example`](.env.example).
 
-### `DATABASE_URL`
+### `GATEWAY_URL`
 
-**Required at runtime on the server.** Pooled Neon connection string. Used transitively via `@postroll/database`'s Prisma client. Server-only — never exposed to the browser.
+**Required at runtime on the server.** Base URL of the `@postroll/gateway` HTTP API. The web app does not talk to Postgres directly — all DB access goes through the gateway (see "Data access" below). Server-only — never exposed to the browser.
 
-- **Local dev / `next start`**: read from `process.env` (loaded from `.env` / `.env.local` by [`src/instrumentation.ts`](src/instrumentation.ts)).
-- **Cloudflare Workers**: provided as a runtime secret on the worker. Configure it in the Cloudflare dashboard under Workers & Pages → `postroll` → **Settings → Variables and Secrets** (not the Build → Variables and secrets section — those are scoped to the build container, not the running worker). Or via `pnpm exec wrangler secret put DATABASE_URL`.
+- **Local dev / `next start`**: read from `process.env` (loaded from `.env` / `.env.local` by [`src/instrumentation.ts`](src/instrumentation.ts)). Defaults to `http://localhost:8080` in `.env.example`.
+- **Cloudflare Workers**: provided as a runtime variable on the worker. Configure it in the Cloudflare dashboard under Workers & Pages → `postroll` → **Settings → Variables and Secrets** (not the Build → Variables and secrets section — those are scoped to the build container, not the running worker). Or via `pnpm exec wrangler secret put GATEWAY_URL`. Point it at the Fly URL of the matching gateway deployment (production → production gateway; PR preview → that PR's Fly review app).
 
 ## How validation is wired
 
@@ -41,11 +41,32 @@ See [`@postroll/env`](../../packages/env/README.md) for the model. [`src/env.ts`
 
 The file lives at `src/instrumentation.ts`, not the project root, because Next.js only discovers it at `<rootDir>/instrumentation.{ts,tsx,...}` where `rootDir` is `src/` when `src/app/` exists. Putting it at the project root works with Turbopack (by accident) but is silently ignored by webpack.
 
+## Data access
+
+The web app does not connect to Postgres. All reads/writes go through the NestJS gateway over HTTP, fetched from server components (or route handlers / server actions, eventually). The data layer lives in [`src/lib/api.ts`](src/lib/api.ts):
+
+```ts
+import type { User } from '@postroll/database';
+import { getServerEnv } from '@/env';
+
+export async function getUsers(): Promise<User[]> {
+  const { GATEWAY_URL } = getServerEnv();
+  const res = await fetch(`${GATEWAY_URL}/users`, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`gateway ${res.status}`);
+  return res.json();
+}
+```
+
+`@postroll/database` is depended on **only for its types** — `import type { User }` is erased at compile time, so no Prisma runtime, engine, or `pg` driver ends up in the OpenNext bundle. The package's main entrypoint is intentionally a type-only re-export to make this safe; the live `PrismaClient` lives behind the `@postroll/database/prisma` subpath and is only imported by the gateway.
+
+If gateway response shapes diverge from raw Prisma models (e.g. via `select` / `include`), define the shape on the gateway with `Prisma.UserGetPayload<{...}>` and import that type instead of `User`.
+
 ## Running locally
 
 1. Make sure the database is up: `pnpm --filter @postroll/database db:start` (see the [database README](../../packages/database/README.md)).
-2. Copy `.env.example` to `.env` in this directory.
-3. `pnpm dev`.
+2. Make sure the gateway is running so the web app has somewhere to fetch from. From the repo root, `pnpm dev` boots both apps together; alternatively run the gateway by itself with `pnpm --filter @postroll/gateway dev`.
+3. Copy `.env.example` to `.env` in this directory.
+4. `pnpm dev`.
 
 To test the Cloudflare deployment path locally without pushing: `pnpm preview` (runs `wrangler dev` against the OpenNext bundle).
 
@@ -58,12 +79,8 @@ Connected to Cloudflare Workers Builds (configured in the Cloudflare dashboard):
 - Version command: `pnpm run upload` (for non-`main` branches → preview URLs)
 - Root directory: `/apps/web`
 
-Build-time secrets (set in dashboard → Build → Variables and Secrets):
+Runtime variables (set in dashboard → Settings → Variables and Secrets, or via `wrangler secret put`):
 
-- `DATABASE_URL`, `DIRECT_URL` — these are present at build time but **not** automatically forwarded to the runtime worker.
-
-Runtime secrets (set in dashboard → Settings → Variables and Secrets, or via `wrangler secret put`):
-
-- `DATABASE_URL` — required, as documented above.
+- `GATEWAY_URL` — required, as documented above.
 
 R2 / bindings live in [`wrangler.jsonc`](wrangler.jsonc).

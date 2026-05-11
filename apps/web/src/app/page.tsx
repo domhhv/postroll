@@ -1,7 +1,7 @@
-import { prisma } from '@postroll/database';
+import { getUserCount } from '@/lib/api';
 
 export default async function Home() {
-  const userCount = await prisma.user.count();
+  const userCount = await getUserCount();
 
   return (
     <main className="flex flex-1 w-full flex-col items-center gap-4 py-24 px-16 bg-gray-100 dark:bg-gray-800 sm:items-start text-center">

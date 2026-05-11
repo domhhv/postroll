@@ -1,20 +1,16 @@
 import { Injectable } from '@nestjs/common';
-// biome-ignore lint/style/useImportType: needed for the DI constructor injection
-import { Pool } from 'pg';
+import type { PrismaClient } from '@postroll/database/prisma';
+import { InjectPrisma } from '../database/database.module';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly pool: Pool) {}
+  constructor(@InjectPrisma() private readonly prisma: PrismaClient) {}
 
-  async getCount(): Promise<number> {
-    const { rows } = await this.pool.query<{ count: string }>(
-      'SELECT count(*)::text AS count FROM users',
-    );
-    return Number(rows[0]?.count ?? 0);
+  getAll() {
+    return this.prisma.user.findMany();
   }
 
-  async getAll() {
-    const { rows } = await this.pool.query('SELECT * FROM users');
-    return rows;
+  getCount() {
+    return this.prisma.user.count();
   }
 }
