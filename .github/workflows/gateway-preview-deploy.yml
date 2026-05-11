@@ -36,11 +36,6 @@ jobs:
           message: |
             :rocket: Deploying gateway preview… ([run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}))
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: 11.0.6
-
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
