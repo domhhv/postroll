@@ -54,7 +54,8 @@ const port = app.get(ConfigService).get<number>('PORT', 8080);
 - **Production**: pushing to `main` triggers [`gateway-production-deploy.yml`](../../.github/workflows/gateway-production-deploy.yml) which runs `prisma migrate deploy` against the production Neon branch and then `flyctl deploy`.
 - **PR preview**: opening or updating a PR triggers [`gateway-preview-deploy.yml`](../../.github/workflows/gateway-preview-deploy.yml) which creates a Neon branch named `preview/<branch-name>`, runs migrations against it, and deploys a Fly review app. The Fly URL is posted as a PR comment.
 
-Secrets configured outside the repo:
+Configuration outside the repo:
 
 - Fly: `DATABASE_URL` (set via `superfly/fly-pr-review-apps` action for previews; via Fly dashboard for production).
-- GitHub Actions: `DATABASE_URL`, `DIRECT_URL`, `NEON_API_KEY`, `NEON_PROJECT_ID`, `FLY_API_TOKEN`.
+- GitHub Actions secrets: `DATABASE_URL`, `DIRECT_URL`, `NEON_API_KEY`, `FLY_API_TOKEN`.
+- GitHub Actions variables: `NEON_PROJECT_ID`.
