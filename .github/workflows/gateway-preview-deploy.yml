@@ -64,20 +64,22 @@ jobs:
           branch_name: preview/${{ steps.branch-name.outputs.current_branch }}
           api_key: ${{ secrets.NEON_API_KEY }}
 
-      - name: Set DATABASE_URL env var
+      - name: Set DATABASE_URL and DIRECT_URL env vars
         run: |
           echo "DATABASE_URL=${{ steps.create-neon-branch.outputs.db_url_with_pooler }}" >> "$GITHUB_ENV"
+          echo "DIRECT_URL=${{ steps.create-neon-branch.outputs.db_url }}" >> "$GITHUB_ENV"
 
       - name: Deploy database migrations to preview branch on Neon
         run: pnpm turbo run db:deploy --filter @postroll/database
         env:
-          DIRECT_URL: ${{ env.DATABASE_URL }}
+          DIRECT_URL: ${{ env.DIRECT_URL }}
 
       - name: Deploy Gateway PR App to Fly.io
         id: deploy
         uses: superfly/fly-pr-review-apps@1.6.0
         with:
           config: apps/gateway/fly.toml
+          build_secrets: DIRECT_URL=${{ env.DIRECT_URL }}
           secrets: DATABASE_URL=${{ env.DATABASE_URL }}
           launch_options: --dockerfile apps/gateway/Dockerfile
           deploy_options: --dockerfile apps/gateway/Dockerfile

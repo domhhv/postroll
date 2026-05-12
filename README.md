@@ -26,7 +26,7 @@ pnpm install
 Copy each `.env.example` to a sibling `.env` and fill it in:
 
 - [`packages/database/.env.example`](packages/database/.env.example) — Neon credentials for the local DB
-- [`apps/web/.env.example`](apps/web/.env.example) — `DATABASE_URL`
+- [`apps/web/.env.example`](apps/web/.env.example) — `GATEWAY_URL`
 - [`apps/gateway/.env.example`](apps/gateway/.env.example) — `DATABASE_URL`
 
 Then:
@@ -52,7 +52,8 @@ Validation across the monorepo is centralized in [`@postroll/env`](packages/env/
 
 | Variable | Where it's required | Details |
 |---|---|---|
-| `DATABASE_URL` | `apps/web`, `apps/gateway` runtime; `packages/database` runtime | Pooled Neon connection string. |
+| `DATABASE_URL` | `apps/gateway` runtime; `packages/database` (only if the in-package `prisma` singleton is imported) | Postgres connection string. The gateway picks its driver adapter based on the URL host: Neon URLs → `@prisma/adapter-neon`, everything else → `@prisma/adapter-pg`. |
+| `GATEWAY_URL` | `apps/web` runtime | Base URL of the gateway. The web app fetches all data through it — it does not connect to Postgres directly. |
 | `DIRECT_URL` | `packages/database` migrations | Non-pooled Neon connection for `prisma migrate`. |
 | `SHADOW_DATABASE_URL` | `packages/database` migrations (optional) | Drift-detection DB for `prisma migrate dev`. |
 | `NEON_API_KEY`, `NEON_PROJECT_ID`, `PARENT_BRANCH_ID` | `packages/database` local `db:start` | Passed to the `neondatabase/neon_local` Docker container. |

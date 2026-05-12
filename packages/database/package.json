@@ -14,7 +14,13 @@
     "studio": "postroll-check-env ./src/env.ts migrationEnvSchema && prisma studio"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./prisma": {
+      "types": "./src/generated/prisma/client.d.ts",
+      "import": "./src/generated/prisma/client.js",
+      "default": "./src/generated/prisma/client.js"
+    }
   },
   "dependencies": {
     "@postroll/env": "workspace:*",

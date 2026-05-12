@@ -28,7 +28,7 @@ COPY --link . .
 RUN pnpm install --frozen-lockfile --prod=false
 
 # Build application
-RUN pnpm --filter @postroll/gateway... build
+RUN pnpm turbo run build --filter @postroll/gateway...
 
 
 # Final stage for app image

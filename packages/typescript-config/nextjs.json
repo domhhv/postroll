@@ -8,9 +8,6 @@
     "jsx": "preserve",
     "allowJs": true,
     "noEmit": true,
-    "plugins": [{ "name": "next" }],
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "plugins": [{ "name": "next" }]
   }
 }

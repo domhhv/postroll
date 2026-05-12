@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const envExampleHint = 'apps/web/.env.example';
 
 export const webServerEnvSchema = z.object({
-  DATABASE_URL: z.url(),
+  GATEWAY_URL: z.url(),
 });
 
 export type WebServerEnv = z.infer<typeof webServerEnvSchema>;
