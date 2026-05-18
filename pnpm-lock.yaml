@@ -35,6 +35,9 @@ importers:
       '@nestjs/platform-express':
         specifier: ^11.1.19
         version: 11.1.19(@nestjs/common@11.1.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)
+      '@postroll/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@postroll/env':
         specifier: workspace:*
         version: link:../../packages/env
@@ -108,6 +111,9 @@ importers:
       '@opennextjs/cloudflare':
         specifier: ^1.19.4
         version: 1.19.4(next@16.2.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(wrangler@4.86.0)
+      '@postroll/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@postroll/env':
         specifier: workspace:*
         version: link:../../packages/env
@@ -127,9 +133,6 @@ importers:
       '@postroll/biome-config':
         specifier: workspace:^
         version: link:../../packages/biome-config
-      '@postroll/database':
-        specifier: workspace:*
-        version: link:../../packages/database
       '@postroll/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
@@ -153,6 +156,22 @@ importers:
         version: 4.86.0
 
   packages/biome-config: {}
+
+  packages/contracts:
+    dependencies:
+      zod:
+        specifier: ^4.1.12
+        version: 4.4.3
+    devDependencies:
+      '@postroll/biome-config':
+        specifier: workspace:^
+        version: link:../biome-config
+      '@postroll/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: ^24.12.2
+        version: 24.12.2
 
   packages/database:
     dependencies:

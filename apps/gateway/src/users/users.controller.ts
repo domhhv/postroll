@@ -1,4 +1,10 @@
 import { Controller, Get } from '@nestjs/common';
+import {
+  type UsersCountResponse,
+  type UsersListResponse,
+  usersCountResponseSchema,
+  usersListResponseSchema,
+} from '@postroll/contracts';
 // biome-ignore lint/style/useImportType: needed for the decorator
 import { UsersService } from './users.service';
 
@@ -7,12 +13,14 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('/')
-  async getAll() {
-    return await this.usersService.getAll();
+  async getAll(): Promise<UsersListResponse> {
+    return usersListResponseSchema.parse(await this.usersService.getAll());
   }
 
   @Get('count')
-  async getCount(): Promise<{ count: number }> {
-    return { count: await this.usersService.getCount() };
+  async getCount(): Promise<UsersCountResponse> {
+    return usersCountResponseSchema.parse({
+      count: await this.usersService.getCount(),
+    });
   }
 }
