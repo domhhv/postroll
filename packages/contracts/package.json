@@ -1,0 +1,35 @@
+{
+  "name": "@postroll/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check-types": "tsc --noEmit",
+    "biome:check": "biome check",
+    "biome:write": "biome check --write"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./users": {
+      "types": "./dist/users.d.ts",
+      "import": "./dist/users.js",
+      "default": "./dist/users.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@postroll/biome-config": "workspace:^",
+    "@postroll/typescript-config": "workspace:*",
+    "@types/node": "^24.12.2"
+  }
+}

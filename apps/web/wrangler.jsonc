@@ -14,6 +14,9 @@
       "bucket_name": "next-isr-cache"
     }
   ],
+  "vars": {
+    "GATEWAY_URL": "https://gateway-bitter-ocean-8201.fly.dev"
+  },
   "images": {
     "binding": "IMAGES"
   },
