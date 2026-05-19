@@ -90,7 +90,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           gitHubToken: ${{ secrets.GH_TOKEN }}
-          workingDirectory: "app/web"
+          workingDirectory: "apps/web"
           preCommands: npx turbo run build
           command: pnpm run upload
           vars: |
