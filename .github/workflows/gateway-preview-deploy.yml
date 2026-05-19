@@ -96,7 +96,6 @@ jobs:
           gitHubToken: ${{ secrets.GH_TOKEN }}
           workingDirectory: "apps/web"
           preCommands: npx turbo run build
-          command: pnpm run upload
           vars: |
             GATEWAY_URL=${{ steps.deploy.outputs.url }}
 
