@@ -83,6 +83,10 @@ jobs:
           launch_options: --dockerfile apps/gateway/Dockerfile
           deploy_options: --dockerfile apps/gateway/Dockerfile
 
+      - name: Set GATEWAY_URL var for Cloudflare Worker deployment
+        run: |
+          echo "GATEWAY_URL=${{ steps.deploy.outputs.url }}" >> "$GITHUB_ENV"
+
       - name: Deploy Cloudflare Worker for Gateway PR App
         id: deploy-worker
         uses: cloudflare/wrangler-action@v4
