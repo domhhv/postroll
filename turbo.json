@@ -21,6 +21,10 @@
     },
     "biome:check": {},
     "biome:write": {},
+    "build:cf": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", ".open-next/**"]
+    },
     "dev": {
       "dependsOn": ["^build", "^db:start", "^db:generate"],
       "persistent": true,

@@ -83,6 +83,21 @@ jobs:
           launch_options: --dockerfile apps/gateway/Dockerfile
           deploy_options: --dockerfile apps/gateway/Dockerfile
 
+      - name: Set GATEWAY_URL var for Cloudflare Worker deployment
+        run: |
+          echo "GATEWAY_URL=${{ steps.deploy.outputs.url }}" >> "$GITHUB_ENV"
+
+      - name: Deploy Cloudflare Worker for Gateway PR App
+        id: deploy-worker
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          gitHubToken: ${{ secrets.GH_TOKEN }}
+          workingDirectory: "apps/web"
+          preCommands: pnpm turbo run build:cf --filter @postroll/web
+          command: versions upload --var GATEWAY_URL:${{ steps.deploy.outputs.url }}
+
       - name: Update comment with success
         uses: marocchino/sticky-pull-request-comment@v3.0.4
         with:
@@ -91,6 +106,7 @@ jobs:
           message: |
             Fly Preview URL :balloon: : ${{ steps.deploy.outputs.url }}
             Neon branch :elephant: : https://console.neon.tech/app/projects/${{ vars.NEON_PROJECT_ID }}/branches/${{ steps.create-neon-branch.outputs.branch_id }}
+            Cloudflare Worker :cloud: : ${{ steps.deploy-worker.outputs.deployment-url }}
 
       - name: Update comment on failure
         if: failure()
