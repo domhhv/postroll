@@ -95,7 +95,7 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           gitHubToken: ${{ secrets.GH_TOKEN }}
           workingDirectory: "apps/web"
-          preCommands: npx turbo run build
+          preCommands: pnpm turbo run build:cf --filter @postroll/web
           command: deploy --var GATEWAY_URL:${{ steps.deploy.outputs.url }}
 
       - name: Update comment with success
