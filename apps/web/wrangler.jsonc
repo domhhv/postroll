@@ -17,6 +17,12 @@
   "vars": {
     "GATEWAY_URL": "https://gateway-bitter-ocean-8201.fly.dev"
   },
+  "env": {
+    "preview": {
+      "name": "preview",
+      "preview_urls": true
+    }
+  },
   "images": {
     "binding": "IMAGES"
   },
