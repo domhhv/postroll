@@ -20,17 +20,17 @@
   "env": {
     "preview": {
       "name": "preview",
-      "preview_urls": true
-    },
-    "r2_buckets": [
-      {
-        "binding": "NEXT_INC_CACHE_R2_BUCKET",
-        "bucket_name": "next-isr-cache"
+      "preview_urls": true,
+      "r2_buckets": [
+        {
+          "binding": "NEXT_INC_CACHE_R2_BUCKET",
+          "bucket_name": "next-isr-cache"
+        }
+      ],
+      "vars": {},
+      "images": {
+        "binding": "IMAGES"
       }
-    ],
-    "vars": {},
-    "images": {
-      "binding": "IMAGES"
     }
   },
   "images": {
