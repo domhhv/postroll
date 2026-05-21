@@ -1,14 +1,16 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
-import './globals.css';
+import { Roboto_Slab, Source_Sans_3 } from 'next/font/google';
+import { ThemeProvider } from '@/components/theme-provider';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+import '@postroll/ui/globals.css';
+
+const robotoSlab = Roboto_Slab({
+  variable: '--font-roboto-slab',
   subsets: ['latin'],
 });
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const sourceSans3 = Source_Sans_3({
+  variable: '--font-source-sans-3',
   subsets: ['latin'],
 });
 
@@ -25,9 +27,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
+      className={`${robotoSlab.variable} ${sourceSans3.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ThemeProvider>
+          <main className="flex flex-1 p-16 bg-background">{children}</main>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

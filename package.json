@@ -10,12 +10,14 @@
   },
   "keywords": [],
   "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "check-types": "turbo run check-types",
-    "biome:check": "turbo run biome:check",
-    "biome:write": "turbo run biome:write",
-    "prepare": "husky"
+    "prepare": "husky",
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "check-types": "turbo check-types",
+    "biome:check": "turbo biome:check",
+    "biome:write": "turbo biome:write",
+    "db:start": "pnpm --filter @postroll/database start",
+    "ui": "pnpm --filter @postroll/ui ui"
   },
   "engines": {
     "node": "^24.15.0"

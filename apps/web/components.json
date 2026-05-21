@@ -1,0 +1,22 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "rsc": true,
+  "rtl": false,
+  "style": "base-vega",
+  "iconLibrary": "tabler",
+  "menuAccent": "subtle",
+  "menuColor": "default-translucent",
+  "tailwind": {
+    "config": "",
+    "css": "../../packages/ui/src/styles/globals.css",
+    "baseColor": "olive",
+    "cssVariables": true
+  },
+  "aliases": {
+    "components": "#components",
+    "ui": "@postroll/ui/components",
+    "lib": "#lib",
+    "hooks": "#hooks",
+    "utils": "@postroll/ui/lib/utils"
+  }
+}
