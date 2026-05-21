@@ -1,17 +1,26 @@
+import { Button } from '@postroll/ui/components/button';
+import Link from 'next/link';
 import { getUserCount } from '@/lib/api';
 
 export default async function Home() {
   const userCount = await getUserCount();
 
   return (
-    <main className="flex flex-1 w-full flex-col items-center gap-4 py-24 px-16 bg-gray-100 dark:bg-gray-800 sm:items-start text-center">
-      <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-        Postroll
-      </h1>
-      <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-        Coming soon to a browser near you.
-      </p>
-      <p>There are {userCount} users in the database.</p>
-    </main>
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-foreground">
+          Postroll
+        </h1>
+        <p className="max-w-md text-lg leading-8 text-muted-foreground">
+          Coming soon to a browser near you.
+        </p>
+        <p className="text-accent-foreground">
+          There are {userCount} users in the database.
+        </p>
+      </div>
+      <Button asChild size="lg">
+        <Link href="/register">Register</Link>
+      </Button>
+    </div>
   );
 }

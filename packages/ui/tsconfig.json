@@ -1,0 +1,10 @@
+{
+  "extends": "@postroll/typescript-config",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "paths": {
+      "@postroll/ui/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*"]
+}
