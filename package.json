@@ -11,7 +11,7 @@
   "keywords": [],
   "scripts": {
     "prepare": "husky",
-    "dev": "turbo dev",
+    "dev": "TURBO_UI=1 turbo dev",
     "build": "turbo build",
     "check-types": "turbo check-types",
     "biome:check": "turbo biome:check",
