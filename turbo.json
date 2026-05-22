@@ -58,6 +58,5 @@
       "persistent": true,
       "dependsOn": ["^build"]
     }
-  },
-  "ui": "tui"
+  }
 }
