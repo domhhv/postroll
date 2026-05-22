@@ -12,7 +12,7 @@ WORKDIR /app
 ENV NODE_ENV="production"
 
 # Install pnpm
-ARG PNPM_VERSION=11.1.1
+ARG PNPM_VERSION=11.2.2
 RUN npm install -g pnpm@$PNPM_VERSION
 
 
@@ -38,5 +38,5 @@ FROM base
 COPY --from=build /app /app
 
 # Start the server by default, this can be overwritten at runtime
-EXPOSE 3000
+EXPOSE 8080
 CMD [ "pnpm", "--filter", "@postroll/gateway", "start:prod" ]
