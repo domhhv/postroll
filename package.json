@@ -16,7 +16,8 @@
     "check-types": "turbo check-types",
     "biome:check": "turbo biome:check",
     "biome:write": "turbo biome:write",
-    "db:start": "pnpm --filter @postroll/database start",
+    "db:start": "pnpm --filter @postroll/database db:start",
+    "db:stop": "pnpm --filter @postroll/database db:stop",
     "ui": "pnpm --filter @postroll/ui ui"
   },
   "engines": {
@@ -25,6 +26,8 @@
   "packageManager": "pnpm@11.2.2",
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
+    "@commitlint/cli": "^21.0.1",
+    "@commitlint/config-conventional": "^21.0.1",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.2",
     "turbo": "^2.9.14",
