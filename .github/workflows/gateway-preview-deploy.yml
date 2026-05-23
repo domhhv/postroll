@@ -12,7 +12,7 @@ jobs:
   deploy-gateway-preview:
     name: Deploy to Neon and Fly.io
     if: >-
-      !contains(github.event.pull_request.body, '[Skip CI]')
+      !contains(github.event.pull_request.body, '[Skip preview]')
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
