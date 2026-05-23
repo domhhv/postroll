@@ -21,7 +21,7 @@
     "ui": "pnpm --filter @postroll/ui ui"
   },
   "engines": {
-    "node": "^24.15.0"
+    "node": "^24.16.0"
   },
   "packageManager": "pnpm@11.2.2",
   "devDependencies": {
