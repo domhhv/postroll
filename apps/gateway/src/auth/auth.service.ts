@@ -1,15 +1,31 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import type { RegisterRequest, UserDto } from '@postroll/contracts';
-import type { PrismaClient } from '@postroll/database/prisma';
-import { hash } from 'bcryptjs';
+import type {
+  LoginResponse,
+  RegisterRequest,
+  UserDto,
+} from '@postroll/contracts';
+import type { PrismaClient, User } from '@postroll/database/prisma';
+import { compare, hash } from 'bcryptjs';
 import { InjectPrisma } from '../database/database.module';
 import { toUserDto } from '../users/toUserDto';
+// biome-ignore lint/style/useImportType: needed for the decorator
+import { TokensService } from './tokens.service';
+
+export type AuthenticatedUser = Omit<User, 'password'>;
+
+export type LoginWithRefresh = LoginResponse & {
+  refreshToken: string;
+  refreshExpiresAt: Date;
+};
 
 @Injectable()
 export class AuthService {
   BCRYPT_COST = 12;
 
-  constructor(@InjectPrisma() private readonly prisma: PrismaClient) {}
+  constructor(
+    @InjectPrisma() private readonly prisma: PrismaClient,
+    private readonly tokens: TokensService,
+  ) {}
 
   async register(input: RegisterRequest): Promise<UserDto> {
     const passwordHash = await hash(input.password, this.BCRYPT_COST);
@@ -29,6 +45,32 @@ export class AuthService {
       }
       throw error;
     }
+  }
+
+  async validateUser(
+    email: string,
+    password: string,
+  ): Promise<AuthenticatedUser | null> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) return null;
+    const ok = await compare(password, user.password);
+    if (!ok) return null;
+    const { password: _password, ...rest } = user;
+    return rest;
+  }
+
+  async login(
+    user: AuthenticatedUser,
+    meta: { userAgent?: string | undefined; ip?: string | undefined } = {},
+  ): Promise<LoginWithRefresh> {
+    const accessToken = this.tokens.signAccessToken(user.id);
+    const refresh = await this.tokens.issueRefreshToken(user.id, meta);
+    return {
+      accessToken,
+      refreshToken: refresh.token,
+      refreshExpiresAt: refresh.expiresAt,
+      user: toUserDto(user),
+    };
   }
 
   private isUniqueViolation(error: unknown): boolean {

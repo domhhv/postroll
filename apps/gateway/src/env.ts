@@ -9,6 +9,10 @@ export const gatewayEnvSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
     .default('development'),
+  JWT_ACCESS_SECRET: z.string().min(32),
+  JWT_ACCESS_TTL: z.string().default('15m'),
+  JWT_REFRESH_TTL_DAYS: z.coerce.number().int().positive().default(30),
+  COOKIE_SECURE: z.stringbool().default(true),
 });
 
 export type GatewayEnv = z.infer<typeof gatewayEnvSchema>;

@@ -8,6 +8,7 @@
       "Bash(pnpm install *)",
       "Bash(pnpm check-types *)",
       "Bash(pnpm biome:check)",
+      "Bash(pnpm db:start)",
       "Bash(gh search *)",
       "Bash(gh pr *)",
       "Bash(gh issue *)",

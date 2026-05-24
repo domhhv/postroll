@@ -37,7 +37,7 @@ export async function registerUser(
   input: RegisterRequest,
 ): Promise<RegisterResponse> {
   const { GATEWAY_URL } = getServerEnv();
-  const res = await fetch(`${GATEWAY_URL}/register`, {
+  const res = await fetch(`${GATEWAY_URL}/auth/register`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(input),

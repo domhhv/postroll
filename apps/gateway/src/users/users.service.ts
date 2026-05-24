@@ -16,4 +16,12 @@ export class UsersService {
   getCount(): Promise<number> {
     return this.prisma.user.count();
   }
+
+  async findById(id: string): Promise<UserDto | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      omit: { password: true },
+    });
+    return user ? toUserDto(user) : null;
+  }
 }
