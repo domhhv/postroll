@@ -79,7 +79,12 @@ jobs:
         uses: superfly/fly-pr-review-apps@1.6.0
         with:
           config: apps/gateway/fly.toml
-          secrets: DATABASE_URL=${{ env.DATABASE_URL }}
+          secrets: |
+            DATABASE_URL=${{ env.DATABASE_URL }}
+            JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET_PREVIEW }}
+            JWT_ACCESS_TTL=15m
+            JWT_REFRESH_TTL_DAYS=30
+            COOKIE_SECURE=true
           launch_options: --dockerfile apps/gateway/Dockerfile
           deploy_options: --dockerfile apps/gateway/Dockerfile
 

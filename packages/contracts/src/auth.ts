@@ -11,3 +11,23 @@ export type RegisterRequest = z.infer<typeof registerRequestSchema>;
 export const registerResponseSchema = userDtoSchema;
 
 export type RegisterResponse = z.infer<typeof registerResponseSchema>;
+
+export const loginRequestSchema = z.object({
+  email: z.email(),
+  password: z.string().min(1),
+});
+
+export type LoginRequest = z.infer<typeof loginRequestSchema>;
+
+export const loginResponseSchema = z.object({
+  accessToken: z.string(),
+  user: userDtoSchema,
+});
+
+export type LoginResponse = z.infer<typeof loginResponseSchema>;
+
+export const refreshResponseSchema = z.object({
+  accessToken: z.string(),
+});
+
+export type RefreshResponse = z.infer<typeof refreshResponseSchema>;

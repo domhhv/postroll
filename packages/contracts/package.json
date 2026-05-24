@@ -19,6 +19,11 @@
       "types": "./dist/users.d.ts",
       "import": "./dist/users.js",
       "default": "./dist/users.js"
+    },
+    "./auth": {
+      "types": "./dist/auth.d.ts",
+      "import": "./dist/auth.js",
+      "default": "./dist/auth.js"
     }
   },
   "files": [
