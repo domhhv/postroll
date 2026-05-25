@@ -92,12 +92,6 @@ jobs:
         run: |
           echo "GATEWAY_URL=${{ steps.deploy.outputs.url }}" >> "$GITHUB_ENV"
 
-      - name: Build web for Cloudflare
-        run: pnpm turbo run build:cf --filter @postroll/web
-        env:
-          GATEWAY_URL: ${{ steps.deploy.outputs.url }}
-          SESSION_SECRET: ${{ secrets.SESSION_SECRET_PREVIEW }}
-
       - name: Deploy Cloudflare Worker for Gateway PR App
         id: deploy-worker
         uses: cloudflare/wrangler-action@v4
@@ -108,7 +102,8 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           gitHubToken: ${{ secrets.GH_TOKEN }}
           workingDirectory: "apps/web"
-          command: versions upload --var GATEWAY_URL:${{ steps.deploy.outputs.url }}
+          preCommands: pnpm turbo run build:cf --filter @postroll/web
+          command: versions upload --var GATEWAY_URL:${{ steps.deploy.outputs.url }} --var SESSION_SECRET:${{ secrets.SESSION_SECRET_PREVIEW }}
           secrets: |
             SESSION_SECRET
 
