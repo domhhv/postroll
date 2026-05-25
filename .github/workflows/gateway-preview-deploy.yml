@@ -103,7 +103,7 @@ jobs:
           gitHubToken: ${{ secrets.GH_TOKEN }}
           workingDirectory: "apps/web"
           preCommands: pnpm turbo run build:cf --filter @postroll/web
-          command: versions upload --var GATEWAY_URL:${{ steps.deploy.outputs.url }} --var SESSION_SECRET:${{ secrets.SESSION_SECRET_PREVIEW }}
+          command: versions upload --var GATEWAY_URL:${{ steps.deploy.outputs.url }}
           secrets: |
             SESSION_SECRET
 

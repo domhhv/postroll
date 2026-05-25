@@ -26,4 +26,5 @@ export default function proxy(request: NextRequest) {
 
 export const config = {
   matcher: ['/login', '/register', '/dashboard/:path*'],
+  runtime: 'edge',
 };
