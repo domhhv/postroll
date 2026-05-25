@@ -10,7 +10,7 @@ env:
 
 jobs:
   deploy-gateway-preview:
-    name: Deploy to Neon and Fly.io
+    name: Deploy to Neon, Fly.io, and Cloudflare Workers
     if: >-
       !contains(github.event.pull_request.body, '[Skip preview]')
     runs-on: ubuntu-latest
@@ -92,6 +92,12 @@ jobs:
         run: |
           echo "GATEWAY_URL=${{ steps.deploy.outputs.url }}" >> "$GITHUB_ENV"
 
+      - name: Build web for Cloudflare
+        run: pnpm turbo run build:cf --filter @postroll/web
+        env:
+          GATEWAY_URL: ${{ steps.deploy.outputs.url }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET_PREVIEW }}
+
       - name: Deploy Cloudflare Worker for Gateway PR App
         id: deploy-worker
         uses: cloudflare/wrangler-action@v4
@@ -102,7 +108,6 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           gitHubToken: ${{ secrets.GH_TOKEN }}
           workingDirectory: "apps/web"
-          preCommands: pnpm turbo run build:cf --filter @postroll/web
           command: versions upload --var GATEWAY_URL:${{ steps.deploy.outputs.url }}
           secrets: |
             SESSION_SECRET

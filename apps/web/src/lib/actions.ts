@@ -59,10 +59,19 @@ export async function registerAction(
     };
   }
 
+  let registered = false;
   try {
     await registerUser(parsed.data);
+    registered = true;
     await loginAndCreateSession(parsed.data);
   } catch (error) {
+    if (registered) {
+      return {
+        status: 'error',
+        message: 'Account created. Please sign in to continue.',
+        values,
+      };
+    }
     if (error instanceof GatewayError) {
       return { status: 'error', message: error.message, values };
     }

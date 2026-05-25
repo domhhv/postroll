@@ -13,6 +13,7 @@ import {
   usersCountResponseSchema,
   usersListResponseSchema,
 } from '@postroll/contracts';
+import { parse as parseSetCookies } from 'set-cookie-parser';
 import { getServerEnv } from '@/env';
 import {
   createSession,
@@ -45,37 +46,16 @@ const refreshLocks = new Map<string, Promise<RefreshResult>>();
 function parseRefreshCookie(
   setCookies: string[],
 ): { value: string; expiresAt: string } | null {
-  for (const line of setCookies) {
-    const parts = line.split(';').map((p) => p.trim());
-    const first = parts[0];
-    if (!first) continue;
-    const eq = first.indexOf('=');
-    if (eq === -1) continue;
-    const name = first.slice(0, eq);
-    if (name !== GATEWAY_REFRESH_COOKIE) continue;
-    const value = first.slice(eq + 1);
-    let expiresAt = new Date(
-      Date.now() + 30 * 24 * 60 * 60 * 1000,
-    ).toISOString();
-    for (const attr of parts.slice(1)) {
-      const [rawKey, ...rest] = attr.split('=');
-      const key = rawKey?.toLowerCase();
-      const rawValue = rest.join('=');
-      if (key === 'max-age') {
-        const seconds = Number.parseInt(rawValue, 10);
-        if (!Number.isNaN(seconds)) {
-          expiresAt = new Date(Date.now() + seconds * 1000).toISOString();
-        }
-      } else if (key === 'expires' && rawValue) {
-        const d = new Date(rawValue);
-        if (!Number.isNaN(d.getTime())) {
-          expiresAt = d.toISOString();
-        }
-      }
-    }
-    return { value, expiresAt };
-  }
-  return null;
+  const cookie = parseSetCookies(setCookies).find(
+    (c) => c.name === GATEWAY_REFRESH_COOKIE,
+  );
+  if (!cookie) return null;
+  const expiresAt =
+    cookie.maxAge !== undefined
+      ? new Date(Date.now() + cookie.maxAge * 1000).toISOString()
+      : (cookie.expires?.toISOString() ??
+        new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString());
+  return { value: cookie.value, expiresAt };
 }
 
 export async function getUsers(): Promise<UserDto[]> {

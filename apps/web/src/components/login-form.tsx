@@ -10,6 +10,7 @@ import {
   FieldSet,
 } from '@postroll/ui/components/field';
 import { Input } from '@postroll/ui/components/input';
+import Link from 'next/link';
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { type AuthFormState, loginAction } from '#lib/actions';
@@ -77,7 +78,7 @@ export function LoginForm() {
           )}
           <SubmitButton />
           <FieldDescription className="text-center">
-            New here? <a href="/register">Create an account</a>.
+            New here? <Link href="/register">Create an account</Link>.
           </FieldDescription>
         </FieldGroup>
       </FieldSet>
