@@ -9,7 +9,8 @@
     "NEON_PROJECT_ID",
     "PARENT_BRANCH_ID",
     "PORT",
-    "NODE_ENV"
+    "NODE_ENV",
+    "SESSION_SECRET"
   ],
   "tasks": {
     "build": {

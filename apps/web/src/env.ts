@@ -5,6 +5,7 @@ export const envExampleHint = 'apps/web/.env.example';
 
 export const webServerEnvSchema = z.object({
   GATEWAY_URL: z.url(),
+  SESSION_SECRET: z.string().min(32),
 });
 
 export type WebServerEnv = z.infer<typeof webServerEnvSchema>;

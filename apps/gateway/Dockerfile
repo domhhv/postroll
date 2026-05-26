@@ -28,7 +28,7 @@ COPY --link . .
 RUN pnpm install --frozen-lockfile --prod=false
 
 # Build application
-RUN --mount=type=secret,id=JWT_ACCESS_SECRET_PREVIEW,env=JWT_ACCESS_SECRET_PREVIEW pnpm turbo run build --filter @postroll/gateway...
+RUN pnpm turbo run build --filter @postroll/gateway...
 
 
 # Final stage for app image

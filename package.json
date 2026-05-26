@@ -18,6 +18,7 @@
     "biome:write": "turbo biome:write",
     "db:start": "pnpm --filter @postroll/database db:start",
     "db:stop": "pnpm --filter @postroll/database db:stop",
+    "db:reset": "pnpm --filter @postroll/database db:reset",
     "db:studio": "pnpm --filter @postroll/database studio",
     "ui": "pnpm --filter @postroll/ui ui"
   },

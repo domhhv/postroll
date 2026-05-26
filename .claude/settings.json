@@ -4,6 +4,7 @@
       "mcp__plugin_cloudflare_cloudflare-api__search",
       "mcp__plugin_cloudflare_cloudflare-api__execute",
       "mcp__context7__query-docs",
+      "Bash(pnpm add * --filter @postroll/*)",
       "Bash(pnpm --version)",
       "Bash(pnpm install *)",
       "Bash(pnpm check-types *)",
@@ -14,6 +15,7 @@
       "Bash(gh issue *)",
       "Bash(gh api *)",
       "Bash(gh release *)",
+      "Bash(npm view *)",
       "WebFetch(domain:github.com)"
     ]
   },

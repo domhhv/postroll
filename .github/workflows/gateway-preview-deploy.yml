@@ -10,7 +10,7 @@ env:
 
 jobs:
   deploy-gateway-preview:
-    name: Deploy to Neon and Fly.io
+    name: Deploy to Neon, Fly.io, and Cloudflare Workers
     if: >-
       !contains(github.event.pull_request.body, '[Skip preview]')
     runs-on: ubuntu-latest
@@ -95,6 +95,8 @@ jobs:
       - name: Deploy Cloudflare Worker for Gateway PR App
         id: deploy-worker
         uses: cloudflare/wrangler-action@v4
+        env:
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET_PREVIEW }}
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -102,6 +104,8 @@ jobs:
           workingDirectory: "apps/web"
           preCommands: pnpm turbo run build:cf --filter @postroll/web
           command: versions upload --var GATEWAY_URL:${{ steps.deploy.outputs.url }}
+          secrets: |
+            SESSION_SECRET
 
       - name: Update comment with success
         uses: marocchino/sticky-pull-request-comment@v3.0.4
