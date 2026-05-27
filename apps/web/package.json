@@ -24,6 +24,7 @@
     "@opennextjs/cloudflare": "^1.19.4",
     "@postroll/contracts": "workspace:*",
     "@postroll/env": "workspace:*",
+    "@tabler/icons-react": "^3.44.0",
     "add": "^2.0.6",
     "jose": "^6.2.3",
     "next": "16.2.4",

@@ -1,6 +1,3 @@
-import { Button } from '@postroll/ui/components/button';
-import Link from 'next/link';
-
 export default function Home() {
   return (
     <div className="space-y-4">
@@ -12,9 +9,6 @@ export default function Home() {
           Coming soon to a browser near you.
         </p>
       </div>
-      <Button asChild size="lg">
-        <Link href="/register">Register</Link>
-      </Button>
     </div>
   );
 }
