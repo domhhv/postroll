@@ -9,13 +9,3 @@ export const userDtoSchema = z.object({
 });
 
 export type UserDto = z.infer<typeof userDtoSchema>;
-
-export const usersListResponseSchema = z.array(userDtoSchema);
-
-export type UsersListResponse = z.infer<typeof usersListResponseSchema>;
-
-export const usersCountResponseSchema = z.object({
-  count: z.number().int().nonnegative(),
-});
-
-export type UsersCountResponse = z.infer<typeof usersCountResponseSchema>;

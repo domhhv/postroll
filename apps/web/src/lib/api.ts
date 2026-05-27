@@ -10,8 +10,6 @@ import {
   registerResponseSchema,
   type UserDto,
   userDtoSchema,
-  usersCountResponseSchema,
-  usersListResponseSchema,
 } from '@postroll/contracts';
 import { parse as parseSetCookies } from 'set-cookie-parser';
 import { getServerEnv } from '@/env';
@@ -56,21 +54,6 @@ function parseRefreshCookie(
       : (cookie.expires?.toISOString() ??
         new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString());
   return { value: cookie.value, expiresAt };
-}
-
-export async function getUsers(): Promise<UserDto[]> {
-  const { GATEWAY_URL } = getServerEnv();
-  const res = await fetch(`${GATEWAY_URL}/users`, { cache: 'no-store' });
-  if (!res.ok) throw new GatewayError(res.status, `gateway ${res.status}`);
-  return usersListResponseSchema.parse(await res.json());
-}
-
-export async function getUserCount(): Promise<number> {
-  const { GATEWAY_URL } = getServerEnv();
-  const res = await fetch(`${GATEWAY_URL}/users/count`, { cache: 'no-store' });
-  if (!res.ok) throw new GatewayError(res.status, `gateway ${res.status}`);
-  const { count } = usersCountResponseSchema.parse(await res.json());
-  return count;
 }
 
 export async function registerUser(
