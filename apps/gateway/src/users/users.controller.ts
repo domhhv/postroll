@@ -1,12 +1,5 @@
 import { Controller, Get, NotFoundException, UseGuards } from '@nestjs/common';
-import {
-  type UserDto,
-  type UsersCountResponse,
-  type UsersListResponse,
-  userDtoSchema,
-  usersCountResponseSchema,
-  usersListResponseSchema,
-} from '@postroll/contracts';
+import { type UserDto, userDtoSchema } from '@postroll/contracts';
 import {
   CurrentUser,
   type RequestUser,
@@ -19,11 +12,6 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Get('/')
-  async getAll(): Promise<UsersListResponse> {
-    return usersListResponseSchema.parse(await this.usersService.getAll());
-  }
-
   @Get('me')
   @UseGuards(JwtAuthGuard)
   async getMe(@CurrentUser() user: RequestUser): Promise<UserDto> {
@@ -32,12 +20,5 @@ export class UsersController {
       throw new NotFoundException('User not found');
     }
     return userDtoSchema.parse(found);
-  }
-
-  @Get('count')
-  async getCount(): Promise<UsersCountResponse> {
-    return usersCountResponseSchema.parse({
-      count: await this.usersService.getCount(),
-    });
   }
 }
