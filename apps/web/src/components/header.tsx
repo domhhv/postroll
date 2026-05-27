@@ -4,8 +4,6 @@ import Link from 'next/link';
 import { UserMenu } from '#components/user-menu';
 import { getUser } from '#lib/dal';
 
-const GITHUB_URL = 'https://github.com/domhhv/postroll';
-
 export async function Header() {
   const user = await getUser();
 
@@ -15,13 +13,17 @@ export async function Header() {
         href="/"
         className="flex items-center gap-2 text-foreground hover:opacity-80"
       >
-        <IconMovie className="size-5" />
+        <IconMovie className="size-5 self-start" />
         <span className="font-semibold tracking-tight">Postroll</span>
       </Link>
 
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="icon" asChild aria-label="GitHub">
-          <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
+          <a
+            href="https://github.com/domhhv/postroll"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <IconBrandGithub />
           </a>
         </Button>
@@ -35,7 +37,7 @@ export async function Header() {
           </>
         ) : (
           <>
-            <Button variant="ghost" asChild>
+            <Button variant="secondary" asChild>
               <Link href="/login">Log In</Link>
             </Button>
             <Button asChild>

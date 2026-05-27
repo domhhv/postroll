@@ -33,21 +33,22 @@ export function UserMenu({ email }: UserMenuProps) {
           </Button>
         )}
       />
-      <PopoverContent align="end" className="w-56 gap-1 p-1">
+      <PopoverContent align="end" className="w-56 gap-1 p-2">
         <div className="truncate px-2 py-1.5 text-sm text-muted-foreground">
           {email}
         </div>
-        <Separator className="my-1" />
+        <Separator className="my-1 h-px" />
         <Link href="/account" className={menuItem}>
           Account
         </Link>
         <form action={logoutAction}>
-          <button
+          <Button
+            variant="ghost"
             type="submit"
-            className={`${menuItem} text-destructive hover:text-destructive`}
+            className={`${menuItem} text-destructive hover:text-destructive justify-start hover:bg-destructive/10 focus-visible:bg-destructive/10`}
           >
             Log Out
-          </button>
+          </Button>
         </form>
       </PopoverContent>
     </Popover>
