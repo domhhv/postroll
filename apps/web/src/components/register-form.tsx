@@ -10,7 +10,7 @@ import {
   FieldSet,
 } from '@postroll/ui/components/field';
 import { Input } from '@postroll/ui/components/input';
-import Link from 'next/dist/client/link';
+import Link from 'next/link';
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { type AuthFormState, registerAction } from '#lib/actions';
