@@ -7,11 +7,13 @@ export const metadata = {
 
 export default async function AccountPage() {
   const session = await verifySession();
+
   if (!session) {
     redirect('/login');
   }
 
   const me = await getUser();
+
   if (!me) {
     redirect('/login');
   }

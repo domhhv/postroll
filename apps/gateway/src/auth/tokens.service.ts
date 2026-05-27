@@ -24,6 +24,13 @@ export type RotatedTokens = {
   expiresAt: Date;
 };
 
+/**
+ * Grace window during which a concurrent retry presenting the just-rotated
+ * (now-revoked) token receives the replacement instead of triggering family
+ * revocation. Absorbs benign races without weakening reuse detection beyond it.
+ */
+const ROTATION_GRACE_MS = 10_000;
+
 @Injectable()
 export class TokensService {
   constructor(
@@ -73,6 +80,21 @@ export class TokensService {
     }
 
     if (row.revokedAt !== null) {
+      const withinGrace =
+        Date.now() - row.revokedAt.getTime() <= ROTATION_GRACE_MS;
+      if (withinGrace && row.replacedById) {
+        const replacement = await this.prisma.refreshToken.findUnique({
+          where: { id: row.replacedById },
+        });
+        if (replacement && replacement.revokedAt === null) {
+          /**
+           * We can't return the original plaintext token (only the hash is
+           * stored), so issue another rotation off the replacement. The caller
+           * ends up with a fresh token either way.
+           */
+          return this.rotateRow(replacement, meta);
+        }
+      }
       await this.revokeFamily(row.familyId);
       throw new UnauthorizedException('Refresh token reuse detected');
     }
@@ -81,36 +103,7 @@ export class TokensService {
       throw new UnauthorizedException('Refresh token expired');
     }
 
-    const issued = await this.prisma.$transaction(async (tx) => {
-      const { count } = await tx.refreshToken.updateMany({
-        where: { id: row.id, revokedAt: null },
-        data: { revokedAt: new Date() },
-      });
-      if (count !== 1) {
-        throw new UnauthorizedException('Refresh token rotation conflict');
-      }
-
-      const next = randomBytes(32).toString('base64url');
-      const nextHash = this.hash(next);
-      const expiresAt = this.computeRefreshExpiry();
-      await tx.refreshToken.create({
-        data: {
-          userId: row.userId,
-          tokenHash: nextHash,
-          familyId: row.familyId,
-          expiresAt,
-          userAgent: meta.userAgent ?? null,
-          ip: meta.ip ?? null,
-        },
-      });
-      return { token: next, expiresAt };
-    });
-
-    return {
-      accessToken: this.signAccessToken(row.userId),
-      refreshToken: issued.token,
-      expiresAt: issued.expiresAt,
-    };
+    return this.rotateRow(row, meta);
   }
 
   async revokeFamily(familyId: string): Promise<void> {
@@ -129,6 +122,43 @@ export class TokensService {
     if (row) {
       await this.revokeFamily(row.familyId);
     }
+  }
+
+  private async rotateRow(
+    row: { id: string; userId: string; familyId: string },
+    meta: RefreshTokenMeta,
+  ): Promise<RotatedTokens> {
+    const issued = await this.prisma.$transaction(async (tx) => {
+      const next = randomBytes(32).toString('base64url');
+      const nextHash = this.hash(next);
+      const expiresAt = this.computeRefreshExpiry();
+      const created = await tx.refreshToken.create({
+        data: {
+          userId: row.userId,
+          tokenHash: nextHash,
+          familyId: row.familyId,
+          expiresAt,
+          userAgent: meta.userAgent ?? null,
+          ip: meta.ip ?? null,
+        },
+      });
+
+      const { count } = await tx.refreshToken.updateMany({
+        where: { id: row.id, revokedAt: null },
+        data: { revokedAt: new Date(), replacedById: created.id },
+      });
+      if (count !== 1) {
+        throw new UnauthorizedException('Refresh token rotation conflict');
+      }
+
+      return { token: next, expiresAt };
+    });
+
+    return {
+      accessToken: this.signAccessToken(row.userId),
+      refreshToken: issued.token,
+      expiresAt: issued.expiresAt,
+    };
   }
 
   private hash(raw: string): string {

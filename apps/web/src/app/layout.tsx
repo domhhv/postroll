@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Roboto_Slab, Source_Sans_3 } from 'next/font/google';
 import { Header } from '#components/header';
-import { ThemeProvider } from '@/components/theme-provider';
+import { ThemeProvider } from '#components/theme-provider';
 
 import '@postroll/ui/globals.css';
 
