@@ -8,8 +8,8 @@ import {
   loginAndCreateSession,
   logoutGateway,
   registerUser,
-} from '@/lib/api';
-import { deleteSession, readSessionCookie } from '@/lib/session';
+} from './api';
+import { deleteSession, readSessionCookie } from './session';
 
 export type AuthFormState =
   | { status: 'idle' }
@@ -20,26 +20,52 @@ export type AuthFormState =
       values: { email: string; password?: string };
     };
 
+type Credentials = { email: string; password: string };
+
 function extractFieldErrors(error: z.ZodError): Record<string, string> {
   const fieldErrors: Record<string, string> = {};
+
   for (const issue of error.issues) {
     const field = issue.path[0];
+
     if (typeof field === 'string' && !fieldErrors[field]) {
       fieldErrors[field] = issue.message;
     }
   }
+
   return fieldErrors;
 }
 
-function readCredentials(formData: FormData): {
-  email: string;
-  password: string;
-} {
+function readCredentials(formData: FormData): Credentials {
   const email = formData.get('email');
   const password = formData.get('password');
+
   return {
     email: typeof email === 'string' ? email : '',
     password: typeof password === 'string' ? password : '',
+  };
+}
+
+function toFormError(
+  error: unknown,
+  values: Credentials,
+): Extract<AuthFormState, { status: 'error' }> {
+  if (error instanceof GatewayError) {
+    return { status: 'error', message: error.message, values };
+  }
+
+  if (error instanceof z.ZodError) {
+    return {
+      status: 'error',
+      message: 'Unexpected response from gateway.',
+      values,
+    };
+  }
+
+  return {
+    status: 'error',
+    message: 'Something went wrong. Please try again.',
+    values,
   };
 }
 
@@ -59,34 +85,11 @@ export async function registerAction(
     };
   }
 
-  let registered = false;
   try {
     await registerUser(parsed.data);
-    registered = true;
     await loginAndCreateSession(parsed.data);
   } catch (error) {
-    if (registered) {
-      return {
-        status: 'error',
-        message: 'Account created. Please sign in to continue.',
-        values,
-      };
-    }
-    if (error instanceof GatewayError) {
-      return { status: 'error', message: error.message, values };
-    }
-    if (error instanceof z.ZodError) {
-      return {
-        status: 'error',
-        message: 'Unexpected response from gateway.',
-        values,
-      };
-    }
-    return {
-      status: 'error',
-      message: 'Something went wrong. Please try again.',
-      values,
-    };
+    return toFormError(error, values);
   }
 
   redirect('/dashboard');
@@ -111,21 +114,7 @@ export async function loginAction(
   try {
     await loginAndCreateSession(parsed.data);
   } catch (error) {
-    if (error instanceof GatewayError) {
-      return { status: 'error', message: error.message, values };
-    }
-    if (error instanceof z.ZodError) {
-      return {
-        status: 'error',
-        message: 'Unexpected response from gateway.',
-        values,
-      };
-    }
-    return {
-      status: 'error',
-      message: 'Something went wrong. Please try again.',
-      values,
-    };
+    return toFormError(error, values);
   }
 
   redirect('/dashboard');
@@ -133,9 +122,11 @@ export async function loginAction(
 
 export async function logoutAction(): Promise<void> {
   const session = await readSessionCookie();
+
   if (session) {
     await logoutGateway(session);
   }
+
   await deleteSession();
   redirect('/login');
 }

@@ -13,10 +13,6 @@ export async function register() {
 
   loadEnvFile({
     importMetaUrl: import.meta.url,
-    relativePath: '../.env.local',
-  });
-  loadEnvFile({
-    importMetaUrl: import.meta.url,
     relativePath: '../.env',
   });
 

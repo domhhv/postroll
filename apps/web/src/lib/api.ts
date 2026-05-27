@@ -20,6 +20,7 @@ import {
   type SessionPayload,
   updateSession,
 } from './session';
+import { noop } from './utils';
 
 const GATEWAY_REFRESH_COOKIE = 'postroll_rt';
 
@@ -33,69 +34,75 @@ export class GatewayError extends Error {
   }
 }
 
+type RefreshCookie = { value: string; expiresAt: string };
+
 type RefreshResult = {
   refreshToken: string;
   accessToken: string;
   refreshExpiresAt: string;
 };
 
-const refreshLocks = new Map<string, Promise<RefreshResult>>();
-
-function parseRefreshCookie(
-  setCookies: string[],
-): { value: string; expiresAt: string } | null {
+function parseRefreshCookie(setCookies: string[]): RefreshCookie {
   const cookie = parseSetCookies(setCookies).find(
     (c) => c.name === GATEWAY_REFRESH_COOKIE,
   );
-  if (!cookie) return null;
+
+  if (!cookie) {
+    throw new GatewayError(502, 'Gateway did not return a refresh cookie.');
+  }
+
   const expiresAt =
     cookie.maxAge !== undefined
       ? new Date(Date.now() + cookie.maxAge * 1000).toISOString()
-      : (cookie.expires?.toISOString() ??
-        new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString());
+      : cookie.expires?.toISOString();
+
+  if (!expiresAt) {
+    throw new GatewayError(502, 'Gateway refresh cookie is missing an expiry.');
+  }
+
   return { value: cookie.value, expiresAt };
+}
+
+async function postJson(
+  path: string,
+  body: unknown,
+  errorMap: Record<number, string>,
+): Promise<Response> {
+  const { GATEWAY_URL } = getServerEnv();
+  const res = await fetch(`${GATEWAY_URL}${path}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const message = errorMap[res.status] ?? `Request failed (${res.status}).`;
+
+    throw new GatewayError(res.status, message);
+  }
+
+  return res;
 }
 
 export async function registerUser(
   input: RegisterRequest,
 ): Promise<RegisterResponse> {
-  const { GATEWAY_URL } = getServerEnv();
-  const res = await fetch(`${GATEWAY_URL}/auth/register`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(input),
+  const res = await postJson('/auth/register', input, {
+    409: 'An account with this email already exists.',
   });
-  if (!res.ok) {
-    const message =
-      res.status === 409
-        ? 'An account with this email already exists.'
-        : `Registration failed (${res.status}).`;
-    throw new GatewayError(res.status, message);
-  }
+
   return registerResponseSchema.parse(await res.json());
 }
 
 export async function loginUser(
   input: LoginRequest,
 ): Promise<LoginResponse & { refreshToken: string; refreshExpiresAt: string }> {
-  const { GATEWAY_URL } = getServerEnv();
-  const res = await fetch(`${GATEWAY_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(input),
+  const res = await postJson('/auth/login', input, {
+    401: 'Invalid email or password.',
   });
-  if (!res.ok) {
-    const message =
-      res.status === 401
-        ? 'Invalid email or password.'
-        : `Login failed (${res.status}).`;
-    throw new GatewayError(res.status, message);
-  }
   const body = loginResponseSchema.parse(await res.json());
   const cookie = parseRefreshCookie(res.headers.getSetCookie());
-  if (!cookie) {
-    throw new GatewayError(502, 'Gateway did not return a refresh cookie.');
-  }
+
   return {
     ...body,
     refreshToken: cookie.value,
@@ -104,52 +111,33 @@ export async function loginUser(
 }
 
 async function refreshTokens(session: SessionPayload): Promise<RefreshResult> {
-  const existing = refreshLocks.get(session.sid);
-  if (existing) return existing;
-
   const { GATEWAY_URL } = getServerEnv();
-  const promise = (async (): Promise<RefreshResult> => {
-    try {
-      const res = await fetch(`${GATEWAY_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: {
-          cookie: `${GATEWAY_REFRESH_COOKIE}=${session.refreshToken}`,
-        },
-      });
-      if (!res.ok) {
-        throw new GatewayError(res.status, `refresh failed (${res.status})`);
-      }
-      const body = refreshResponseSchema.parse(await res.json());
-      const cookie = parseRefreshCookie(res.headers.getSetCookie());
-      if (!cookie) {
-        throw new GatewayError(502, 'Gateway did not return a refresh cookie.');
-      }
-      return {
-        accessToken: body.accessToken,
-        refreshToken: cookie.value,
-        refreshExpiresAt: cookie.expiresAt,
-      };
-    } finally {
-      refreshLocks.delete(session.sid);
-    }
-  })();
+  const res = await fetch(`${GATEWAY_URL}/auth/refresh`, {
+    method: 'POST',
+    headers: { cookie: `${GATEWAY_REFRESH_COOKIE}=${session.refreshToken}` },
+  });
 
-  refreshLocks.set(session.sid, promise);
-  return promise;
+  if (!res.ok) {
+    throw new GatewayError(res.status, `refresh failed (${res.status})`);
+  }
+
+  const body = refreshResponseSchema.parse(await res.json());
+  const cookie = parseRefreshCookie(res.headers.getSetCookie());
+
+  return {
+    accessToken: body.accessToken,
+    refreshToken: cookie.value,
+    refreshExpiresAt: cookie.expiresAt,
+  };
 }
 
 export async function logoutGateway(session: SessionPayload): Promise<void> {
   const { GATEWAY_URL } = getServerEnv();
-  try {
-    await fetch(`${GATEWAY_URL}/auth/logout`, {
-      method: 'POST',
-      headers: {
-        cookie: `${GATEWAY_REFRESH_COOKIE}=${session.refreshToken}`,
-      },
-    });
-  } catch {
-    // best effort; we'll still clear the local session
-  }
+
+  await fetch(`${GATEWAY_URL}/auth/logout`, {
+    method: 'POST',
+    headers: { cookie: `${GATEWAY_REFRESH_COOKIE}=${session.refreshToken}` },
+  }).catch(noop);
 }
 
 async function gatewayFetch(
@@ -158,6 +146,7 @@ async function gatewayFetch(
 ): Promise<Response> {
   const { GATEWAY_URL } = getServerEnv();
   const session = await readSessionCookie();
+
   if (!session) {
     throw new GatewayError(401, 'No active session.');
   }
@@ -173,8 +162,15 @@ async function gatewayFetch(
     });
 
   const first = await doFetch(session.accessToken);
-  if (first.status !== 401) return first;
 
+  if (first.status !== 401) {
+    return first;
+  }
+
+  /**
+   * Concurrent 401s may all hit /auth/refresh; the gateway absorbs the race
+   * via a short rotation grace window (see apps/gateway/src/auth/tokens.service.ts)
+   */
   try {
     const next = await refreshTokens(session);
     await updateSession({
@@ -182,18 +178,22 @@ async function gatewayFetch(
       refreshToken: next.refreshToken,
       refreshExpiresAt: next.refreshExpiresAt,
     });
+
     return await doFetch(next.accessToken);
   } catch {
     await deleteSession();
+
     throw new GatewayError(401, 'Session expired.');
   }
 }
 
 export async function getMe(): Promise<UserDto> {
   const res = await gatewayFetch('/users/me');
+
   if (!res.ok) {
     throw new GatewayError(res.status, `me ${res.status}`);
   }
+
   return userDtoSchema.parse(await res.json());
 }
 
@@ -207,5 +207,6 @@ export async function loginAndCreateSession(
     refreshToken: result.refreshToken,
     refreshExpiresAt: result.refreshExpiresAt,
   });
+
   return result.user;
 }
