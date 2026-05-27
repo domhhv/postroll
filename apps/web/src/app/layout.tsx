@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Roboto_Slab, Source_Sans_3 } from 'next/font/google';
+import { Header } from '#components/header';
 import { ThemeProvider } from '@/components/theme-provider';
 
 import '@postroll/ui/globals.css';
@@ -32,6 +33,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
+          <Header />
           <main className="flex flex-1 p-16 bg-background">{children}</main>
         </ThemeProvider>
       </body>

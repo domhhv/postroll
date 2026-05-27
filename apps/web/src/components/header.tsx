@@ -21,7 +21,7 @@ export async function Header() {
 
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="icon" asChild aria-label="GitHub">
-          <a href={GITHUB_URL} target="_blank" rel="noreferrer">
+          <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
             <IconBrandGithub />
           </a>
         </Button>
