@@ -1,6 +1,5 @@
 'use client';
 
-import { Button } from '@postroll/ui/components/button';
 import {
   Field,
   FieldDescription,
@@ -10,21 +9,13 @@ import {
   FieldSet,
 } from '@postroll/ui/components/field';
 import { Input } from '@postroll/ui/components/input';
+import { PasswordInput } from '@postroll/ui/components/password-input';
 import Link from 'next/link';
 import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
 import { type AuthFormState, registerAction } from '#lib/actions';
+import { PendingButton } from './pending-button';
 
 const initialState: AuthFormState = { status: 'idle' };
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" size="lg" disabled={pending}>
-      {pending ? 'Creating account…' : 'Create account'}
-    </Button>
-  );
-}
 
 export function RegisterForm() {
   const [state, formAction] = useActionState(registerAction, initialState);
@@ -64,10 +55,9 @@ export function RegisterForm() {
             <FieldDescription>
               Must be at least 8 characters long.
             </FieldDescription>
-            <Input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               autoComplete="new-password"
               placeholder="••••••••"
               minLength={8}
@@ -84,7 +74,11 @@ export function RegisterForm() {
               {state.message}
             </p>
           )}
-          <SubmitButton />
+          <PendingButton
+            idle="Create account"
+            pendingLabel="Creating account"
+            size="lg"
+          />
           <FieldDescription className="text-center">
             Already have an account? <Link href="/login">Log in</Link>.
           </FieldDescription>

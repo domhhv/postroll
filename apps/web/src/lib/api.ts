@@ -1,6 +1,7 @@
 import 'server-only';
 
 import {
+  type ChangePasswordRequest,
   type LoginRequest,
   type LoginResponse,
   loginResponseSchema,
@@ -8,6 +9,7 @@ import {
   type RegisterResponse,
   refreshResponseSchema,
   registerResponseSchema,
+  type UpdateUserRequest,
   type UserDto,
   userDtoSchema,
 } from '@postroll/contracts';
@@ -195,6 +197,39 @@ export async function getMe(): Promise<UserDto> {
   }
 
   return userDtoSchema.parse(await res.json());
+}
+
+export async function updateMe(input: UpdateUserRequest): Promise<UserDto> {
+  const res = await gatewayFetch('/users/me', {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+
+  if (!res.ok) {
+    const message =
+      res.status === 409
+        ? 'An account with this email already exists.'
+        : `Request failed (${res.status}).`;
+
+    throw new GatewayError(res.status, message);
+  }
+
+  return userDtoSchema.parse(await res.json());
+}
+
+export async function updatePassword(
+  input: ChangePasswordRequest,
+): Promise<void> {
+  const res = await gatewayFetch('/users/me/password', {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+
+  if (!res.ok) {
+    throw new GatewayError(res.status, `Request failed (${res.status}).`);
+  }
 }
 
 export async function loginAndCreateSession(

@@ -31,3 +31,15 @@ export const refreshResponseSchema = z.object({
 });
 
 export type RefreshResponse = z.infer<typeof refreshResponseSchema>;
+
+export const changePasswordRequestSchema = z
+  .object({
+    newPassword: z.string().min(8).max(128),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Passwords do not match.',
+    path: ['confirmPassword'],
+  });
+
+export type ChangePasswordRequest = z.infer<typeof changePasswordRequestSchema>;

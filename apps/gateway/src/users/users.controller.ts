@@ -1,5 +1,19 @@
-import { Controller, Get, NotFoundException, UseGuards } from '@nestjs/common';
-import { type UserDto, userDtoSchema } from '@postroll/contracts';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  NotFoundException,
+  Patch,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  changePasswordRequestSchema,
+  type UserDto,
+  updateUserRequestSchema,
+  userDtoSchema,
+} from '@postroll/contracts';
 import {
   CurrentUser,
   type RequestUser,
@@ -20,5 +34,26 @@ export class UsersController {
       throw new NotFoundException('User not found');
     }
     return userDtoSchema.parse(found);
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  async updateMe(
+    @CurrentUser() user: RequestUser,
+    @Body() body: unknown,
+  ): Promise<UserDto> {
+    const input = updateUserRequestSchema.parse(body);
+    return userDtoSchema.parse(await this.usersService.update(user.id, input));
+  }
+
+  @Patch('me/password')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async changePassword(
+    @CurrentUser() user: RequestUser,
+    @Body() body: unknown,
+  ): Promise<void> {
+    const input = changePasswordRequestSchema.parse(body);
+    await this.usersService.changePassword(user.id, input.newPassword);
   }
 }

@@ -7,6 +7,8 @@
 @source "../../../../apps/web/src";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant data-horizontal (&[data-orientation="horizontal"]);
+@custom-variant data-vertical (&[data-orientation="vertical"]);
 
 :root {
   --background: oklch(1 0 0);

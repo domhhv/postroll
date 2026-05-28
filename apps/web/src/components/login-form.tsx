@@ -1,6 +1,5 @@
 'use client';
 
-import { Button } from '@postroll/ui/components/button';
 import {
   Field,
   FieldDescription,
@@ -10,21 +9,13 @@ import {
   FieldSet,
 } from '@postroll/ui/components/field';
 import { Input } from '@postroll/ui/components/input';
+import { PasswordInput } from '@postroll/ui/components/password-input';
 import Link from 'next/link';
 import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
 import { type AuthFormState, loginAction } from '#lib/actions';
+import { PendingButton } from './pending-button';
 
 const initialState: AuthFormState = { status: 'idle' };
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" size="lg" disabled={pending}>
-      {pending ? 'Signing in…' : 'Sign in'}
-    </Button>
-  );
-}
 
 export function LoginForm() {
   const [state, formAction] = useActionState(loginAction, initialState);
@@ -58,10 +49,9 @@ export function LoginForm() {
           </Field>
           <Field data-invalid={passwordError ? true : undefined}>
             <FieldLabel htmlFor="password">Password</FieldLabel>
-            <Input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               autoComplete="current-password"
               placeholder="••••••••"
               required
@@ -76,7 +66,7 @@ export function LoginForm() {
               {state.message}
             </p>
           )}
-          <SubmitButton />
+          <PendingButton idle="Sign in" pendingLabel="Signing in" size="lg" />
           <FieldDescription className="text-center">
             New here? <Link href="/register">Create an account</Link>.
           </FieldDescription>
