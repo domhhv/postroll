@@ -93,10 +93,11 @@ jobs:
           echo "GATEWAY_URL=${{ steps.deploy.outputs.url }}" >> "$GITHUB_ENV"
 
       - name: Write Cloudflare secrets file
+        env:
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET_PREVIEW }}
         run: |
           umask 077
-          printf '%s' '${{ secrets.SESSION_SECRET_PREVIEW }}' \
-            | jq -R '{SESSION_SECRET: .}' > "${RUNNER_TEMP}/cf-secrets.json"
+          jq -n --arg v "$SESSION_SECRET" '{SESSION_SECRET: $v}' > "${RUNNER_TEMP}/cf-secrets.json"
 
       - name: Deploy Cloudflare Worker for Gateway PR App
         id: deploy-worker
