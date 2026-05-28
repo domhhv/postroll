@@ -13,7 +13,7 @@ model User {
   password      String
   name          String?
   username      String?
-  createdAt     DateTime       @default(now())
+  createdAt     DateTime       @default(now()) @db.Timestamptz(3) @map("created_at")
   refreshTokens RefreshToken[]
 
   @@map("users")
@@ -21,15 +21,15 @@ model User {
 
 model RefreshToken {
   id           String    @id @default(uuid()) @db.Uuid
-  userId       String    @db.Uuid
+  userId       String    @db.Uuid @map("user_id")
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash    String    @unique
-  familyId     String    @db.Uuid
-  expiresAt    DateTime
-  revokedAt    DateTime?
-  replacedById String?   @db.Uuid
-  createdAt    DateTime  @default(now())
-  userAgent    String?
+  tokenHash    String    @unique @map("token_hash")
+  familyId     String    @db.Uuid @map("family_id")
+  expiresAt    DateTime  @db.Timestamptz(3) @map("expires_at")
+  revokedAt    DateTime? @db.Timestamptz(3) @map("revoked_at")
+  replacedById String?   @db.Uuid @map("replaced_by_id")
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  userAgent    String?   @map("user_agent")
   ip           String?
 
   @@index([userId])
