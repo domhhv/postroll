@@ -12,7 +12,7 @@ WORKDIR /app
 ENV NODE_ENV="production"
 
 # Install pnpm
-ARG PNPM_VERSION=11.3.0
+ARG PNPM_VERSION=11.4.0
 RUN npm install -g pnpm@$PNPM_VERSION
 
 
