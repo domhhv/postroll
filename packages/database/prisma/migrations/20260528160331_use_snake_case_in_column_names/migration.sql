@@ -1,36 +1,16 @@
-ALTER TABLE "refresh_tokens" DROP CONSTRAINT "refresh_tokens_userId_fkey";
+ALTER TABLE "refresh_tokens" RENAME COLUMN "createdAt" TO "created_at";
+ALTER TABLE "refresh_tokens" RENAME COLUMN "expiresAt" TO "expires_at";
+ALTER TABLE "refresh_tokens" RENAME COLUMN "familyId" TO "family_id";
+ALTER TABLE "refresh_tokens" RENAME COLUMN "replacedById" TO "replaced_by_id";
+ALTER TABLE "refresh_tokens" RENAME COLUMN "revokedAt" TO "revoked_at";
+ALTER TABLE "refresh_tokens" RENAME COLUMN "tokenHash" TO "token_hash";
+ALTER TABLE "refresh_tokens" RENAME COLUMN "userAgent" TO "user_agent";
+ALTER TABLE "refresh_tokens" RENAME COLUMN "userId" TO "user_id";
 
-DROP INDEX "refresh_tokens_familyId_idx";
+ALTER TABLE "users" RENAME COLUMN "createdAt" TO "created_at";
 
-DROP INDEX "refresh_tokens_tokenHash_key";
+ALTER INDEX "refresh_tokens_tokenHash_key" RENAME TO "refresh_tokens_token_hash_key";
+ALTER INDEX "refresh_tokens_userId_idx" RENAME TO "refresh_tokens_user_id_idx";
+ALTER INDEX "refresh_tokens_familyId_idx" RENAME TO "refresh_tokens_family_id_idx";
 
-DROP INDEX "refresh_tokens_userId_idx";
-
-ALTER TABLE "refresh_tokens" DROP COLUMN "createdAt",
-DROP COLUMN "expiresAt",
-DROP COLUMN "familyId",
-DROP COLUMN "replacedById",
-DROP COLUMN "revokedAt",
-DROP COLUMN "tokenHash",
-DROP COLUMN "userAgent",
-DROP COLUMN "userId",
-ADD COLUMN  "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-ADD COLUMN  "expires_at" TIMESTAMPTZ(3) NOT NULL,
-ADD COLUMN  "family_id" UUID NOT NULL,
-ADD COLUMN  "replaced_by_id" UUID,
-ADD COLUMN  "revoked_at" TIMESTAMPTZ(3),
-ADD COLUMN  "token_hash" TEXT NOT NULL,
-ADD COLUMN  "user_agent" TEXT,
-ADD COLUMN  "user_id" UUID NOT NULL;
-
-ALTER TABLE "users" DROP COLUMN "createdAt",
-ADD COLUMN "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
-CREATE UNIQUE INDEX "refresh_tokens_token_hash_key" ON "refresh_tokens"("token_hash");
-
-CREATE INDEX "refresh_tokens_user_id_idx" ON "refresh_tokens"("user_id");
-
-CREATE INDEX "refresh_tokens_family_id_idx" ON "refresh_tokens"("family_id");
-
-ALTER TABLE "refresh_tokens" ADD CONSTRAINT "refresh_tokens_user_id_fkey"
-FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "refresh_tokens" RENAME CONSTRAINT "refresh_tokens_userId_fkey" TO "refresh_tokens_user_id_fkey";

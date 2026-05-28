@@ -30,7 +30,7 @@ model RefreshToken {
   replacedById String?   @db.Uuid @map("replaced_by_id")
   createdAt    DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
   userAgent    String?   @map("user_agent")
-  ip           String?   @map("ip")
+  ip           String?
 
   @@index([userId])
   @@index([familyId])
