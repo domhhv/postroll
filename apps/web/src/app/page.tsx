@@ -6,7 +6,7 @@ export default function Home() {
           Postroll
         </h1>
         <p className="max-w-md text-lg leading-8 text-muted-foreground">
-          Coming soon to a browser near you.
+          Coming soon to a browser near you. Dummy change.
         </p>
       </div>
     </div>
