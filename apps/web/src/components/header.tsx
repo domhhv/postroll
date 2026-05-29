@@ -18,7 +18,7 @@ export async function Header() {
       </Link>
 
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" asChild aria-label="GitHub">
+        <Button variant="ghost" size="icon" aria-label="GitHub">
           <a
             href="https://github.com/domhhv/postroll"
             target="_blank"
@@ -30,17 +30,17 @@ export async function Header() {
 
         {user ? (
           <>
-            <Button asChild>
+            <Button>
               <Link href="/dashboard">Dashboard</Link>
             </Button>
             <UserMenu email={user.email} />
           </>
         ) : (
           <>
-            <Button variant="secondary" asChild>
+            <Button variant="secondary">
               <Link href="/login">Log In</Link>
             </Button>
-            <Button asChild>
+            <Button>
               <Link href="/register">Register</Link>
             </Button>
           </>
