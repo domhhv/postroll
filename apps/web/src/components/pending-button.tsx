@@ -18,10 +18,10 @@ export function PendingButton({
 
   return (
     <Button
-      type="submit"
-      disabled={pending}
-      className={cn('flex items-center gap-2', className)}
       {...props}
+      type="submit"
+      className={cn('flex items-center gap-2', className)}
+      disabled={pending}
     >
       {pending ? pendingLabel : idle}
       {pending && <HourglassLoader />}

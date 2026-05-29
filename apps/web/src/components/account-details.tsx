@@ -71,7 +71,7 @@ function ProfileTab({ user }: { user: UserDto }) {
     if (state.status === 'success') {
       setEditing(false);
     }
-  }, [state.status]);
+  }, [state]);
 
   const fieldErrors = state.status === 'error' ? state.fieldErrors : undefined;
 
@@ -150,7 +150,7 @@ function SecurityTab() {
     if (state.status === 'success') {
       setEditing(false);
     }
-  }, [state.status]);
+  }, [state]);
 
   const fieldErrors = state.status === 'error' ? state.fieldErrors : undefined;
 
@@ -168,6 +168,7 @@ function SecurityTab() {
     );
   }
 
+  const currentPasswordError = fieldErrors?.['currentPassword'];
   const newPasswordError = fieldErrors?.['newPassword'];
   const confirmPasswordError = fieldErrors?.['confirmPassword'];
 
@@ -180,6 +181,19 @@ function SecurityTab() {
         </Button>
       </div>
       <div className="space-y-4">
+        <Field data-invalid={currentPasswordError ? true : undefined}>
+          <FieldLabel htmlFor="currentPassword">Current password</FieldLabel>
+          <PasswordInput
+            id="currentPassword"
+            name="currentPassword"
+            autoComplete="current-password"
+            placeholder="••••••••"
+            aria-invalid={currentPasswordError ? true : undefined}
+          />
+          {currentPasswordError && (
+            <FieldError errors={[{ message: currentPasswordError }]} />
+          )}
+        </Field>
         <Field data-invalid={newPasswordError ? true : undefined}>
           <FieldLabel htmlFor="newPassword">New password</FieldLabel>
           <PasswordInput
@@ -206,6 +220,18 @@ function SecurityTab() {
             <FieldError errors={[{ message: confirmPasswordError }]} />
           )}
         </Field>
+        <label
+          htmlFor="revokeOtherSessions"
+          className="flex items-center gap-2 text-sm text-muted-foreground"
+        >
+          <input
+            id="revokeOtherSessions"
+            name="revokeOtherSessions"
+            type="checkbox"
+            className="size-4 rounded border-input accent-primary"
+          />
+          Sign out of other devices
+        </label>
       </div>
       {state.status === 'error' && !fieldErrors && (
         <p role="alert" className="text-sm text-destructive">

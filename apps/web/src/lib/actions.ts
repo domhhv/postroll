@@ -19,6 +19,7 @@ import {
   updatePassword,
 } from './api';
 import { deleteSession, readSessionCookie } from './session';
+import { getFormValue } from './utils';
 
 export type AuthFormState =
   | { status: 'idle' }
@@ -28,8 +29,6 @@ export type AuthFormState =
       fieldErrors?: Record<string, string>;
       values: { email: string; password?: string };
     };
-
-type Credentials = { email: string; password: string };
 
 function extractFieldErrors(error: z.ZodError): Record<string, string> {
   const fieldErrors: Record<string, string> = {};
@@ -45,19 +44,9 @@ function extractFieldErrors(error: z.ZodError): Record<string, string> {
   return fieldErrors;
 }
 
-function readCredentials(formData: FormData): Credentials {
-  const email = formData.get('email');
-  const password = formData.get('password');
-
-  return {
-    email: typeof email === 'string' ? email : '',
-    password: typeof password === 'string' ? password : '',
-  };
-}
-
 function toFormError(
   error: unknown,
-  values: Credentials,
+  values: { email: string; password: string },
 ): Extract<AuthFormState, { status: 'error' }> {
   if (error instanceof GatewayError) {
     return { status: 'error', message: error.message, values };
@@ -82,7 +71,10 @@ export async function registerAction(
   _previous: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
-  const values = readCredentials(formData);
+  const values = {
+    email: getFormValue(formData, 'email'),
+    password: getFormValue(formData, 'password'),
+  };
   const parsed = registerRequestSchema.safeParse(values);
 
   if (!parsed.success) {
@@ -108,7 +100,10 @@ export async function loginAction(
   _previous: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
-  const values = readCredentials(formData);
+  const values = {
+    email: getFormValue(formData, 'email'),
+    password: getFormValue(formData, 'password'),
+  };
   const parsed = loginRequestSchema.safeParse(values);
 
   if (!parsed.success) {
@@ -141,32 +136,21 @@ export type AccountFormState =
       values: AccountValues;
     };
 
-function readAccountValues(formData: FormData): AccountValues {
-  const read = (key: string) => {
-    const value = formData.get(key);
-    return typeof value === 'string' ? value.trim() : '';
-  };
-
-  return {
-    email: read('email'),
-    name: read('name'),
-    username: read('username'),
-  };
-}
-
 export async function updateAccountAction(
   _previous: AccountFormState,
   formData: FormData,
 ): Promise<AccountFormState> {
-  const values = readAccountValues(formData);
+  const values = {
+    email: getFormValue(formData, 'email'),
+    name: getFormValue(formData, 'name'),
+    username: getFormValue(formData, 'username'),
+  };
   const input: UpdateUserRequest = {
     email: values.email,
     name: values.name === '' ? null : values.name,
     username: values.username === '' ? null : values.username,
   };
   const parsed = updateUserRequestSchema.safeParse(input);
-
-  await new Promise((resolve) => setTimeout(resolve, 2000));
 
   if (!parsed.success) {
     return {
@@ -216,11 +200,11 @@ export async function changePasswordAction(
   _previous: PasswordFormState,
   formData: FormData,
 ): Promise<PasswordFormState> {
-  const newPassword = formData.get('newPassword');
-  const confirmPassword = formData.get('confirmPassword');
   const parsed = changePasswordRequestSchema.safeParse({
-    newPassword: typeof newPassword === 'string' ? newPassword : '',
-    confirmPassword: typeof confirmPassword === 'string' ? confirmPassword : '',
+    currentPassword: getFormValue(formData, 'currentPassword'),
+    newPassword: getFormValue(formData, 'newPassword'),
+    confirmPassword: getFormValue(formData, 'confirmPassword'),
+    revokeOtherSessions: getFormValue(formData, 'revokeOtherSessions') === 'on',
   });
 
   if (!parsed.success) {
@@ -235,6 +219,14 @@ export async function changePasswordAction(
     await updatePassword(parsed.data);
   } catch (error) {
     if (error instanceof GatewayError) {
+      if (error.status === 401) {
+        return {
+          status: 'error',
+          message: 'Please fix the errors below.',
+          fieldErrors: { currentPassword: error.message },
+        };
+      }
+
       return { status: 'error', message: error.message };
     }
 

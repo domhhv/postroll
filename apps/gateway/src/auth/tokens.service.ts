@@ -124,6 +124,34 @@ export class TokensService {
     }
   }
 
+  /**
+   * Revokes every active refresh token for the user except the family the
+   * given raw token belongs to. When the token is missing or unknown, all of
+   * the user's tokens are revoked.
+   */
+  async revokeOtherFamilies(
+    userId: string,
+    keepRawToken: string | undefined,
+  ): Promise<void> {
+    let keepFamilyId: string | undefined;
+    if (keepRawToken) {
+      const row = await this.prisma.refreshToken.findUnique({
+        where: { tokenHash: this.hash(keepRawToken) },
+        select: { familyId: true },
+      });
+      keepFamilyId = row?.familyId;
+    }
+
+    await this.prisma.refreshToken.updateMany({
+      where: {
+        userId,
+        revokedAt: null,
+        ...(keepFamilyId ? { familyId: { not: keepFamilyId } } : {}),
+      },
+      data: { revokedAt: new Date() },
+    });
+  }
+
   private async rotateRow(
     row: { id: string; userId: string; familyId: string },
     meta: RefreshTokenMeta,

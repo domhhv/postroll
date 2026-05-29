@@ -221,14 +221,27 @@ export async function updateMe(input: UpdateUserRequest): Promise<UserDto> {
 export async function updatePassword(
   input: ChangePasswordRequest,
 ): Promise<void> {
+  const session = await readSessionCookie();
+  const headers: Record<string, string> = {
+    'content-type': 'application/json',
+  };
+  if (input.revokeOtherSessions && session) {
+    headers['x-postroll-refresh-token'] = session.refreshToken;
+  }
+
   const res = await gatewayFetch('/users/me/password', {
     method: 'PATCH',
-    headers: { 'content-type': 'application/json' },
+    headers,
     body: JSON.stringify(input),
   });
 
   if (!res.ok) {
-    throw new GatewayError(res.status, `Request failed (${res.status}).`);
+    const message =
+      res.status === 401
+        ? 'Current password is incorrect.'
+        : `Request failed (${res.status}).`;
+
+    throw new GatewayError(res.status, message);
   }
 }
 

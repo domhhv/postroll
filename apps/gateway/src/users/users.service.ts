@@ -1,7 +1,11 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import type { UpdateUserRequest, UserDto } from '@postroll/contracts';
 import type { Prisma, PrismaClient } from '@postroll/database/prisma';
-import { hash } from 'bcryptjs';
+import { compare, hash } from 'bcryptjs';
 import { InjectPrisma } from '../database/database.module';
 import { toUserDto } from './toUserDto';
 
@@ -40,7 +44,16 @@ export class UsersService {
     }
   }
 
-  async changePassword(id: string, newPassword: string): Promise<void> {
+  async changePassword(
+    id: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user || !(await compare(currentPassword, user.password))) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
     const password = await hash(newPassword, BCRYPT_COST);
     await this.prisma.user.update({ where: { id }, data: { password } });
   }

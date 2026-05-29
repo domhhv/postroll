@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule, type JwtModuleOptions } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -16,7 +16,7 @@ type ExpiresIn = NonNullable<
 @Module({
   imports: [
     PassportModule,
-    UsersModule,
+    forwardRef(() => UsersModule),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -30,5 +30,6 @@ type ExpiresIn = NonNullable<
   ],
   controllers: [AuthController],
   providers: [AuthService, TokensService, LocalStrategy, JwtStrategy],
+  exports: [TokensService],
 })
 export class AuthModule {}

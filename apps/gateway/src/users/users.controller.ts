@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   NotFoundException,
@@ -14,17 +15,20 @@ import {
   updateUserRequestSchema,
   userDtoSchema,
 } from '@postroll/contracts';
-import {
-  CurrentUser,
-  type RequestUser,
-} from '../auth/decorators/current-user.decorator';
+import type { RequestUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+// biome-ignore lint/style/useImportType: needed for the decorator
+import { TokensService } from '../auth/tokens.service';
 // biome-ignore lint/style/useImportType: needed for the decorator
 import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly tokens: TokensService,
+  ) {}
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
@@ -52,8 +56,17 @@ export class UsersController {
   async changePassword(
     @CurrentUser() user: RequestUser,
     @Body() body: unknown,
+    @Headers('x-postroll-refresh-token') currentRefreshToken?: string,
   ): Promise<void> {
     const input = changePasswordRequestSchema.parse(body);
-    await this.usersService.changePassword(user.id, input.newPassword);
+    await this.usersService.changePassword(
+      user.id,
+      input.currentPassword,
+      input.newPassword,
+    );
+
+    if (input.revokeOtherSessions) {
+      await this.tokens.revokeOtherFamilies(user.id, currentRefreshToken);
+    }
   }
 }

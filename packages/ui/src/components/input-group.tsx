@@ -61,6 +61,7 @@ function InputGroupAddon({
           return;
         }
         e.currentTarget.parentElement?.querySelector('input')?.focus();
+        e.currentTarget.parentElement?.querySelector('textarea')?.focus();
       }}
       {...props}
     />
