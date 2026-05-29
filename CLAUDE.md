@@ -41,6 +41,10 @@ The gateway owns identity. Flow:
 
 The web app wraps this in a **session JWE** stored in `postroll_session` (encrypted with `SESSION_SECRET`, see `apps/web/src/lib/session.ts`). The session contains `{ sid, userId, accessToken, refreshToken, refreshExpiresAt }`. `gatewayFetch` (in `apps/web/src/lib/api.ts`) does the access/refresh dance on 401, updates the cookie, and retries — so server components / actions just call `getMe()` and the rotation is transparent.
 
+The proactive refresh runs in `apps/web/src/middleware.ts`, ahead of render. **Cookies can only be mutated in middleware, Server Actions, or Route Handlers — never during an RSC render.** Since `getUser()` runs while rendering the layout, a refresh triggered there can't persist the rotated cookie (Next throws "Cookies can only be modified in a Server Action or Route Handler"). Middleware decodes the access token `exp`, refreshes near expiry, and writes the rotated session onto both the request (so the in-flight render sees it) and the response. `updateSession` / `deleteSession` also swallow the read-only-cookie error as a mid-render fallback. The edge-safe refresh primitives live in `lib/refresh.ts` + `lib/session-crypto.ts` (no `server-only`, so middleware can import them); `lib/session.ts` keeps the `next/headers`-bound, `server-only` wrappers.
+
+The middleware file **must stay named `middleware.ts`, not the Next 16 `proxy.ts`** — you'll see a deprecation warning telling you to rename it; ignore it. `proxy` is nodejs-runtime-only and OpenNext rejects Node.js middleware (`opennextjs-cloudflare build` fails: "Node.js middleware is not currently supported"); `middleware` runs on edge, which OpenNext supports. Everything in the middleware import graph must be edge-safe (no `node:` builtins, no `@postroll/env` barrel — use `@postroll/env/format`).
+
 Server-only code lives behind `import 'server-only'` (see `lib/api.ts`, `lib/dal.ts`, `lib/session.ts`). Don't pass the decrypted `SessionPayload` to client components — `accessToken` / `refreshToken` are server-only fields.
 
 ### Env validation is centralized via `@postroll/env`
@@ -48,8 +52,10 @@ Server-only code lives behind `import 'server-only'` (see `lib/api.ts`, `lib/dal
 Three contexts, one set of primitives:
 
 - **Shell-time gating**: `postroll-check-env <module> <export>` runs before scripts that need a contract (e.g. `db:migrate` checks `migrationEnvSchema` before invoking `prisma`). Fails with formatted Zod errors before anything destructive runs.
-- **Boot-time**: `apps/gateway/src/app.module.ts` passes `validateGatewayEnv` to `ConfigModule.forRoot({ validate })`. `apps/web/src/instrumentation.ts` loads `.env.local` / `.env` and calls `getServerEnv()` once at server boot — but **only** under the Node runtime (skipped on Cloudflare, where env values live in `getCloudflareContext().env`, not `process.env`).
+- **Boot-time**: `apps/gateway/src/app.module.ts` passes `validateGatewayEnv` to `ConfigModule.forRoot({ validate })`. `apps/web/src/instrumentation.ts`'s `register()` does the Node-only env load (`.env.local` / `.env` + `getServerEnv()`) by `await import('./instrumentation-node')` **inside** an `if (process.env.NEXT_RUNTIME === 'nodejs')` check. The import must sit inside that branch (not top-level, not after an early-return guard) or webpack bundles `@postroll/env/load`'s `node:fs` for the edge build and the OpenNext build fails. On Cloudflare, env lives in `getCloudflareContext().env`, not `process.env`, so validation defers to call sites with the Workers context.
 - **Module-load**: `packages/database/src/client.ts` validates `DATABASE_URL` on import.
+
+`@postroll/env`'s barrel (`.`) re-exports the Node-only `load` module (`node:fs` / `node:url` / `dotenv`). From edge-runtime code (anything in the `apps/web` middleware graph), import `@postroll/env/format` for `formatZodEnvError`, never the barrel — the barrel drags `node:` builtins into the edge bundle. `loadEnvFile` / `validateEnv` (Node-only) stay on `.` and `./load`.
 
 When adding a new env var: define its schema in the consuming package's `env.ts`, add it to that package's `.env.example`, and — if it affects build output or runtime — add it to `globalEnv` in the root `turbo.json` so turbo's cache invalidates correctly.
 
@@ -57,7 +63,7 @@ When adding a new env var: define its schema in the consuming package's `env.ts`
 
 `apps/web` runs `next build --webpack` in production despite Next 16 defaulting to Turbopack. OpenNext's `copyTracedFiles` depends on the standalone output that webpack produces and Turbopack omits. Dev uses Turbopack. If you change the build script, you'll break Cloudflare deploys — see `apps/web/README.md` for the upstream issue link.
 
-`src/instrumentation.ts` must live under `src/` (not the project root). Next discovers `instrumentation.ts` at `<rootDir>` where `rootDir` is `src/` when `src/app/` exists; Turbopack happens to find it at the root, webpack doesn't.
+`src/instrumentation.ts` must live under `src/` (not the project root). Next discovers `instrumentation.ts` at `<rootDir>` where `rootDir` is `src/` when `src/app/` exists; Turbopack happens to find it at the root, webpack doesn't. Its Node-only env work lives in `src/instrumentation-node.ts`, imported only inside the `NEXT_RUNTIME === 'nodejs'` branch so it stays out of the edge bundle (see the env section).
 
 ### Gateway database adapter selection
 

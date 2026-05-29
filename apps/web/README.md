@@ -33,11 +33,18 @@ Source of truth: [`src/env.ts`](src/env.ts). Local values: [`.env.example`](.env
 
 See [`@postroll/env`](../../packages/env/README.md) for the model. [`src/env.ts`](src/env.ts) exports `getServerEnv(source?)` — a memoized validator that parses against `webServerEnvSchema`. Defaults `source` to `process.env`; pass `getCloudflareContext().env` from code that runs inside the Workers runtime.
 
-[`src/instrumentation.ts`](src/instrumentation.ts) is Next 16's canonical server boot hook. It:
+[`src/instrumentation.ts`](src/instrumentation.ts) is Next 16's canonical server boot hook. Its `register()` does exactly one thing:
 
-1. Returns early if `NEXT_RUNTIME` isn't `nodejs` (skips edge / build phases).
-2. Returns early if running inside the Cloudflare Workers runtime (`globalThis.WebSocketPair` is the runtime tell). On Cloudflare, env values aren't in `process.env` — they're in `getCloudflareContext().env` — so validation defers to call sites that have access to that.
-3. Otherwise (Node SSR / `next start`), loads `.env.local` then `.env` relative to the project root, then calls `getServerEnv()` to fail boot if anything's missing.
+```ts
+if (process.env.NEXT_RUNTIME === 'nodejs') {
+  const { registerNode } = await import('./instrumentation-node');
+  registerNode();
+}
+```
+
+The Node-only boot validation lives in [`src/instrumentation-node.ts`](src/instrumentation-node.ts) — it loads `.env.local` / `.env` via [`@postroll/env/load`](../../packages/env/README.md) and calls `getServerEnv()` to fail boot if anything's missing.
+
+**Why the split matters:** `register()` runs in every runtime (Node, edge, build), and `@postroll/env/load` pulls in `node:fs` / `node:url` / `dotenv`. webpack only treats a dynamic `import()` as a per-runtime boundary — and thus keeps it out of the edge bundle — when the `import()` sits *inside* the `NEXT_RUNTIME === 'nodejs'` check. A top-level import (or an import after an early-`return` guard) gets bundled for the edge build too, which breaks the OpenNext build with "module not found: node:fs". So the Node-only code must be a separate module imported only inside that branch. This is the same reason validation can't happen on Cloudflare via `instrumentation`: there, env values live in `getCloudflareContext().env`, not `process.env`, so call sites that have the Workers context validate instead.
 
 The file lives at `src/instrumentation.ts`, not the project root, because Next.js only discovers it at `<rootDir>/instrumentation.{ts,tsx,...}` where `rootDir` is `src/` when `src/app/` exists. Putting it at the project root works with Turbopack (by accident) but is silently ignored by webpack.
 
@@ -60,6 +67,18 @@ export async function getUsers(): Promise<User[]> {
 `@postroll/database` is depended on **only for its types** — `import type { User }` is erased at compile time, so no Prisma runtime, engine, or `pg` driver ends up in the OpenNext bundle. The package's main entrypoint is intentionally a type-only re-export to make this safe; the live `PrismaClient` lives behind the `@postroll/database/prisma` subpath and is only imported by the gateway.
 
 If gateway response shapes diverge from raw Prisma models (e.g. via `select` / `include`), define the shape on the gateway with `Prisma.UserGetPayload<{...}>` and import that type instead of `User`.
+
+## Auth session & token refresh
+
+The gateway issues a short-lived access JWT and a rotating opaque refresh token. The web app wraps both in an encrypted session JWE stored in the `postroll_session` cookie (see [`src/lib/session.ts`](src/lib/session.ts) / [`src/lib/session-crypto.ts`](src/lib/session-crypto.ts)). When the access token expires, the tokens must be refreshed and the cookie rewritten.
+
+The refresh runs in [`src/middleware.ts`](src/middleware.ts), ahead of any render. This is deliberate: **cookies can only be mutated in middleware, Server Actions, or Route Handlers — never during an RSC render.** Since `getUser()` runs while rendering the layout/pages, a refresh triggered there can't persist the rotated cookie (Next throws `Cookies can only be modified in a Server Action or Route Handler`). Middleware decodes the access token's `exp`, refreshes when it's near expiry, and writes the rotated session onto both the request (so the in-flight render sees the fresh token) and the response (so the browser is updated). `updateSession` / `deleteSession` in `session.ts` additionally swallow the read-only-cookie error as a fallback for any refresh that still fires mid-render.
+
+### Why `middleware.ts`, not `proxy.ts`
+
+Next 16 deprecated the `middleware.ts` filename in favour of `proxy.ts` — **you will see a build warning telling you to rename it. Do not.** `proxy` is locked to the Node.js runtime, and OpenNext/Cloudflare does not support Node.js middleware (`opennextjs-cloudflare build` fails with *"Node.js middleware is not currently supported"*). `middleware.ts` runs on the edge runtime, which OpenNext supports. Per Next's own [v16 upgrade guide](https://nextjs.org/docs/app/guides/upgrading/version-16): *"The edge runtime is NOT supported in `proxy`. If you want to continue using the edge runtime, keep using `middleware`."* Revisit only once OpenNext ships edge support for `proxy`.
+
+Because the middleware bundles for the edge runtime, **everything in its import graph must be edge-safe** — no `node:` builtins, no `@postroll/env` barrel (it re-exports the Node-only `load` module; import `@postroll/env/format` instead). zod and `getServerEnv()` (which reads `process.env`) are fine on edge.
 
 ## Running locally
 

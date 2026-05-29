@@ -1,4 +1,4 @@
-import { formatZodEnvError } from '@postroll/env';
+import { formatZodEnvError } from '@postroll/env/format';
 import { z } from 'zod';
 
 export const envExampleHint = 'apps/web/.env.example';

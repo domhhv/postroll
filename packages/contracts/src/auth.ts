@@ -3,7 +3,10 @@ import { userDtoSchema } from './users.js';
 
 export const registerRequestSchema = z.object({
   email: z.email(),
-  password: z.string().min(8).max(128),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters long.')
+    .max(128),
 });
 
 export type RegisterRequest = z.infer<typeof registerRequestSchema>;
