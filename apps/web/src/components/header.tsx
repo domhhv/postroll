@@ -11,9 +11,9 @@ export async function Header() {
     <header className="flex h-14 items-center justify-between border-b border-border bg-background px-6">
       <Link
         href="/"
-        className="flex items-center gap-2 text-foreground hover:opacity-80"
+        className="flex items-center gap-1 text-foreground hover:opacity-80"
       >
-        <IconMovie className="size-5 self-start" />
+        <IconMovie className="size-5 -mt-0.5" />
         <span className="font-semibold tracking-tight">Postroll</span>
       </Link>
 
