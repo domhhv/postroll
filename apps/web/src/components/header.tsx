@@ -1,4 +1,4 @@
-import { Button } from '@postroll/ui/components/button';
+import { buttonVariants } from '@postroll/ui/components/button';
 import { IconBrandGithub, IconMovie } from '@tabler/icons-react';
 import Link from 'next/link';
 import { UserMenu } from '#components/user-menu';
@@ -18,31 +18,42 @@ export async function Header() {
       </Link>
 
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" asChild aria-label="GitHub">
-          <a
-            href="https://github.com/domhhv/postroll"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <IconBrandGithub />
-          </a>
-        </Button>
+        <a
+          href="https://github.com/domhhv/postroll"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="GitHub"
+          className={buttonVariants({
+            variant: 'ghost',
+            size: 'icon',
+          })}
+        >
+          <IconBrandGithub />
+        </a>
 
         {user ? (
           <>
-            <Button asChild>
-              <Link href="/dashboard">Dashboard</Link>
-            </Button>
+            <Link href="/dashboard" className={buttonVariants()}>
+              Dashboard
+            </Link>
             <UserMenu email={user.email} />
           </>
         ) : (
           <>
-            <Button variant="secondary" asChild>
-              <Link href="/login">Log In</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/register">Register</Link>
-            </Button>
+            <Link
+              href="/login"
+              className={buttonVariants({
+                variant: 'secondary',
+              })}
+            >
+              Log In
+            </Link>
+            <Link
+              href="/register"
+              className={buttonVariants({ variant: 'default' })}
+            >
+              Register
+            </Link>
           </>
         )}
       </div>
