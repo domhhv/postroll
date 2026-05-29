@@ -2,6 +2,7 @@
   "extends": "@postroll/typescript-config",
   "compilerOptions": {
     "jsx": "react-jsx",
+    "lib": ["dom", "dom.iterable", "ES2023"],
     "paths": {
       "@postroll/ui/*": ["./src/*"]
     }

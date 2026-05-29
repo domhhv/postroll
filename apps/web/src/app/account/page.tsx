@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { AccountDetails } from '#components/account-details';
 import { getUser, verifySession } from '#lib/dal';
 
 export const metadata = {
@@ -19,15 +20,11 @@ export default async function AccountPage() {
   }
 
   return (
-    <div className="w-full mx-auto max-w-md self-center space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold leading-10 tracking-tight">
-          Account
-        </h1>
-        <p className="text-muted-foreground">
-          Signed in as <span className="text-foreground">{me.email}</span>.
-        </p>
-      </div>
+    <div className="w-full max-w-md space-y-6 self-start">
+      <h1 className="text-3xl font-semibold leading-10 tracking-tight">
+        Account
+      </h1>
+      <AccountDetails user={me} />
     </div>
   );
 }

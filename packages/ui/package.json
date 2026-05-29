@@ -12,6 +12,7 @@
   "imports": {
     "#components/*": "./src/components/*.tsx",
     "#lib/*": "./src/lib/*.ts",
+    "#styles/*": "./src/styles/*.css",
     "#hooks/*": "./src/hooks/*.ts"
   },
   "exports": {
