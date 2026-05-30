@@ -8,5 +8,9 @@
     "./typescript/nextjs": "./typescript/nextjs.json",
     "./typescript/nestjs": "./typescript/nestjs.json",
     "./typescript/prisma": "./typescript/prisma.json"
+  },
+  "scripts": {
+    "sort-package-json": "sort-package-json",
+    "sort-package-json:check": "sort-package-json --check"
   }
 }

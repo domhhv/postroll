@@ -26,6 +26,12 @@
       "dependsOn": ["^build"],
       "outputs": [".next/**", ".open-next/**"]
     },
+    "sort-package-json": {
+      "outputs": ["**/package.json"]
+    },
+    "sort-package-json:check": {
+      "outputs": ["**/package.json"]
+    },
     "dev": {
       "dependsOn": ["^build", "^db:start", "^db:generate"],
       "persistent": true,

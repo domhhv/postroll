@@ -3,16 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "scripts": {
-    "check-types": "tsc --noEmit",
-    "db:generate": "prisma generate",
-    "db:migrate": "postroll-check-env ./src/env.ts migrationEnvSchema && prisma migrate dev",
-    "db:deploy": "postroll-check-env ./src/env.ts migrationEnvSchema && prisma migrate deploy",
-    "db:reset": "postroll-check-env ./src/env.ts migrationEnvSchema && prisma migrate reset",
-    "db:start": "postroll-check-env ./src/env.ts dockerEnvSchema && node ./scripts/check-docker.mjs && docker compose up -d",
-    "db:stop": "docker compose down",
-    "studio": "postroll-check-env ./src/env.ts migrationEnvSchema && prisma studio"
-  },
   "exports": {
     ".": "./src/index.ts",
     "./client": "./src/client.ts",
@@ -21,6 +11,18 @@
       "import": "./src/generated/prisma/client.js",
       "default": "./src/generated/prisma/client.js"
     }
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "db:deploy": "postroll-check-env ./src/env.ts migrationEnvSchema && prisma migrate deploy",
+    "db:generate": "prisma generate",
+    "db:migrate": "postroll-check-env ./src/env.ts migrationEnvSchema && prisma migrate dev",
+    "db:reset": "postroll-check-env ./src/env.ts migrationEnvSchema && prisma migrate reset",
+    "db:start": "postroll-check-env ./src/env.ts dockerEnvSchema && node ./scripts/check-docker.mjs && docker compose up -d",
+    "db:stop": "docker compose down",
+    "sort-package-json": "sort-package-json",
+    "sort-package-json:check": "sort-package-json --check",
+    "studio": "postroll-check-env ./src/env.ts migrationEnvSchema && prisma studio"
   },
   "dependencies": {
     "@postroll/env": "workspace:*",
