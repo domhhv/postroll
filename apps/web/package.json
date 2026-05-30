@@ -23,7 +23,7 @@
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload"
   },
   "dependencies": {
-    "@opennextjs/cloudflare": "^1.19.4",
+    "@opennextjs/cloudflare": "^1.19.11",
     "@postroll/contracts": "workspace:*",
     "@postroll/env": "workspace:*",
     "@tabler/icons-react": "^3.44.0",
@@ -39,11 +39,11 @@
   "devDependencies": {
     "@postroll/configs": "workspace:*",
     "@postroll/ui": "workspace:*",
-    "@tailwindcss/postcss": "^4.2.4",
-    "@types/node": "^24.12.2",
-    "@types/react": "^19.2.14",
+    "@tailwindcss/postcss": "^4.3.0",
+    "@types/node": "^24.12.4",
+    "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
-    "tailwindcss": "^4.2.4",
-    "wrangler": "^4.86.0"
+    "tailwindcss": "^4.3.0",
+    "wrangler": "^4.95.0"
   }
 }

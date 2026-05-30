@@ -4,7 +4,7 @@ packages:
 allowBuilds:
   "@nestjs/core": true
   "@prisma/engines": true
-  esbuild@0.25.4 || 0.27.3: true
+  esbuild: true
   sharp: true
   prisma: true
   workerd: true
