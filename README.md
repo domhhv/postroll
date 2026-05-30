@@ -12,8 +12,7 @@ Monorepo managed by [pnpm workspaces](https://pnpm.io/workspaces) and [Turborepo
 | [`apps/gateway`](apps/gateway) | NestJS HTTP gateway, deployed to Fly.io. | [README](apps/gateway/README.md) |
 | [`packages/database`](packages/database) | Prisma schema, generated client, and local Neon dev stack. | [README](packages/database/README.md) |
 | [`packages/env`](packages/env) | Shared Zod-backed env-variable validator. | [README](packages/env/README.md) |
-| [`packages/biome-config`](packages/biome-config) | Shared Biome config. | — |
-| [`packages/typescript-config`](packages/typescript-config) | Shared `tsconfig` presets (base / nestjs / nextjs / prisma). | — |
+| [`packages/configs`](packages/configs) | Shared Biome config and `tsconfig` presets (base / nestjs / nextjs / prisma). | [README](packages/configs/README.md) |
 
 ## Quickstart
 
@@ -69,13 +68,13 @@ Every variable that affects build output or runtime is declared in `globalEnv` i
 - `pnpm biome:check` — checks formatting and lint rules across all packages (via Turbo).
 - `pnpm biome:write` — applies safe fixes.
 
-The shared config lives in [`packages/biome-config`](packages/biome-config) and is extended by every package's local `biome.json`.
+The shared config lives in [`packages/configs`](packages/configs) (`biome/biome.json`, exported as `@postroll/configs/biome`) and is extended by every package's local `biome.json`.
 
 ### Type checking — TypeScript
 
 - `pnpm check-types` — runs `tsc --noEmit` in every package via Turbo. Depends on `^build` (so `@postroll/env`'s `dist/` is available) and `^db:generate` (so the Prisma client types exist).
 
-The shared `tsconfig` presets live in [`packages/typescript-config`](packages/typescript-config): `base.json` (strict defaults), `nextjs.json`, `nestjs.json`, `prisma.json`.
+The shared `tsconfig` presets live in [`packages/configs`](packages/configs) under `typescript/`, exported as `@postroll/configs/typescript/<preset>`: `base` (strict defaults), `nextjs`, `nestjs`, `prisma`.
 
 ### Pre-commit hook — [husky](https://typicode.github.io/husky/) + [lint-staged](https://github.com/lint-staged/lint-staged)
 

@@ -1,5 +1,5 @@
 {
-  "extends": "@postroll/typescript-config/nextjs.json",
+  "extends": "@postroll/configs/typescript/nextjs",
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"]

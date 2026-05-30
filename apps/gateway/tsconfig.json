@@ -1,5 +1,5 @@
 {
-  "extends": "@postroll/typescript-config/nestjs.json",
+  "extends": "@postroll/configs/typescript/nestjs",
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
