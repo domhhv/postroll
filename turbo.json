@@ -29,9 +29,7 @@
     "sort-package-json": {
       "outputs": ["**/package.json"]
     },
-    "sort-package-json:check": {
-      "outputs": ["**/package.json"]
-    },
+    "sort-package-json:check": {},
     "dev": {
       "dependsOn": ["^build", "^db:start", "^db:generate"],
       "persistent": true,
