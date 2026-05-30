@@ -10,7 +10,7 @@ jobs:
   delete-preview:
     name: Destroy Neon database preview branch and Fly.io preview app
     if: >-
-      !contains(github.event.pull_request.body, '[Skip CI]')
+      !contains(github.event.pull_request.body, '[Skip preview]')
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -28,8 +28,8 @@ jobs:
       - name: Update PR comment with cleanup status
         uses: marocchino/sticky-pull-request-comment@v3.0.4
         with:
-          header: deploy-gateway
+          header: deploy-preview
           only_update: true
           skip_unchanged: true
           message: |
-            :broom: Gateway preview cleaned up — Fly app destroyed, Neon branch deleted.
+            :broom: Preview cleaned up — Fly app destroyed, Neon branch deleted.
