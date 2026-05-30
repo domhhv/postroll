@@ -1,5 +1,5 @@
 {
-  "extends": "@postroll/typescript-config",
+  "extends": "@postroll/configs/typescript/base",
   "compilerOptions": {
     "jsx": "react-jsx",
     "lib": ["dom", "dom.iterable", "ES2023"],

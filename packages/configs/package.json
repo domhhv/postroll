@@ -1,0 +1,12 @@
+{
+  "name": "@postroll/configs",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./biome": "./biome/biome.json",
+    "./typescript/base": "./typescript/base.json",
+    "./typescript/nextjs": "./typescript/nextjs.json",
+    "./typescript/nestjs": "./typescript/nestjs.json",
+    "./typescript/prisma": "./typescript/prisma.json"
+  }
+}

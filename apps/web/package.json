@@ -35,8 +35,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@postroll/biome-config": "workspace:^",
-    "@postroll/typescript-config": "workspace:*",
+    "@postroll/configs": "workspace:*",
     "@postroll/ui": "workspace:*",
     "@tailwindcss/postcss": "^4.2.4",
     "@types/node": "^24.12.2",

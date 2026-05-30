@@ -23,7 +23,7 @@ Node 24 / pnpm 11 (enforced by `engines` and `packageManager`). Commits must fol
 
 ## Architecture
 
-Two apps, one database, two packages doing real work (`env`, `contracts`, `database`); `ui`, `biome-config`, `typescript-config` are shared config/UI.
+Two apps, one database, two packages doing real work (`env`, `contracts`, `database`); `ui`, `configs` are shared config/UI. `@postroll/configs` centralizes the Biome config (`@postroll/configs/biome`) and the `tsconfig` presets (`@postroll/configs/typescript/{base,nextjs,nestjs,prisma}`); see `packages/configs/README.md`.
 
 ### Gateway is the only thing that talks to Postgres
 
