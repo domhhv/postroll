@@ -1,4 +1,4 @@
-name: Gateway Preview App
+name: Preview App
 on:
   pull_request:
     types: [opened, reopened, synchronize]
@@ -9,7 +9,7 @@ env:
   FLY_ORG: personal
 
 jobs:
-  deploy-gateway-preview:
+  deploy-preview:
     name: Deploy to Neon, Fly.io, and Cloudflare Workers
     if: >-
       !contains(github.event.pull_request.body, '[Skip preview]')
@@ -21,7 +21,7 @@ jobs:
     concurrency:
       group: pr-${{ github.event.number }}
     environment:
-      name: gateway-preview
+      name: preview
       url: ${{ steps.deploy.outputs.url }}
 
     steps:
@@ -31,10 +31,12 @@ jobs:
       - name: Post starting comment
         uses: marocchino/sticky-pull-request-comment@v3.0.4
         with:
-          header: deploy-gateway
+          header: deploy-preview
           skip_unchanged: true
           message: |
-            :rocket: Deploying gateway preview… ([run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}))
+            ## :rocket: Deploying preview app...
+            Installing dependencies...
+            Log runs [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
 
       - name: Install pnpm
         uses: pnpm/action-setup@v6
@@ -74,7 +76,18 @@ jobs:
         env:
           DIRECT_URL: ${{ env.DIRECT_URL }}
 
-      - name: Deploy Gateway PR App to Fly.io
+      - name: Update comment with branch and database status
+        uses: marocchino/sticky-pull-request-comment@v3.0.4
+        with:
+          header: deploy-preview
+          skip_unchanged: true
+          message: |
+            ## :rocket: Deploying preview app...
+            Neon DB branch ready: https://console.neon.tech/app/projects/${{ vars.NEON_PROJECT_ID }}/branches/${{ steps.create-neon-branch.outputs.branch_id }}
+            Deploying gateway...
+            Log runs [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+
+      - name: Deploy Gateway PR Review App to Fly.io
         id: deploy
         uses: superfly/fly-pr-review-apps@1.6.0
         with:
@@ -87,6 +100,18 @@ jobs:
             COOKIE_SECURE=true
           launch_options: --dockerfile apps/gateway/Dockerfile
           deploy_options: --dockerfile apps/gateway/Dockerfile
+      
+      - name: Update comment with gateway status
+        uses: marocchino/sticky-pull-request-comment@v3.0.4
+        with:
+          header: deploy-preview
+          skip_unchanged: true
+          message: |
+            ## :rocket: Deploying preview app...
+            Neon DB branch ready: https://console.neon.tech/app/projects/${{ vars.NEON_PROJECT_ID }}/branches/${{ steps.create-neon-branch.outputs.branch_id }}
+            Gateway ready: ${{ steps.deploy.outputs.url }}
+            Deploying Cloudflare Worker...
+            Log runs [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
 
       - name: Set GATEWAY_URL var for Cloudflare Worker deployment
         run: |
@@ -99,7 +124,7 @@ jobs:
           umask 077
           jq -n --arg v "$SESSION_SECRET" '{SESSION_SECRET: $v}' > "${RUNNER_TEMP}/cf-secrets.json"
 
-      - name: Deploy Cloudflare Worker for Gateway PR App
+      - name: Deploy Cloudflare Worker for Gateway PR Review App
         id: deploy-worker
         uses: cloudflare/wrangler-action@v4
         with:
@@ -113,18 +138,19 @@ jobs:
       - name: Update comment with success
         uses: marocchino/sticky-pull-request-comment@v3.0.4
         with:
-          header: deploy-gateway
+          header: deploy-preview
           skip_unchanged: true
           message: |
-            Fly Preview URL :balloon: : ${{ steps.deploy.outputs.url }}
-            Neon branch :elephant: : https://console.neon.tech/app/projects/${{ vars.NEON_PROJECT_ID }}/branches/${{ steps.create-neon-branch.outputs.branch_id }}
-            Cloudflare Worker :cloud: : ${{ steps.deploy-worker.outputs.deployment-url }}
+            ## Preview deployed successfully! :tada:
+            :elephant: Neon DB branch: https://console.neon.tech/app/projects/${{ vars.NEON_PROJECT_ID }}/branches/${{ steps.create-neon-branch.outputs.branch_id }}
+            :balloon: Gateway URL: ${{ steps.deploy.outputs.url }}
+            :cloud: Cloudflare Worker: ${{ steps.deploy-worker.outputs.deployment-url }}
 
       - name: Update comment on failure
         if: failure()
         uses: marocchino/sticky-pull-request-comment@v3.0.4
         with:
-          header: deploy-gateway
+          header: deploy-preview
           skip_unchanged: true
           message: |
-            :x: Gateway preview deploy failed — see [run logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+            :x: Preview deploy failed — see [run logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
