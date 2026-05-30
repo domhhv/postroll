@@ -2,37 +2,40 @@
   "name": "postroll",
   "version": "0.1.0",
   "description": "A system designed to manage and process media files with an efficient and structured approach, ensuring that they are executed in an organized manner.",
-  "author": "Dominik Hryshaiev <domhryshaiev@gmail.com>",
-  "license": "ISC",
+  "keywords": [],
   "repository": {
     "type": "git",
     "url": "https://github.com/domhhv/postroll.git"
   },
-  "keywords": [],
+  "license": "ISC",
+  "author": "Dominik Hryshaiev <domhryshaiev@gmail.com>",
   "scripts": {
-    "prepare": "husky",
-    "dev": "TURBO_UI=1 turbo dev",
-    "build": "turbo build",
-    "check-types": "turbo check-types",
     "biome:check": "turbo biome:check",
     "biome:write": "turbo biome:write",
+    "build": "turbo build",
+    "check-types": "turbo check-types",
+    "db:reset": "pnpm --filter @postroll/database db:reset",
     "db:start": "pnpm --filter @postroll/database db:start",
     "db:stop": "pnpm --filter @postroll/database db:stop",
-    "db:reset": "pnpm --filter @postroll/database db:reset",
     "db:studio": "pnpm --filter @postroll/database studio",
+    "dev": "TURBO_UI=1 turbo dev",
+    "prepare": "husky",
+    "sort-package-json": "turbo sort-package-json",
+    "sort-package-json:check": "turbo sort-package-json:check",
     "ui": "pnpm --filter @postroll/ui ui"
   },
-  "engines": {
-    "node": "^24.16.0"
-  },
-  "packageManager": "pnpm@11.4.0",
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
     "@commitlint/cli": "^21.0.1",
     "@commitlint/config-conventional": "^21.0.1",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.2",
+    "sort-package-json": "^3.6.1",
     "turbo": "^2.9.16",
     "typescript": "^6.0.3"
+  },
+  "packageManager": "pnpm@11.4.0",
+  "engines": {
+    "node": "^24.16.0"
   }
 }

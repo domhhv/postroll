@@ -3,12 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "check-types": "tsc --noEmit",
-    "biome:check": "biome check",
-    "biome:write": "biome check --write"
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -29,6 +23,14 @@
   "files": [
     "dist"
   ],
+  "scripts": {
+    "biome:check": "biome check",
+    "biome:write": "biome check --write",
+    "build": "tsc -p tsconfig.build.json",
+    "check-types": "tsc --noEmit",
+    "sort-package-json": "sort-package-json",
+    "sort-package-json:check": "sort-package-json --check"
+  },
   "dependencies": {
     "zod": "^4.1.12"
   },

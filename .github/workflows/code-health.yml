@@ -18,6 +18,8 @@ jobs:
             command: check-types
           - name: Biome
             command: biome:check
+          - name: Sort package.json
+            command: sort-package-json:check
       fail-fast: false
     name: ${{ matrix.check.name }}
 

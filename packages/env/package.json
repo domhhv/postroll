@@ -3,10 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "check-types": "tsc --noEmit"
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -24,9 +20,18 @@
       "default": "./dist/load.js"
     }
   },
-  "files": ["dist", "scripts"],
   "bin": {
     "postroll-check-env": "./scripts/check-env.mjs"
+  },
+  "files": [
+    "dist",
+    "scripts"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check-types": "tsc --noEmit",
+    "sort-package-json": "sort-package-json",
+    "sort-package-json:check": "sort-package-json --check"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
