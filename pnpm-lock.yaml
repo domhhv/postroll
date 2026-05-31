@@ -65,6 +65,9 @@ importers:
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
+      bowser:
+        specifier: ^2.14.1
+        version: 2.14.1
       cookie-parser:
         specifier: ^1.4.7
         version: 1.4.7

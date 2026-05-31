@@ -48,3 +48,31 @@ export const changePasswordRequestSchema = z
   });
 
 export type ChangePasswordRequest = z.infer<typeof changePasswordRequestSchema>;
+
+export const sessionDtoSchema = z.object({
+  /** The token family id; stable across refresh rotations for one login. */
+  id: z.uuid(),
+  /** Friendly browser name, e.g. "Chrome" (null when unknown). */
+  browser: z.string().nullable(),
+  /** Friendly OS name, e.g. "macOS" (null when unknown). */
+  os: z.string().nullable(),
+  /** "desktop" | "mobile" | "tablet" | … when known. */
+  deviceType: z.string().nullable(),
+  /** Single human-readable line, e.g. "Chrome 148 on macOS". */
+  label: z.string(),
+  /** Raw User-Agent header, kept for forensics / tooltip. */
+  userAgent: z.string().nullable(),
+  ip: z.string().nullable(),
+  /** When this session was first created (initial login). */
+  createdAt: z.iso.datetime(),
+  /** Last activity (most recent token issued in the family). */
+  lastActiveAt: z.iso.datetime(),
+  /** True for the session making the request. */
+  current: z.boolean(),
+});
+
+export type SessionDto = z.infer<typeof sessionDtoSchema>;
+
+export const sessionListSchema = z.array(sessionDtoSchema);
+
+export type SessionList = z.infer<typeof sessionListSchema>;

@@ -25,6 +25,7 @@
     "@prisma/adapter-neon": "^7.8.0",
     "@prisma/adapter-pg": "^7.8.0",
     "bcryptjs": "^3.0.3",
+    "bowser": "^2.14.1",
     "cookie-parser": "^1.4.7",
     "nestjs-pino": "^4.6.1",
     "passport": "^0.7.0",

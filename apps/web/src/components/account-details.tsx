@@ -1,6 +1,6 @@
 'use client';
 
-import type { UserDto } from '@postroll/contracts';
+import type { SessionDto, UserDto } from '@postroll/contracts';
 import { Button } from '@postroll/ui/components/button';
 import { Field, FieldError, FieldLabel } from '@postroll/ui/components/field';
 import { Input } from '@postroll/ui/components/input';
@@ -19,9 +19,11 @@ import {
   updateAccountAction,
 } from '#lib/actions';
 import { PendingButton } from './pending-button';
+import { SessionsList } from './sessions-list';
 
 type AccountDetailsProps = {
   user: UserDto;
+  sessions: SessionDto[];
 };
 
 export const profileInitialState: AccountFormState = { status: 'idle' };
@@ -242,18 +244,22 @@ function SecurityTab() {
   );
 }
 
-export function AccountDetails({ user }: AccountDetailsProps) {
+export function AccountDetails({ user, sessions }: AccountDetailsProps) {
   return (
     <Tabs defaultValue="profile">
       <TabsList>
         <TabsTrigger value="profile">Profile</TabsTrigger>
         <TabsTrigger value="security">Security</TabsTrigger>
+        <TabsTrigger value="sessions">Sessions</TabsTrigger>
       </TabsList>
       <TabsContent value="profile" className="pt-4">
         <ProfileTab user={user} />
       </TabsContent>
       <TabsContent value="security" className="pt-4">
         <SecurityTab />
+      </TabsContent>
+      <TabsContent value="sessions" className="pt-4">
+        <SessionsList sessions={sessions} />
       </TabsContent>
     </Tabs>
   );
