@@ -30,6 +30,9 @@ import { TokensService } from './tokens.service';
 
 const REFRESH_COOKIE = 'postroll_rt';
 
+/** Set by the web app (which terminates the browser TLS) to relay the real client IP. */
+const CLIENT_IP_HEADER = 'x-postroll-client-ip';
+
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -57,7 +60,7 @@ export class AuthController {
     const user = req.user as AuthenticatedUser;
     const result = await this.authService.login(user, {
       userAgent: req.get('user-agent') ?? undefined,
-      ip: req.ip,
+      ip: req.get(CLIENT_IP_HEADER) ?? req.ip,
     });
     res.cookie(REFRESH_COOKIE, result.refreshToken, this.cookieOptions());
     return loginResponseSchema.parse({
@@ -78,7 +81,7 @@ export class AuthController {
     }
     const rotated = await this.tokens.rotateRefreshToken(raw, {
       userAgent: req.get('user-agent') ?? undefined,
-      ip: req.ip,
+      ip: req.get(CLIENT_IP_HEADER) ?? req.ip,
     });
     res.cookie(REFRESH_COOKIE, rotated.refreshToken, this.cookieOptions());
     return refreshResponseSchema.parse({ accessToken: rotated.accessToken });

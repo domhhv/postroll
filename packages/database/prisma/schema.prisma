@@ -8,19 +8,20 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(uuid()) @db.Uuid
+  id            String         @db.Uuid @default(uuid()) @id
   email         String         @unique
   password      String
   name          String?
   username      String?
-  createdAt     DateTime       @default(now()) @db.Timestamptz(3) @map("created_at")
+  createdAt     DateTime       @db.Timestamptz(3) @default(now()) @map("created_at")
+  updatedAt     DateTime?      @db.Timestamptz(3) @map("updated_at") @updatedAt
   refreshTokens RefreshToken[]
 
   @@map("users")
 }
 
 model RefreshToken {
-  id           String    @id @default(uuid()) @db.Uuid
+  id           String    @db.Uuid @default(uuid()) @id
   userId       String    @db.Uuid @map("user_id")
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   tokenHash    String    @unique @map("token_hash")
@@ -28,7 +29,8 @@ model RefreshToken {
   expiresAt    DateTime  @db.Timestamptz(3) @map("expires_at")
   revokedAt    DateTime? @db.Timestamptz(3) @map("revoked_at")
   replacedById String?   @db.Uuid @map("replaced_by_id")
-  createdAt    DateTime  @default(now()) @db.Timestamptz(3) @map("created_at")
+  createdAt    DateTime  @db.Timestamptz(3) @default(now()) @map("created_at")
+  updatedAt    DateTime? @db.Timestamptz(3) @map("updated_at") @updatedAt
   userAgent    String?   @map("user_agent")
   ip           String?
 
