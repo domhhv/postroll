@@ -8,6 +8,7 @@ import {
   updateUserRequestSchema,
 } from '@postroll/contracts';
 import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import {
@@ -18,6 +19,7 @@ import {
   updateMe,
   updatePassword,
 } from './api';
+import { readRequestMeta } from './refresh';
 import { deleteSession, readSessionCookie } from './session';
 import { getFormValue } from './utils';
 
@@ -87,8 +89,9 @@ export async function registerAction(
   }
 
   try {
+    const meta = readRequestMeta(await headers());
     await registerUser(parsed.data);
-    await loginAndCreateSession(parsed.data);
+    await loginAndCreateSession(parsed.data, meta);
   } catch (error) {
     return toFormError(error, values);
   }
@@ -116,7 +119,8 @@ export async function loginAction(
   }
 
   try {
-    await loginAndCreateSession(parsed.data);
+    const meta = readRequestMeta(await headers());
+    await loginAndCreateSession(parsed.data, meta);
   } catch (error) {
     return toFormError(error, values);
   }

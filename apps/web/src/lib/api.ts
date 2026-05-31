@@ -12,11 +12,15 @@ import {
   type UserDto,
   userDtoSchema,
 } from '@postroll/contracts';
+import { headers } from 'next/headers';
 import { getServerEnv } from '@/env';
 import {
+  CLIENT_IP_HEADER,
   GATEWAY_REFRESH_COOKIE,
   GatewayError,
   parseRefreshCookie,
+  type RequestMeta,
+  readRequestMeta,
   refreshTokens,
 } from './refresh';
 import {
@@ -34,11 +38,21 @@ async function postJson(
   path: string,
   body: unknown,
   errorMap: Record<number, string>,
+  meta: RequestMeta = {},
 ): Promise<Response> {
   const { GATEWAY_URL } = getServerEnv();
+  const headers: Record<string, string> = {
+    'content-type': 'application/json',
+  };
+  if (meta.userAgent) {
+    headers['user-agent'] = meta.userAgent;
+  }
+  if (meta.ip) {
+    headers[CLIENT_IP_HEADER] = meta.ip;
+  }
   const res = await fetch(`${GATEWAY_URL}${path}`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers,
     body: JSON.stringify(body),
   });
 
@@ -63,10 +77,14 @@ export async function registerUser(
 
 export async function loginUser(
   input: LoginRequest,
+  meta: RequestMeta = {},
 ): Promise<LoginResponse & { refreshToken: string; refreshExpiresAt: string }> {
-  const res = await postJson('/auth/login', input, {
-    401: 'Invalid email or password.',
-  });
+  const res = await postJson(
+    '/auth/login',
+    input,
+    { 401: 'Invalid email or password.' },
+    meta,
+  );
   const body = loginResponseSchema.parse(await res.json());
   const cookie = parseRefreshCookie(res.headers.getSetCookie());
 
@@ -118,7 +136,8 @@ async function gatewayFetch(
    * via a short rotation grace window (see apps/gateway/src/auth/tokens.service.ts)
    */
   try {
-    const next = await refreshTokens(session);
+    const meta = readRequestMeta(await headers());
+    const next = await refreshTokens(session, meta);
     await updateSession({
       accessToken: next.accessToken,
       refreshToken: next.refreshToken,
@@ -191,8 +210,9 @@ export async function updatePassword(
 
 export async function loginAndCreateSession(
   input: LoginRequest,
+  meta: RequestMeta = {},
 ): Promise<UserDto> {
-  const result = await loginUser(input);
+  const result = await loginUser(input, meta);
   await createSession({
     userId: result.user.id,
     accessToken: result.accessToken,

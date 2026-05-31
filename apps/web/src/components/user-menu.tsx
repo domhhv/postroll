@@ -10,6 +10,7 @@ import { Separator } from '@postroll/ui/components/separator';
 import { IconUserCircle } from '@tabler/icons-react';
 import Link from 'next/link';
 import { logoutAction } from '#lib/actions';
+import { PendingButton } from './pending-button';
 
 type UserMenuProps = {
   email: string;
@@ -42,13 +43,13 @@ export function UserMenu({ email }: UserMenuProps) {
           Account
         </Link>
         <form action={logoutAction}>
-          <Button
+          <PendingButton
+            idle="Log Out"
+            pendingLabel="Logging Out"
             variant="ghost"
             type="submit"
             className={`${menuItem} text-destructive hover:text-destructive justify-start hover:bg-destructive/10 focus-visible:bg-destructive/10`}
-          >
-            Log Out
-          </Button>
+          />
         </form>
       </PopoverContent>
     </Popover>

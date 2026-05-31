@@ -1,6 +1,6 @@
 import { decodeJwt } from 'jose';
 import { type NextRequest, NextResponse } from 'next/server';
-import { refreshTokens } from '#lib/refresh';
+import { readRequestMeta, refreshTokens } from '#lib/refresh';
 import {
   cookieOptions,
   decryptSession,
@@ -54,7 +54,8 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const next = await refreshTokens(session);
+    const meta = readRequestMeta(request.headers);
+    const next = await refreshTokens(session, meta);
     const jwe = await encryptSession({
       ...session,
       accessToken: next.accessToken,

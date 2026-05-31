@@ -5,6 +5,44 @@ import type { SessionPayload } from './session-crypto';
 
 export const GATEWAY_REFRESH_COOKIE = 'postroll_rt';
 
+/** Header the gateway reads to recover the real client IP behind our proxy. */
+export const CLIENT_IP_HEADER = 'x-postroll-client-ip';
+
+/** Per-request client metadata forwarded to the gateway on auth calls. */
+export type RequestMeta = {
+  userAgent?: string | undefined;
+  ip?: string | undefined;
+};
+
+/**
+ * Extract the originating client's user-agent and IP from an incoming request's
+ * headers. On Cloudflare the true client IP is in `cf-connecting-ip`; we fall
+ * back to the first hop of `x-forwarded-for` otherwise.
+ */
+export function readRequestMeta(headers: Headers): RequestMeta {
+  const ip =
+    headers.get('cf-connecting-ip') ??
+    headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    undefined;
+
+  return {
+    userAgent: headers.get('user-agent') ?? undefined,
+    ip: ip || undefined,
+  };
+}
+
+/** Build the forwarding headers for a given request meta. */
+function metaHeaders(meta: RequestMeta = {}): Record<string, string> {
+  const headers: Record<string, string> = {};
+  if (meta.userAgent) {
+    headers['user-agent'] = meta.userAgent;
+  }
+  if (meta.ip) {
+    headers[CLIENT_IP_HEADER] = meta.ip;
+  }
+  return headers;
+}
+
 export class GatewayError extends Error {
   constructor(
     readonly status: number,
@@ -46,11 +84,15 @@ export function parseRefreshCookie(setCookies: string[]): RefreshCookie {
 
 export async function refreshTokens(
   session: SessionPayload,
+  meta: RequestMeta = {},
 ): Promise<RefreshResult> {
   const { GATEWAY_URL } = getServerEnv();
   const res = await fetch(`${GATEWAY_URL}/auth/refresh`, {
     method: 'POST',
-    headers: { cookie: `${GATEWAY_REFRESH_COOKIE}=${session.refreshToken}` },
+    headers: {
+      cookie: `${GATEWAY_REFRESH_COOKIE}=${session.refreshToken}`,
+      ...metaHeaders(meta),
+    },
   });
 
   if (!res.ok) {
