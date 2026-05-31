@@ -8,6 +8,8 @@ import {
   type RegisterRequest,
   type RegisterResponse,
   registerResponseSchema,
+  type SessionList,
+  sessionListSchema,
   type UpdateUserRequest,
   type UserDto,
   userDtoSchema,
@@ -202,6 +204,37 @@ export async function updatePassword(
     const message =
       res.status === 401
         ? 'Current password is incorrect.'
+        : `Request failed (${res.status}).`;
+
+    throw new GatewayError(res.status, message);
+  }
+}
+
+export async function listSessions(): Promise<SessionList> {
+  const session = await readSessionCookie();
+  const headers: Record<string, string> = {};
+  if (session) {
+    headers['x-postroll-refresh-token'] = session.refreshToken;
+  }
+
+  const res = await gatewayFetch('/users/me/sessions', { headers });
+
+  if (!res.ok) {
+    throw new GatewayError(res.status, `sessions ${res.status}`);
+  }
+
+  return sessionListSchema.parse(await res.json());
+}
+
+export async function revokeSession(id: string): Promise<void> {
+  const res = await gatewayFetch(`/users/me/sessions/${id}`, {
+    method: 'DELETE',
+  });
+
+  if (!res.ok) {
+    const message =
+      res.status === 404
+        ? 'Session not found.'
         : `Request failed (${res.status}).`;
 
     throw new GatewayError(res.status, message);

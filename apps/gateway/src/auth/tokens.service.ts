@@ -25,6 +25,19 @@ export type RotatedTokens = {
 };
 
 /**
+ * One active login, derived by collapsing a token family. `createdAt` is the
+ * family's first token (initial login); `lastActiveAt` and the UA/IP come from
+ * its most recent token.
+ */
+export type SessionSummary = {
+  familyId: string;
+  userAgent: string | null;
+  ip: string | null;
+  createdAt: Date;
+  lastActiveAt: Date;
+};
+
+/**
  * Grace window during which a concurrent retry presenting the just-rotated
  * (now-revoked) token receives the replacement instead of triggering family
  * revocation. Absorbs benign races without weakening reuse detection beyond it.
@@ -150,6 +163,68 @@ export class TokensService {
       },
       data: { revokedAt: new Date() },
     });
+  }
+
+  /**
+   * Active sessions for a user: one entry per token family that still has at
+   * least one live (non-revoked, unexpired) token. Newest-active first.
+   */
+  async listSessions(userId: string): Promise<SessionSummary[]> {
+    const rows = await this.prisma.refreshToken.findMany({
+      where: { userId, revokedAt: null, expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        familyId: true,
+        userAgent: true,
+        ip: true,
+        createdAt: true,
+      },
+    });
+
+    const families = new Map<string, SessionSummary>();
+    for (const row of rows) {
+      const existing = families.get(row.familyId);
+      if (!existing) {
+        families.set(row.familyId, {
+          familyId: row.familyId,
+          userAgent: row.userAgent,
+          ip: row.ip,
+          createdAt: row.createdAt,
+          lastActiveAt: row.createdAt,
+        });
+        continue;
+      }
+      // rows are ascending by createdAt, so each later row is the newer activity.
+      existing.lastActiveAt = row.createdAt;
+      existing.userAgent = row.userAgent;
+      existing.ip = row.ip;
+    }
+
+    return [...families.values()].sort(
+      (a, b) => b.lastActiveAt.getTime() - a.lastActiveAt.getTime(),
+    );
+  }
+
+  /** Resolve a raw refresh token to its owning family id, if it exists. */
+  async familyIdForRawToken(rawToken: string): Promise<string | null> {
+    const row = await this.prisma.refreshToken.findUnique({
+      where: { tokenHash: this.hash(rawToken) },
+      select: { familyId: true },
+    });
+    return row?.familyId ?? null;
+  }
+
+  /**
+   * Revoke a single session (token family) belonging to the user. Scoped by
+   * userId so one user can't revoke another's family by guessing an id.
+   * Returns the number of tokens revoked (0 if the family wasn't theirs).
+   */
+  async revokeSession(userId: string, familyId: string): Promise<number> {
+    const { count } = await this.prisma.refreshToken.updateMany({
+      where: { userId, familyId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    return count;
   }
 
   private async rotateRow(

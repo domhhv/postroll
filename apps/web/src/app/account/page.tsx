@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { AccountDetails } from '#components/account-details';
+import { listSessions } from '#lib/api';
 import { getUser, verifySession } from '#lib/dal';
 
 export const metadata = {
@@ -19,12 +20,14 @@ export default async function AccountPage() {
     redirect('/login');
   }
 
+  const sessions = await listSessions();
+
   return (
     <div className="w-full max-w-md space-y-6 self-start">
       <h1 className="text-3xl font-semibold leading-10 tracking-tight">
         Account
       </h1>
-      <AccountDetails user={me} />
+      <AccountDetails user={me} sessions={sessions} />
     </div>
   );
 }

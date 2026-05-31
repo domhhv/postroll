@@ -16,6 +16,7 @@ import {
   loginAndCreateSession,
   logoutGateway,
   registerUser,
+  revokeSession,
   updateMe,
   updatePassword,
 } from './api';
@@ -252,4 +253,29 @@ export async function logoutAction(): Promise<void> {
 
   await deleteSession();
   redirect('/login');
+}
+
+export type RevokeSessionResult =
+  | { status: 'success' }
+  | { status: 'error'; message: string };
+
+export async function revokeSessionAction(
+  id: string,
+): Promise<RevokeSessionResult> {
+  try {
+    await revokeSession(id);
+  } catch (error) {
+    if (error instanceof GatewayError) {
+      return { status: 'error', message: error.message };
+    }
+
+    return {
+      status: 'error',
+      message: 'Something went wrong. Please try again.',
+    };
+  }
+
+  revalidatePath('/account');
+
+  return { status: 'success' };
 }

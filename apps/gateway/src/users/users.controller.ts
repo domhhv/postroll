@@ -1,16 +1,21 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Headers,
   HttpCode,
   HttpStatus,
   NotFoundException,
+  Param,
+  ParseUUIDPipe,
   Patch,
   UseGuards,
 } from '@nestjs/common';
 import {
   changePasswordRequestSchema,
+  type SessionList,
+  sessionListSchema,
   type UserDto,
   updateUserRequestSchema,
   userDtoSchema,
@@ -20,6 +25,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 // biome-ignore lint/style/useImportType: needed for the decorator
 import { TokensService } from '../auth/tokens.service';
+import { parseUserAgent } from '../common/user-agent';
 // biome-ignore lint/style/useImportType: needed for the decorator
 import { UsersService } from './users.service';
 
@@ -67,6 +73,49 @@ export class UsersController {
 
     if (input.revokeOtherSessions) {
       await this.tokens.revokeOtherFamilies(user.id, currentRefreshToken);
+    }
+  }
+
+  @Get('me/sessions')
+  @UseGuards(JwtAuthGuard)
+  async listSessions(
+    @CurrentUser() user: RequestUser,
+    @Headers('x-postroll-refresh-token') currentRefreshToken?: string,
+  ): Promise<SessionList> {
+    const sessions = await this.tokens.listSessions(user.id);
+    const currentFamilyId = currentRefreshToken
+      ? await this.tokens.familyIdForRawToken(currentRefreshToken)
+      : null;
+
+    return sessionListSchema.parse(
+      sessions.map((session) => {
+        const ua = parseUserAgent(session.userAgent);
+        return {
+          id: session.familyId,
+          browser: ua.browser,
+          os: ua.os,
+          deviceType: ua.deviceType,
+          label: ua.label,
+          userAgent: session.userAgent,
+          ip: session.ip,
+          createdAt: session.createdAt.toISOString(),
+          lastActiveAt: session.lastActiveAt.toISOString(),
+          current: session.familyId === currentFamilyId,
+        };
+      }),
+    );
+  }
+
+  @Delete('me/sessions/:id')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async revokeSession(
+    @CurrentUser() user: RequestUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ): Promise<void> {
+    const revoked = await this.tokens.revokeSession(user.id, id);
+    if (revoked === 0) {
+      throw new NotFoundException('Session not found');
     }
   }
 }
