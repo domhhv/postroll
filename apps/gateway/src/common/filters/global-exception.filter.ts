@@ -1,10 +1,4 @@
-import {
-  type ArgumentsHost,
-  Catch,
-  type ExceptionFilter,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { Catch, HttpStatus, HttpException, type ArgumentsHost, type ExceptionFilter } from '@nestjs/common';
 import type { Response } from 'express';
 import type { Logger } from 'nestjs-pino';
 import { ZodError } from 'zod';
@@ -26,16 +20,18 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       const status = exception.getStatus();
       this.logger.error(this.toErrorMessage(exception), 'HTTP exception');
       response.status(status).json(exception.getResponse());
+
       return;
     }
 
     if (exception instanceof ZodError) {
       this.logger.error(this.toErrorMessage(exception), 'Validation error');
       response.status(HttpStatus.BAD_REQUEST).json({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: 'Validation failed',
         fieldErrors: this.formatZodIssues(exception),
+        message: 'Validation failed',
+        statusCode: HttpStatus.BAD_REQUEST,
       });
+
       return;
     }
 
@@ -43,24 +39,27 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       switch (exception.code) {
         case 'P2002':
           response.status(HttpStatus.CONFLICT).json({
-            statusCode: HttpStatus.CONFLICT,
             message: 'Resource already exists',
+            statusCode: HttpStatus.CONFLICT,
             target: exception.meta?.['target'],
           });
+
           return;
+
         case 'P2025':
           response.status(HttpStatus.NOT_FOUND).json({
-            statusCode: HttpStatus.NOT_FOUND,
             message: 'Resource not found',
+            statusCode: HttpStatus.NOT_FOUND,
           });
+
           return;
       }
     }
 
     this.logger.error(this.toErrorMessage(exception), 'Unhandled exception');
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       message: 'Internal server error',
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
     });
   }
 
@@ -68,17 +67,21 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     if (exception instanceof Error) {
       return exception.stack || exception.message;
     }
+
     return String(exception);
   }
 
   private formatZodIssues(error: ZodError): Record<string, string> {
     const fieldErrors: Record<string, string> = {};
+
     for (const issue of error.issues) {
       const field = issue.path[0];
+
       if (typeof field === 'string' && !fieldErrors[field]) {
         fieldErrors[field] = issue.message;
       }
     }
+
     return fieldErrors;
   }
 

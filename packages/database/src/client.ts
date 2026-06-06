@@ -1,5 +1,6 @@
 import { loadEnvFile, validateEnv } from '@postroll/env';
 import { PrismaNeon } from '@prisma/adapter-neon';
+
 import { envExampleHint, runtimeEnvSchema } from './env';
 import { PrismaClient } from './generated/prisma';
 

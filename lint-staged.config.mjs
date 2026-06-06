@@ -1,7 +1,11 @@
 const config = {
-  "**/package.json": "sort-package-json",
-  "**/*.{ts,tsx}": () => "pnpm check-types",
-  "**/*.{md,js,jsx,ts,tsx}": () => "pnpm biome:check",
+  '**/package.json': 'sort-package-json',
+  '**/*.{md,js,jsx,ts,tsx}': () => {
+    return ['pnpm lint', 'pnpm prettier:check'];
+  },
+  '**/*.{ts,tsx}': () => {
+    return 'pnpm check-types';
+  },
 };
 
 export default config;

@@ -1,21 +1,18 @@
-import { ConflictException, Injectable } from '@nestjs/common';
-import type {
-  LoginResponse,
-  RegisterRequest,
-  UserDto,
-} from '@postroll/contracts';
-import type { PrismaClient, User } from '@postroll/database/prisma';
-import { compare, hash } from 'bcryptjs';
+import { Injectable, ConflictException } from '@nestjs/common';
+import type { UserDto, LoginResponse, RegisterRequest } from '@postroll/contracts';
+import type { User, PrismaClient } from '@postroll/database/prisma';
+import { hash, compare } from 'bcryptjs';
+
 import { InjectPrisma } from '../database/database.module';
 import { toUserDto } from '../users/toUserDto';
-// biome-ignore lint/style/useImportType: needed for the decorator
+
 import { TokensService } from './tokens.service';
 
 export type AuthenticatedUser = Omit<User, 'password'>;
 
 export type LoginWithRefresh = LoginResponse & {
-  refreshToken: string;
   refreshExpiresAt: Date;
+  refreshToken: string;
 };
 
 @Injectable()
@@ -24,7 +21,7 @@ export class AuthService {
 
   constructor(
     @InjectPrisma() private readonly prisma: PrismaClient,
-    private readonly tokens: TokensService,
+    private readonly tokens: TokensService
   ) {}
 
   async register(input: RegisterRequest): Promise<UserDto> {
@@ -43,42 +40,47 @@ export class AuthService {
       if (this.isUniqueViolation(error)) {
         throw new ConflictException('Email is already registered');
       }
+
       throw error;
     }
   }
 
-  async validateUser(
-    email: string,
-    password: string,
-  ): Promise<AuthenticatedUser | null> {
+  async validateUser(email: string, password: string): Promise<AuthenticatedUser | null> {
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) return null;
+
+    if (!user) {
+      return null;
+    }
+
     const ok = await compare(password, user.password);
-    if (!ok) return null;
+
+    if (!ok) {
+      return null;
+    }
+
     const { password: _password, ...rest } = user;
+
     return rest;
   }
 
   async login(
     user: AuthenticatedUser,
-    meta: { userAgent?: string | undefined; ip?: string | undefined } = {},
+    meta: { ip?: string | undefined; userAgent?: string | undefined } = {}
   ): Promise<LoginWithRefresh> {
     const accessToken = this.tokens.signAccessToken(user.id);
     const refresh = await this.tokens.issueRefreshToken(user.id, meta);
+
     return {
       accessToken,
-      refreshToken: refresh.token,
       refreshExpiresAt: refresh.expiresAt,
+      refreshToken: refresh.token,
       user: toUserDto(user),
     };
   }
 
   private isUniqueViolation(error: unknown): boolean {
     return (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      (error as { code: unknown }).code === 'P2002'
+      typeof error === 'object' && error !== null && 'code' in error && (error as { code: unknown }).code === 'P2002'
     );
   }
 }

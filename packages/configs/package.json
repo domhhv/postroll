@@ -3,14 +3,29 @@
   "version": "0.1.0",
   "private": true,
   "exports": {
-    "./biome": "./biome/biome.json",
     "./typescript/base": "./typescript/base.json",
     "./typescript/nextjs": "./typescript/nextjs.json",
     "./typescript/nestjs": "./typescript/nestjs.json",
-    "./typescript/prisma": "./typescript/prisma.json"
+    "./typescript/prisma": "./typescript/prisma.json",
+    "./eslint": "./eslint/eslint.config.mjs",
+    "./prettier": "./prettier/prettier.config.mjs"
   },
   "scripts": {
+    "lint": "eslint . --config ./eslint/eslint.config.mjs",
+    "lint:fix": "eslint --fix . --config ./eslint/eslint.config.mjs",
+    "prettier:check": "prettier --check . --config ./prettier/prettier.config.mjs",
+    "prettier:write": "prettier --write . --config ./prettier/prettier.config.mjs",
     "sort-package-json": "sort-package-json",
     "sort-package-json:check": "sort-package-json --check"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-perfectionist": "^5.9.0",
+    "eslint-plugin-switch-case": "^4.0.0",
+    "eslint-plugin-unused-imports": "^4.4.1",
+    "prettier-plugin-tailwindcss": "^0.8.0",
+    "typescript-eslint": "^8.60.1"
   }
 }

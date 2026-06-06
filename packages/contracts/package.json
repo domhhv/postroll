@@ -24,10 +24,12 @@
     "dist"
   ],
   "scripts": {
-    "biome:check": "biome check",
-    "biome:write": "biome check --write",
     "build": "tsc -p tsconfig.build.json",
     "check-types": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "prettier:check": "prettier --check .",
+    "prettier:write": "prettier --write .",
     "sort-package-json": "sort-package-json",
     "sort-package-json:check": "sort-package-json --check"
   },

@@ -4,14 +4,17 @@ NestJS HTTP gateway. Deployed to Fly.io. Production deploys via [`gateway-produc
 
 ## Scripts
 
-| Script | Purpose |
-|---|---|
-| `pnpm dev` | `nest start --watch` — local dev with hot reload. |
-| `pnpm build` | `nest build` — compiles to `dist/`. |
-| `pnpm start` | Runs the compiled output via `nest start`. |
-| `pnpm start:prod` | `node dist/main` — used inside the Fly container. |
-| `pnpm check-types` | `tsc --noEmit`. |
-| `pnpm biome:check` / `pnpm biome:write` | Lint / lint-fix. |
+| Script                                           | Purpose                                           |
+| ------------------------------------------------ | ------------------------------------------------- |
+| `pnpm dev`                                       | `nest start --watch` — local dev with hot reload. |
+| `pnpm build`                                     | `nest build` — compiles to `dist/`.               |
+| `pnpm start`                                     | Runs the compiled output via `nest start`.        |
+| `pnpm start:prod`                                | `node dist/main` — used inside the Fly container. |
+| `pnpm check-types`                               | `tsc --noEmit`.                                   |
+| `pnpm --filter @postroll/gateway lint`           | lint check                                        |
+| `pnpm --filter @postroll/gateway lint:fix`       | lint check with auto-fix                          |
+| `pnpm --filter @postroll/gateway prettier:check` | check formatting                                  |
+| `pnpm --filter @postroll/gateway prettier:write` | apply formatting fixes                            |
 
 ## Environment variables
 

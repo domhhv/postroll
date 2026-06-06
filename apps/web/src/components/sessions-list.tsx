@@ -3,6 +3,7 @@
 import type { SessionDto } from '@postroll/contracts';
 import { Button } from '@postroll/ui/components/button';
 import { useState, useTransition } from 'react';
+
 import { revokeSessionAction } from '#lib/actions';
 
 type SessionsListProps = {
@@ -18,13 +19,17 @@ function formatLastActive(iso: string): string {
   if (Math.abs(diffMinutes) < 1) {
     return 'just now';
   }
+
   if (Math.abs(diffMinutes) < 60) {
     return relativeTime.format(diffMinutes, 'minute');
   }
+
   const diffHours = Math.round(diffMinutes / 60);
+
   if (Math.abs(diffHours) < 24) {
     return relativeTime.format(diffHours, 'hour');
   }
+
   return relativeTime.format(Math.round(diffHours / 24), 'day');
 }
 
@@ -33,41 +38,36 @@ function SessionRow({ session }: { session: SessionDto }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const revoke = () => {
+  function revoke() {
     setError(null);
     startTransition(async () => {
       const result = await revokeSessionAction(session.id);
+
       if (result.status === 'error') {
         setError(result.message);
         setConfirming(false);
       }
     });
-  };
+  }
 
-  const meta = [
-    session.ip,
-    session.current ? 'This device' : formatLastActive(session.lastActiveAt),
-  ]
+  const meta = [session.ip, session.current ? 'This device' : formatLastActive(session.lastActiveAt)]
     .filter(Boolean)
     .join(' · ');
 
   return (
     <li className="flex items-start justify-between gap-4 py-4">
       <div className="min-w-0 space-y-1">
-        <p
-          className="truncate font-medium text-foreground"
-          title={session.userAgent ?? undefined}
-        >
+        <p title={session.userAgent ?? undefined} className="text-foreground truncate font-medium">
           {session.label}
           {session.current && (
-            <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-normal text-primary align-middle">
+            <span className="bg-primary/10 text-primary ml-2 rounded-full px-2 py-0.5 align-middle text-xs font-normal">
               Current
             </span>
           )}
         </p>
-        <p className="text-sm text-muted-foreground">{meta}</p>
+        <p className="text-muted-foreground text-sm">{meta}</p>
         {error && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-destructive text-sm">
             {error}
           </p>
         )}
@@ -76,29 +76,28 @@ function SessionRow({ session }: { session: SessionDto }) {
       {!session.current &&
         (confirming ? (
           <div className="flex shrink-0 gap-2">
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={revoke}
-              disabled={pending}
-            >
+            <Button size="sm" onClick={revoke} disabled={pending} variant="destructive">
               {pending ? 'Revoking…' : 'Confirm'}
             </Button>
             <Button
-              variant="ghost"
               size="sm"
-              onClick={() => setConfirming(false)}
+              variant="ghost"
               disabled={pending}
+              onClick={() => {
+                return setConfirming(false);
+              }}
             >
               Cancel
             </Button>
           </div>
         ) : (
           <Button
-            variant="outline"
             size="sm"
+            variant="outline"
             className="shrink-0"
-            onClick={() => setConfirming(true)}
+            onClick={() => {
+              return setConfirming(true);
+            }}
           >
             Revoke
           </Button>
@@ -109,14 +108,14 @@ function SessionRow({ session }: { session: SessionDto }) {
 
 export function SessionsList({ sessions }: SessionsListProps) {
   if (sessions.length === 0) {
-    return <p className="text-sm text-muted-foreground">No active sessions.</p>;
+    return <p className="text-muted-foreground text-sm">No active sessions.</p>;
   }
 
   return (
-    <ul className="divide-y divide-border">
-      {sessions.map((session) => (
-        <SessionRow key={session.id} session={session} />
-      ))}
+    <ul className="divide-border divide-y">
+      {sessions.map((session) => {
+        return <SessionRow key={session.id} session={session} />;
+      })}
     </ul>
   );
 }

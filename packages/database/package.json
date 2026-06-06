@@ -20,6 +20,10 @@
     "db:reset": "postroll-check-env ./src/env.ts migrationEnvSchema && prisma migrate reset",
     "db:start": "postroll-check-env ./src/env.ts dockerEnvSchema && node ./scripts/check-docker.mjs && docker compose up -d",
     "db:stop": "docker compose down",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "prettier:check": "prettier --check .",
+    "prettier:write": "prettier --write .",
     "sort-package-json": "sort-package-json",
     "sort-package-json:check": "sort-package-json --check",
     "studio": "postroll-check-env ./src/env.ts migrationEnvSchema && prisma studio"

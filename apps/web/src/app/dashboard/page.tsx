@@ -1,5 +1,6 @@
 import { Button } from '@postroll/ui/components/button';
 import { redirect } from 'next/navigation';
+
 import { logoutAction } from '#lib/actions';
 import { getUser, verifySession } from '#lib/dal';
 
@@ -21,17 +22,15 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="w-full mx-auto max-w-md self-center space-y-6">
+    <div className="mx-auto w-full max-w-md space-y-6 self-center">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold leading-10 tracking-tight">
-          Dashboard
-        </h1>
+        <h1 className="text-3xl leading-10 font-semibold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground">
           Signed in as <span className="text-foreground">{me.email}</span>.
         </p>
       </div>
       <form action={logoutAction}>
-        <Button type="submit" size="lg" variant="outline">
+        <Button size="lg" type="submit" variant="outline">
           Sign out
         </Button>
       </form>

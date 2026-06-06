@@ -1,12 +1,8 @@
 import { decodeJwt } from 'jose';
-import { type NextRequest, NextResponse } from 'next/server';
-import { readRequestMeta, refreshTokens } from '#lib/refresh';
-import {
-  cookieOptions,
-  decryptSession,
-  encryptSession,
-  SESSION_COOKIE,
-} from '#lib/session-crypto';
+import { NextResponse, type NextRequest } from 'next/server';
+
+import { refreshTokens, readRequestMeta } from '#lib/refresh';
+import { cookieOptions, decryptSession, encryptSession, SESSION_COOKIE } from '#lib/session-crypto';
 
 /**
  * Refresh the rotating session ahead of any RSC render.
@@ -59,8 +55,8 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     const jwe = await encryptSession({
       ...session,
       accessToken: next.accessToken,
-      refreshToken: next.refreshToken,
       refreshExpiresAt: next.refreshExpiresAt,
+      refreshToken: next.refreshToken,
     });
 
     /**

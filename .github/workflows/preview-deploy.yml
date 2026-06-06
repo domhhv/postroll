@@ -55,13 +55,13 @@ jobs:
       - name: Get git branch name
         id: branch-name
         uses: tj-actions/branch-names@v9
-      
+
       - name: Create database branch on Neon
         id: create-neon-branch
         uses: neondatabase/create-branch-action@v5
         with:
           project_id: ${{ vars.NEON_PROJECT_ID }}
-          username: "neondb_owner"
+          username: 'neondb_owner'
           parent: production
           branch_name: preview/${{ steps.branch-name.outputs.current_branch }}
           api_key: ${{ secrets.NEON_API_KEY }}
@@ -100,7 +100,7 @@ jobs:
             COOKIE_SECURE=true
           launch_options: --dockerfile apps/gateway/Dockerfile
           deploy_options: --dockerfile apps/gateway/Dockerfile
-      
+
       - name: Update comment with gateway status
         uses: marocchino/sticky-pull-request-comment@v3.0.4
         with:
@@ -131,7 +131,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           gitHubToken: ${{ secrets.GH_TOKEN }}
-          workingDirectory: "apps/web"
+          workingDirectory: 'apps/web'
           preCommands: pnpm turbo run build:cf --filter @postroll/web
           command: versions upload --var GATEWAY_URL:${{ steps.deploy.outputs.url }} --secrets-file "${{ runner.temp }}/cf-secrets.json"
 

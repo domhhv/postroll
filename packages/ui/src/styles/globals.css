@@ -1,10 +1,10 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
-@source "../components";
-@source "../lib";
-@source "../hooks";
-@source "../../../../apps/web/src";
+@source '../components';
+@source '../lib';
+@source '../hooks';
+@source '../../../../apps/web/src';
 
 @custom-variant dark (&:is(.dark *));
 @custom-variant data-horizontal (&[data-orientation="horizontal"]);
@@ -119,14 +119,17 @@
 
 @layer base {
   button:not(:disabled),
-  [role="button"]:not(:disabled) {
+  [role='button']:not(:disabled) {
     cursor: pointer;
   }
 }
 
 html {
   font-family:
-    var(--font-source-sans-3), -apple-system, BlinkMacSystemFont, sans-serif;
+    var(--font-source-sans-3),
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
 }
 
 h1,

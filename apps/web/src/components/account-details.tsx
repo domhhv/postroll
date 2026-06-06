@@ -1,29 +1,21 @@
 'use client';
 
-import type { SessionDto, UserDto } from '@postroll/contracts';
+import type { UserDto, SessionDto } from '@postroll/contracts';
 import { Button } from '@postroll/ui/components/button';
 import { Field, FieldError, FieldLabel } from '@postroll/ui/components/field';
 import { Input } from '@postroll/ui/components/input';
 import { PasswordInput } from '@postroll/ui/components/password-input';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@postroll/ui/components/tabs';
-import { useActionState, useEffect, useState } from 'react';
-import {
-  type AccountFormState,
-  changePasswordAction,
-  type PasswordFormState,
-  updateAccountAction,
-} from '#lib/actions';
+import { Tabs, TabsList, TabsContent, TabsTrigger } from '@postroll/ui/components/tabs';
+import { useState, useEffect, useActionState } from 'react';
+
+import { updateAccountAction, changePasswordAction, type AccountFormState, type PasswordFormState } from '#lib/actions';
+
 import { PendingButton } from './pending-button';
 import { SessionsList } from './sessions-list';
 
 type AccountDetailsProps = {
-  user: UserDto;
   sessions: SessionDto[];
+  user: UserDto;
 };
 
 export const profileInitialState: AccountFormState = { status: 'idle' };
@@ -31,33 +23,30 @@ const passwordInitialState: PasswordFormState = { status: 'idle' };
 
 const profileFields = [
   {
-    name: 'email',
-    label: 'Email',
-    type: 'email',
     autoComplete: 'email',
+    label: 'Email',
+    name: 'email',
     placeholder: 'me@email.com',
+    type: 'email',
   },
   {
-    name: 'name',
-    label: 'Name',
-    type: 'text',
     autoComplete: 'name',
+    label: 'Name',
+    name: 'name',
     placeholder: 'Not set',
+    type: 'text',
   },
   {
-    name: 'username',
-    label: 'Username',
-    type: 'text',
     autoComplete: 'username',
+    label: 'Username',
+    name: 'username',
     placeholder: 'Not set',
+    type: 'text',
   },
 ] as const;
 
 function ProfileTab({ user }: { user: UserDto }) {
-  const [state, formAction] = useActionState(
-    updateAccountAction,
-    profileInitialState,
-  );
+  const [state, formAction] = useActionState(updateAccountAction, profileInitialState);
   const [editing, setEditing] = useState(false);
 
   const values =
@@ -80,22 +69,22 @@ function ProfileTab({ user }: { user: UserDto }) {
   if (!editing) {
     return (
       <div className="space-y-6">
-        <Button variant="outline" onClick={() => setEditing(true)}>
+        <Button
+          variant="outline"
+          onClick={() => {
+            return setEditing(true);
+          }}
+        >
           Edit details
         </Button>
         <dl className="space-y-4">
           {profileFields.map((field) => {
             const value = values[field.name];
+
             return (
               <div key={field.name} className="space-y-1">
-                <dt className="text-sm text-muted-foreground">{field.label}</dt>
-                <dd
-                  className={
-                    value ? 'text-foreground' : 'text-muted-foreground'
-                  }
-                >
-                  {value || field.placeholder}
-                </dd>
+                <dt className="text-muted-foreground text-sm">{field.label}</dt>
+                <dd className={value ? 'text-foreground' : 'text-muted-foreground'}>{value || field.placeholder}</dd>
               </div>
             );
           })}
@@ -105,16 +94,23 @@ function ProfileTab({ user }: { user: UserDto }) {
   }
 
   return (
-    <form action={formAction} className="space-y-6" noValidate>
+    <form noValidate action={formAction} className="space-y-6">
       <div className="flex gap-2">
         <PendingButton idle="Save" pendingLabel="Saving" />
-        <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => {
+            return setEditing(false);
+          }}
+        >
           Cancel
         </Button>
       </div>
       <div className="space-y-4">
         {profileFields.map((field) => {
           const error = fieldErrors?.[field.name];
+
           return (
             <Field key={field.name} data-invalid={error ? true : undefined}>
               <FieldLabel htmlFor={field.name}>{field.label}</FieldLabel>
@@ -122,8 +118,8 @@ function ProfileTab({ user }: { user: UserDto }) {
                 id={field.name}
                 name={field.name}
                 type={field.type}
-                autoComplete={field.autoComplete}
                 placeholder={field.placeholder}
+                autoComplete={field.autoComplete}
                 defaultValue={values[field.name]}
                 aria-invalid={error ? true : undefined}
               />
@@ -133,7 +129,7 @@ function ProfileTab({ user }: { user: UserDto }) {
         })}
       </div>
       {state.status === 'error' && !fieldErrors && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-destructive text-sm">
           {state.message}
         </p>
       )}
@@ -142,10 +138,7 @@ function ProfileTab({ user }: { user: UserDto }) {
 }
 
 function SecurityTab() {
-  const [state, formAction] = useActionState(
-    changePasswordAction,
-    passwordInitialState,
-  );
+  const [state, formAction] = useActionState(changePasswordAction, passwordInitialState);
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
@@ -159,11 +152,16 @@ function SecurityTab() {
   if (!editing) {
     return (
       <div className="space-y-6">
-        <Button variant="outline" onClick={() => setEditing(true)}>
+        <Button
+          variant="outline"
+          onClick={() => {
+            return setEditing(true);
+          }}
+        >
           Update password
         </Button>
         <div className="space-y-1">
-          <p className="text-sm text-muted-foreground">Password</p>
+          <p className="text-muted-foreground text-sm">Password</p>
           <p className="text-foreground tracking-widest">{'•'.repeat(8)}</p>
         </div>
       </div>
@@ -175,10 +173,16 @@ function SecurityTab() {
   const confirmPasswordError = fieldErrors?.['confirmPassword'];
 
   return (
-    <form action={formAction} className="space-y-6" noValidate>
+    <form noValidate action={formAction} className="space-y-6">
       <div className="flex gap-2">
         <PendingButton idle="Save" pendingLabel="Saving…" />
-        <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => {
+            return setEditing(false);
+          }}
+        >
           Cancel
         </Button>
       </div>
@@ -188,55 +192,46 @@ function SecurityTab() {
           <PasswordInput
             id="currentPassword"
             name="currentPassword"
-            autoComplete="current-password"
             placeholder="••••••••"
+            autoComplete="current-password"
             aria-invalid={currentPasswordError ? true : undefined}
           />
-          {currentPasswordError && (
-            <FieldError errors={[{ message: currentPasswordError }]} />
-          )}
+          {currentPasswordError && <FieldError errors={[{ message: currentPasswordError }]} />}
         </Field>
         <Field data-invalid={newPasswordError ? true : undefined}>
           <FieldLabel htmlFor="newPassword">New password</FieldLabel>
           <PasswordInput
             id="newPassword"
             name="newPassword"
-            autoComplete="new-password"
             placeholder="••••••••"
+            autoComplete="new-password"
             aria-invalid={newPasswordError ? true : undefined}
           />
-          {newPasswordError && (
-            <FieldError errors={[{ message: newPasswordError }]} />
-          )}
+          {newPasswordError && <FieldError errors={[{ message: newPasswordError }]} />}
         </Field>
         <Field data-invalid={confirmPasswordError ? true : undefined}>
           <FieldLabel htmlFor="confirmPassword">Confirm password</FieldLabel>
           <PasswordInput
             id="confirmPassword"
             name="confirmPassword"
-            autoComplete="new-password"
             placeholder="••••••••"
+            autoComplete="new-password"
             aria-invalid={confirmPasswordError ? true : undefined}
           />
-          {confirmPasswordError && (
-            <FieldError errors={[{ message: confirmPasswordError }]} />
-          )}
+          {confirmPasswordError && <FieldError errors={[{ message: confirmPasswordError }]} />}
         </Field>
-        <label
-          htmlFor="revokeOtherSessions"
-          className="flex items-center gap-2 text-sm text-muted-foreground"
-        >
+        <label htmlFor="revokeOtherSessions" className="text-muted-foreground flex items-center gap-2 text-sm">
           <input
+            type="checkbox"
             id="revokeOtherSessions"
             name="revokeOtherSessions"
-            type="checkbox"
-            className="size-4 rounded border-input accent-primary"
+            className="border-input accent-primary size-4 rounded"
           />
           Sign out of other devices
         </label>
       </div>
       {state.status === 'error' && !fieldErrors && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-destructive text-sm">
           {state.message}
         </p>
       )}
@@ -244,7 +239,7 @@ function SecurityTab() {
   );
 }
 
-export function AccountDetails({ user, sessions }: AccountDetailsProps) {
+export function AccountDetails({ sessions, user }: AccountDetailsProps) {
   return (
     <Tabs defaultValue="profile">
       <TabsList>

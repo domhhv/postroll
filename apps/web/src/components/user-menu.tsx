@@ -1,15 +1,13 @@
 'use client';
 
 import { Button } from '@postroll/ui/components/button';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@postroll/ui/components/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@postroll/ui/components/popover';
 import { Separator } from '@postroll/ui/components/separator';
 import { IconUserCircle } from '@tabler/icons-react';
 import Link from 'next/link';
+
 import { logoutAction } from '#lib/actions';
+
 import { PendingButton } from './pending-button';
 
 type UserMenuProps = {
@@ -23,32 +21,27 @@ export function UserMenu({ email }: UserMenuProps) {
   return (
     <Popover>
       <PopoverTrigger
-        render={(props) => (
-          <Button
-            {...props}
-            variant="ghost"
-            size="icon"
-            aria-label="Account menu"
-          >
-            <IconUserCircle />
-          </Button>
-        )}
+        render={(props) => {
+          return (
+            <Button {...props} size="icon" variant="ghost" aria-label="Account menu">
+              <IconUserCircle />
+            </Button>
+          );
+        }}
       />
       <PopoverContent align="end" className="w-56 gap-1 p-2">
-        <div className="truncate px-2 py-1.5 text-sm text-muted-foreground">
-          {email}
-        </div>
+        <div className="text-muted-foreground truncate px-2 py-1.5 text-sm">{email}</div>
         <Separator className="my-1 h-px" />
         <Link href="/account" className={menuItem}>
           Account
         </Link>
         <form action={logoutAction}>
           <PendingButton
-            idle="Log Out"
-            pendingLabel="Logging Out"
-            variant="ghost"
             type="submit"
-            className={`${menuItem} text-destructive hover:text-destructive justify-start hover:bg-destructive/10 focus-visible:bg-destructive/10`}
+            idle="Log Out"
+            variant="ghost"
+            pendingLabel="Logging Out"
+            className={`${menuItem} text-destructive hover:text-destructive hover:bg-destructive/10 focus-visible:bg-destructive/10 justify-start`}
           />
         </form>
       </PopoverContent>

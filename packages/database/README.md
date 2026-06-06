@@ -6,25 +6,25 @@ Prisma schema, generated client, and Neon-backed local development stack for the
 
 The package exposes three subpaths so consumers can pick exactly what they need without dragging in the Prisma engine where it doesn't belong:
 
-| Import | What you get | Who uses it |
-|---|---|---|
-| `@postroll/database` | **Types only.** `export type *` of the generated client + the `Prisma` namespace (enums, input types). No runtime DB connection, no engine. | `apps/web` — needs `User` etc. for typing gateway responses, but must not bundle the Prisma runtime. |
-| `@postroll/database/prisma` | The raw `PrismaClient` class from the generated client. No singleton, no env loading. | `apps/gateway` — constructs its own client inside NestJS DI so it can own the lifecycle and pick its driver adapter. |
-| `@postroll/database/client` | A pre-built `prisma` singleton wired to [`@prisma/adapter-neon`](https://www.npmjs.com/package/@prisma/adapter-neon), with env loading from `packages/database/.env`. | Currently unused. Kept for one-off scripts that want a ready-to-use client outside an app context. |
+| Import                      | What you get                                                                                                                                                          | Who uses it                                                                                                          |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `@postroll/database`        | **Types only.** `export type *` of the generated client + the `Prisma` namespace (enums, input types). No runtime DB connection, no engine.                           | `apps/web` — needs `User` etc. for typing gateway responses, but must not bundle the Prisma runtime.                 |
+| `@postroll/database/prisma` | The raw `PrismaClient` class from the generated client. No singleton, no env loading.                                                                                 | `apps/gateway` — constructs its own client inside NestJS DI so it can own the lifecycle and pick its driver adapter. |
+| `@postroll/database/client` | A pre-built `prisma` singleton wired to [`@prisma/adapter-neon`](https://www.npmjs.com/package/@prisma/adapter-neon), with env loading from `packages/database/.env`. | Currently unused. Kept for one-off scripts that want a ready-to-use client outside an app context.                   |
 
 The split matters because `@postroll/database/client` has top-level side effects (calls `loadEnvFile`, constructs `PrismaNeon`). If the web app barrel-imported that, every server-side render would pull the Prisma engine into the OpenNext bundle even when only types are used.
 
 ## Scripts
 
-| Script | What it does | Env vars validated |
-|---|---|---|
-| `db:generate` | `prisma generate` — produces the Prisma client to `src/generated/`. | None (no env access needed). |
-| `db:start` | Starts the local Neon-compatible Postgres stack via Docker Compose. | `NEON_API_KEY`, `NEON_PROJECT_ID`, `PARENT_BRANCH_ID`. Also checks that the Docker daemon is reachable. |
-| `db:stop` | `docker compose down`. | None. |
-| `db:migrate` | `prisma migrate dev` — apply migrations against the local dev branch. | `DIRECT_URL` (+ optional `SHADOW_DATABASE_URL`). |
-| `db:deploy` | `prisma migrate deploy` — apply migrations against a production/preview branch. Used by CI. | `DIRECT_URL`. |
-| `db:reset` | `prisma migrate reset` — wipe and re-apply all migrations. | `DIRECT_URL`. |
-| `studio` | Opens Prisma Studio against the configured DB. | `DIRECT_URL`. |
+| Script        | What it does                                                                                | Env vars validated                                                                                      |
+| ------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `db:generate` | `prisma generate` — produces the Prisma client to `src/generated/`.                         | None (no env access needed).                                                                            |
+| `db:start`    | Starts the local Neon-compatible Postgres stack via Docker Compose.                         | `NEON_API_KEY`, `NEON_PROJECT_ID`, `PARENT_BRANCH_ID`. Also checks that the Docker daemon is reachable. |
+| `db:stop`     | `docker compose down`.                                                                      | None.                                                                                                   |
+| `db:migrate`  | `prisma migrate dev` — apply migrations against the local dev branch.                       | `DIRECT_URL` (+ optional `SHADOW_DATABASE_URL`).                                                        |
+| `db:deploy`   | `prisma migrate deploy` — apply migrations against a production/preview branch. Used by CI. | `DIRECT_URL`.                                                                                           |
+| `db:reset`    | `prisma migrate reset` — wipe and re-apply all migrations.                                  | `DIRECT_URL`.                                                                                           |
+| `studio`      | Opens Prisma Studio against the configured DB.                                              | `DIRECT_URL`.                                                                                           |
 
 Each script that needs env vars is gated by [`postroll-check-env`](../env/README.md#postroll-check-env-cli), which fails fast with a friendly Zod error before invoking Prisma or Docker.
 

@@ -6,21 +6,21 @@
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": ".open-next/assets",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
   },
   "r2_buckets": [
     {
       "binding": "NEXT_INC_CACHE_R2_BUCKET",
-      "bucket_name": "next-isr-cache"
-    }
+      "bucket_name": "next-isr-cache",
+    },
   ],
   "vars": {
-    "GATEWAY_URL": "https://gateway-bitter-ocean-8201.fly.dev"
+    "GATEWAY_URL": "https://gateway-bitter-ocean-8201.fly.dev",
   },
   "images": {
-    "binding": "IMAGES"
+    "binding": "IMAGES",
   },
   "observability": {
-    "enabled": true
-  }
+    "enabled": true,
+  },
 }

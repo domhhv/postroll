@@ -21,15 +21,12 @@ Parses `process.env` (or a custom source) against a Zod schema. On failure, prin
 ```ts
 import { validateEnv, z } from '@postroll/env';
 
-const env = validateEnv(
-  z.object({ DATABASE_URL: z.url() }),
-  {
-    contextLabel: '@postroll/database (runtime)',
-    exampleHint: 'packages/database/.env.example',
-    importMetaUrl: import.meta.url,
-    envFileRelativePath: '../.env',
-  },
-);
+const env = validateEnv(z.object({ DATABASE_URL: z.url() }), {
+  contextLabel: '@postroll/database (runtime)',
+  exampleHint: 'packages/database/.env.example',
+  importMetaUrl: import.meta.url,
+  envFileRelativePath: '../.env',
+});
 ```
 
 Options:
@@ -79,12 +76,12 @@ Example, from `packages/database/package.json:9`:
 
 ## Integration patterns used in this monorepo
 
-| Pattern | Where | Why |
-|---|---|---|
-| CLI guard in script chain (`postroll-check-env … && actual-command`) | [`packages/database/package.json`](../database/package.json) | Per-script gating: `db:start` needs Neon vars, `db:migrate` needs `DIRECT_URL` — same package, different env contract per script. pnpm v7+ disables `pre*` hooks by default, so inline `&&` is more explicit. |
-| `ConfigModule.forRoot({ validate })` | [`apps/gateway/src/app.module.ts`](../../apps/gateway/src/app.module.ts) | NestJS calls the `validate` hook once at boot, before any provider is instantiated. The gateway never starts with a bad config. |
-| Next.js `instrumentation.ts` hook | [`apps/web/src/instrumentation.ts`](../../apps/web/src/instrumentation.ts) | Runs once per server boot in the Node runtime. Skipped on Cloudflare Workers — there the env source is `getCloudflareContext().env`, not `process.env`, so validation defers to call sites. |
-| Module-load validation | [`packages/database/src/client.ts`](../database/src/client.ts) | Validates `DATABASE_URL` when the Prisma client is first imported. |
+| Pattern                                                              | Where                                                                      | Why                                                                                                                                                                                                           |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CLI guard in script chain (`postroll-check-env … && actual-command`) | [`packages/database/package.json`](../database/package.json)               | Per-script gating: `db:start` needs Neon vars, `db:migrate` needs `DIRECT_URL` — same package, different env contract per script. pnpm v7+ disables `pre*` hooks by default, so inline `&&` is more explicit. |
+| `ConfigModule.forRoot({ validate })`                                 | [`apps/gateway/src/app.module.ts`](../../apps/gateway/src/app.module.ts)   | NestJS calls the `validate` hook once at boot, before any provider is instantiated. The gateway never starts with a bad config.                                                                               |
+| Next.js `instrumentation.ts` hook                                    | [`apps/web/src/instrumentation.ts`](../../apps/web/src/instrumentation.ts) | Runs once per server boot in the Node runtime. Skipped on Cloudflare Workers — there the env source is `getCloudflareContext().env`, not `process.env`, so validation defers to call sites.                   |
+| Module-load validation                                               | [`packages/database/src/client.ts`](../database/src/client.ts)             | Validates `DATABASE_URL` when the Prisma client is first imported.                                                                                                                                            |
 
 ## How `.env` resolution works
 

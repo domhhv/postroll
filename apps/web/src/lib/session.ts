@@ -1,13 +1,7 @@
 import 'server-only';
-
 import { cookies } from 'next/headers';
-import {
-  cookieOptions,
-  decryptSession,
-  encryptSession,
-  SESSION_COOKIE,
-  type SessionPayload,
-} from './session-crypto';
+
+import { cookieOptions, decryptSession, encryptSession, SESSION_COOKIE, type SessionPayload } from './session-crypto';
 
 export {
   decryptSession,
@@ -26,10 +20,7 @@ export {
  * persisted on the next mutating request or middleware pass.
  */
 function isReadonlyCookieError(error: unknown): boolean {
-  return (
-    error instanceof Error &&
-    error.message.includes('can only be modified in a Server Action')
-  );
+  return error instanceof Error && error.message.includes('can only be modified in a Server Action');
 }
 
 export async function readSessionCookie(): Promise<SessionPayload | null> {
@@ -43,9 +34,7 @@ export async function readSessionCookie(): Promise<SessionPayload | null> {
   return decryptSession(raw);
 }
 
-export async function createSession(
-  payload: Omit<SessionPayload, 'sid'>,
-): Promise<void> {
+export async function createSession(payload: Omit<SessionPayload, 'sid'>): Promise<void> {
   const sid = crypto.randomUUID();
   const jwe = await encryptSession({ sid, ...payload });
   const jar = await cookies();
@@ -53,9 +42,7 @@ export async function createSession(
 }
 
 export async function updateSession(
-  patch: Partial<
-    Pick<SessionPayload, 'accessToken' | 'refreshToken' | 'refreshExpiresAt'>
-  >,
+  patch: Partial<Pick<SessionPayload, 'accessToken' | 'refreshToken' | 'refreshExpiresAt'>>
 ): Promise<void> {
   const current = await readSessionCookie();
 
