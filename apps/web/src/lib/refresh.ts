@@ -1,6 +1,8 @@
 import { refreshResponseSchema } from '@postroll/contracts';
 import { parse as parseSetCookies } from 'set-cookie-parser';
+
 import { getServerEnv } from '@/env';
+
 import type { SessionPayload } from './session-crypto';
 
 export const GATEWAY_REFRESH_COOKIE = 'postroll_rt';
@@ -10,8 +12,8 @@ export const CLIENT_IP_HEADER = 'x-postroll-client-ip';
 
 /** Per-request client metadata forwarded to the gateway on auth calls. */
 export type RequestMeta = {
-  userAgent?: string | undefined;
   ip?: string | undefined;
+  userAgent?: string | undefined;
 };
 
 /**
@@ -20,51 +22,51 @@ export type RequestMeta = {
  * back to the first hop of `x-forwarded-for` otherwise.
  */
 export function readRequestMeta(headers: Headers): RequestMeta {
-  const ip =
-    headers.get('cf-connecting-ip') ??
-    headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    undefined;
+  const ip = headers.get('cf-connecting-ip') ?? headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined;
 
   return {
-    userAgent: headers.get('user-agent') ?? undefined,
     ip: ip || undefined,
+    userAgent: headers.get('user-agent') ?? undefined,
   };
 }
 
 /** Build the forwarding headers for a given request meta. */
 function metaHeaders(meta: RequestMeta = {}): Record<string, string> {
   const headers: Record<string, string> = {};
+
   if (meta.userAgent) {
     headers['user-agent'] = meta.userAgent;
   }
+
   if (meta.ip) {
     headers[CLIENT_IP_HEADER] = meta.ip;
   }
+
   return headers;
 }
 
 export class GatewayError extends Error {
   constructor(
     readonly status: number,
-    message: string,
+    message: string
   ) {
     super(message);
     this.name = 'GatewayError';
   }
 }
 
-type RefreshCookie = { value: string; expiresAt: string };
+type RefreshCookie = { expiresAt: string; value: string };
 
 export type RefreshResult = {
-  refreshToken: string;
   accessToken: string;
   refreshExpiresAt: string;
+  refreshToken: string;
 };
 
 export function parseRefreshCookie(setCookies: string[]): RefreshCookie {
-  const cookie = parseSetCookies(setCookies).find(
-    (c) => c.name === GATEWAY_REFRESH_COOKIE,
-  );
+  const cookie = parseSetCookies(setCookies).find((c) => {
+    return c.name === GATEWAY_REFRESH_COOKIE;
+  });
 
   if (!cookie) {
     throw new GatewayError(502, 'Gateway did not return a refresh cookie.');
@@ -79,13 +81,10 @@ export function parseRefreshCookie(setCookies: string[]): RefreshCookie {
     throw new GatewayError(502, 'Gateway refresh cookie is missing an expiry.');
   }
 
-  return { value: cookie.value, expiresAt };
+  return { expiresAt, value: cookie.value };
 }
 
-export async function refreshTokens(
-  session: SessionPayload,
-  meta: RequestMeta = {},
-): Promise<RefreshResult> {
+export async function refreshTokens(session: SessionPayload, meta: RequestMeta = {}): Promise<RefreshResult> {
   const { GATEWAY_URL } = getServerEnv();
   const res = await fetch(`${GATEWAY_URL}/auth/refresh`, {
     method: 'POST',
@@ -104,7 +103,7 @@ export async function refreshTokens(
 
   return {
     accessToken: body.accessToken,
-    refreshToken: cookie.value,
     refreshExpiresAt: cookie.expiresAt,
+    refreshToken: cookie.value,
   };
 }

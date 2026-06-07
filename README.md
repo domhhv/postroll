@@ -6,13 +6,13 @@ A system designed to manage and process media files with an efficient and struct
 
 Monorepo managed by [pnpm workspaces](https://pnpm.io/workspaces) and [Turborepo](https://turbo.build/repo).
 
-| Path | What | Docs |
-|---|---|---|
-| [`apps/web`](apps/web) | Next.js 16 frontend, deployed to Cloudflare Workers via OpenNext. | [README](apps/web/README.md) |
-| [`apps/gateway`](apps/gateway) | NestJS HTTP gateway, deployed to Fly.io. | [README](apps/gateway/README.md) |
-| [`packages/database`](packages/database) | Prisma schema, generated client, and local Neon dev stack. | [README](packages/database/README.md) |
-| [`packages/env`](packages/env) | Shared Zod-backed env-variable validator. | [README](packages/env/README.md) |
-| [`packages/configs`](packages/configs) | Shared Biome config and `tsconfig` presets (base / nestjs / nextjs / prisma). | [README](packages/configs/README.md) |
+| Path                                     | What                                                                                         | Docs                                  |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------- |
+| [`apps/web`](apps/web)                   | Next.js 16 frontend, deployed to Cloudflare Workers via OpenNext.                            | [README](apps/web/README.md)          |
+| [`apps/gateway`](apps/gateway)           | NestJS HTTP gateway, deployed to Fly.io.                                                     | [README](apps/gateway/README.md)      |
+| [`packages/database`](packages/database) | Prisma schema, generated client, and local Neon dev stack.                                   | [README](packages/database/README.md) |
+| [`packages/env`](packages/env)           | Shared Zod-backed env-variable validator.                                                    | [README](packages/env/README.md)      |
+| [`packages/configs`](packages/configs)   | Shared ESLINT and Prettier configs and `tsconfig` presets (base / nestjs / nextjs / prisma). | [README](packages/configs/README.md)  |
 
 ## Quickstart
 
@@ -49,26 +49,30 @@ To stop the database: `pnpm --filter @postroll/database db:stop`.
 
 Validation across the monorepo is centralized in [`@postroll/env`](packages/env/README.md). Each package defines its own Zod schema; validation runs at script-time, app boot, or module load depending on context.
 
-| Variable | Where it's required | Details |
-|---|---|---|
-| `DATABASE_URL` | `apps/gateway` runtime; `packages/database` (only if the in-package `prisma` singleton is imported) | Postgres connection string. The gateway picks its driver adapter based on the URL host: Neon URLs → `@prisma/adapter-neon`, everything else → `@prisma/adapter-pg`. |
-| `GATEWAY_URL` | `apps/web` runtime | Base URL of the gateway. The web app fetches all data through it — it does not connect to Postgres directly. |
-| `DIRECT_URL` | `packages/database` migrations | Non-pooled Neon connection for `prisma migrate`. |
-| `SHADOW_DATABASE_URL` | `packages/database` migrations (optional) | Drift-detection DB for `prisma migrate dev`. |
-| `NEON_API_KEY`, `NEON_PROJECT_ID`, `PARENT_BRANCH_ID` | `packages/database` local `db:start` | Passed to the `neondatabase/neon_local` Docker container. |
-| `PORT` | `apps/gateway` (optional, defaults to `8080`) | HTTP listener port. |
-| `NODE_ENV` | `apps/gateway` (optional, defaults to `development`) | Standard Node env. |
+| Variable                                              | Where it's required                                                                                 | Details                                                                                                                                                             |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                                        | `apps/gateway` runtime; `packages/database` (only if the in-package `prisma` singleton is imported) | Postgres connection string. The gateway picks its driver adapter based on the URL host: Neon URLs → `@prisma/adapter-neon`, everything else → `@prisma/adapter-pg`. |
+| `GATEWAY_URL`                                         | `apps/web` runtime                                                                                  | Base URL of the gateway. The web app fetches all data through it — it does not connect to Postgres directly.                                                        |
+| `DIRECT_URL`                                          | `packages/database` migrations                                                                      | Non-pooled Neon connection for `prisma migrate`.                                                                                                                    |
+| `SHADOW_DATABASE_URL`                                 | `packages/database` migrations (optional)                                                           | Drift-detection DB for `prisma migrate dev`.                                                                                                                        |
+| `NEON_API_KEY`, `NEON_PROJECT_ID`, `PARENT_BRANCH_ID` | `packages/database` local `db:start`                                                                | Passed to the `neondatabase/neon_local` Docker container.                                                                                                           |
+| `PORT`                                                | `apps/gateway` (optional, defaults to `8080`)                                                       | HTTP listener port.                                                                                                                                                 |
+| `NODE_ENV`                                            | `apps/gateway` (optional, defaults to `development`)                                                | Standard Node env.                                                                                                                                                  |
 
 Every variable that affects build output or runtime is declared in `globalEnv` in [`turbo.json`](turbo.json) so Turbo's cache invalidates when their values change. See individual package READMEs for full descriptions and which scripts/runtimes use which variables.
 
 ## Code quality
 
-### Formatting and linting — [Biome](https://biomejs.dev/)
+### Formatting and linting — [ESLint](https://eslint.org/) + [Prettier](https://prettier.io/)
 
-- `pnpm biome:check` — checks formatting and lint rules across all packages (via Turbo).
-- `pnpm biome:write` — applies safe fixes.
+These commands can be run from the monorepo root across all apps and packages via Turbo, leveraging its caching:
 
-The shared config lives in [`packages/configs`](packages/configs) (`biome/biome.json`, exported as `@postroll/configs/biome`) and is extended by every package's local `biome.json`.
+- `pnpm lint` — checks lint rules across.
+- `pnpm lint:fix` — auto-fixes lint issues.
+- `pnpm prettier:check` - checks formatting.
+- `pnpm prettier:write` - auto-formats files.
+
+The shared config lives in [`packages/configs`](packages/configs) (`eslint/eslint.config.mjs` and `prettier/prettier.config.mjs`, exported as `@postroll/configs/eslint` and `@postroll/configs/prettier`) and is exported by every package's local `eslint.config.mjs` and `prettier.config.mjs`.
 
 ### Type checking — TypeScript
 
@@ -81,7 +85,7 @@ The shared `tsconfig` presets live in [`packages/configs`](packages/configs) und
 On every commit, [`lint-staged.config.mjs`](lint-staged.config.mjs) runs:
 
 - `pnpm check-types` if any `.ts` / `.tsx` changed
-- `pnpm biome:check` if any `.md` / `.js` / `.jsx` / `.ts` / `.tsx` changed
+- `pnpm lint` and `pnpm prettier:check` if any `.md` / `.js` / `.jsx` / `.ts` / `.tsx` changed
 
 The hook is installed by `pnpm install` (via the `prepare` script).
 
@@ -89,7 +93,7 @@ The hook is installed by `pnpm install` (via the `prepare` script).
 
 GitHub Actions in [`.github/workflows/`](.github/workflows):
 
-- [`code-health.yml`](.github/workflows/code-health.yml) — runs `check-types` and `biome:check` on every PR.
+- [`code-health.yml`](.github/workflows/code-health.yml) — runs `check-types`, `pnpm lint`, and `pnpm prettier:check` on every PR.
 - [`gateway-preview-deploy.yml`](.github/workflows/gateway-preview-deploy.yml) — creates a Neon preview branch, deploys a Fly review app per PR.
 - [`gateway-preview-cleanup.yml`](.github/workflows/gateway-preview-cleanup.yml) — tears down preview infra on PR close.
 - [`gateway-production-deploy.yml`](.github/workflows/gateway-production-deploy.yml) — runs migrations and deploys to Fly on push to `main`.
@@ -98,15 +102,16 @@ The Cloudflare Workers Builds integration handles `apps/web` deploys (configured
 
 ## Common commands
 
-| Command | What it does |
-|---|---|
-| `pnpm dev` | Generate Prisma client, boot DB, run both apps. |
-| `pnpm build` | Build all packages and apps. |
-| `pnpm check-types` | Type-check all packages. |
-| `pnpm biome:check` / `pnpm biome:write` | Lint / lint-fix. |
-| `pnpm --filter @postroll/database db:migrate` | Apply migrations to the local DB. |
-| `pnpm --filter @postroll/database db:reset` | Wipe and re-apply all migrations. |
-| `pnpm --filter @postroll/database studio` | Open Prisma Studio. |
-| `pnpm --filter @postroll/database db:stop` | Stop the local DB containers. |
+| Command                                       | What it does                                    |
+| --------------------------------------------- | ----------------------------------------------- |
+| `pnpm dev`                                    | Generate Prisma client, boot DB, run both apps. |
+| `pnpm build`                                  | Build all packages and apps.                    |
+| `pnpm check-types`                            | Type-check all packages.                        |
+| `pnpm lint` / `pnpm lint:fix`                 | Lint / auto-fix issues.                         |
+| `pnpm prettier:check` / `pnpm prettier:write` | Check formatting / auto-format files.           |
+| `pnpm --filter @postroll/database db:migrate` | Apply migrations to the local DB.               |
+| `pnpm --filter @postroll/database db:reset`   | Wipe and re-apply all migrations.               |
+| `pnpm --filter @postroll/database studio`     | Open Prisma Studio.                             |
+| `pnpm --filter @postroll/database db:stop`    | Stop the local DB containers.                   |
 
 See the [database README](packages/database/README.md) for the full script reference.

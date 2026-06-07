@@ -1,24 +1,25 @@
 'use server';
 
 import {
-  changePasswordRequestSchema,
   loginRequestSchema,
   registerRequestSchema,
   type UpdateUserRequest,
   updateUserRequestSchema,
+  changePasswordRequestSchema,
 } from '@postroll/contracts';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
+
 import {
-  GatewayError,
-  loginAndCreateSession,
-  logoutGateway,
-  registerUser,
-  revokeSession,
   updateMe,
+  GatewayError,
+  registerUser,
+  logoutGateway,
+  revokeSession,
   updatePassword,
+  loginAndCreateSession,
 } from './api';
 import { readRequestMeta } from './refresh';
 import { deleteSession, readSessionCookie } from './session';
@@ -27,9 +28,9 @@ import { getFormValue } from './utils';
 export type AuthFormState =
   | { status: 'idle' }
   | {
-      status: 'error';
-      message: string;
       fieldErrors?: Record<string, string>;
+      message: string;
+      status: 'error';
       values: { email: string; password?: string };
     };
 
@@ -49,31 +50,28 @@ function extractFieldErrors(error: z.ZodError): Record<string, string> {
 
 function toFormError(
   error: unknown,
-  values: { email: string; password: string },
+  values: { email: string; password: string }
 ): Extract<AuthFormState, { status: 'error' }> {
   if (error instanceof GatewayError) {
-    return { status: 'error', message: error.message, values };
+    return { message: error.message, status: 'error', values };
   }
 
   if (error instanceof z.ZodError) {
     return {
-      status: 'error',
       message: 'Unexpected response from gateway.',
+      status: 'error',
       values,
     };
   }
 
   return {
-    status: 'error',
     message: 'Something went wrong. Please try again.',
+    status: 'error',
     values,
   };
 }
 
-export async function registerAction(
-  _previous: AuthFormState,
-  formData: FormData,
-): Promise<AuthFormState> {
+export async function registerAction(_previous: AuthFormState, formData: FormData): Promise<AuthFormState> {
   const values = {
     email: getFormValue(formData, 'email'),
     password: getFormValue(formData, 'password'),
@@ -82,9 +80,9 @@ export async function registerAction(
 
   if (!parsed.success) {
     return {
-      status: 'error',
-      message: 'Please fix the errors below.',
       fieldErrors: extractFieldErrors(parsed.error),
+      message: 'Please fix the errors below.',
+      status: 'error',
       values,
     };
   }
@@ -100,10 +98,7 @@ export async function registerAction(
   redirect('/dashboard');
 }
 
-export async function loginAction(
-  _previous: AuthFormState,
-  formData: FormData,
-): Promise<AuthFormState> {
+export async function loginAction(_previous: AuthFormState, formData: FormData): Promise<AuthFormState> {
   const values = {
     email: getFormValue(formData, 'email'),
     password: getFormValue(formData, 'password'),
@@ -112,9 +107,9 @@ export async function loginAction(
 
   if (!parsed.success) {
     return {
-      status: 'error',
-      message: 'Please fix the errors below.',
       fieldErrors: extractFieldErrors(parsed.error),
+      message: 'Please fix the errors below.',
+      status: 'error',
       values,
     };
   }
@@ -135,16 +130,13 @@ export type AccountFormState =
   | { status: 'idle' }
   | { status: 'success'; values: AccountValues }
   | {
-      status: 'error';
-      message: string;
       fieldErrors?: Record<string, string>;
+      message: string;
+      status: 'error';
       values: AccountValues;
     };
 
-export async function updateAccountAction(
-  _previous: AccountFormState,
-  formData: FormData,
-): Promise<AccountFormState> {
+export async function updateAccountAction(_previous: AccountFormState, formData: FormData): Promise<AccountFormState> {
   const values = {
     email: getFormValue(formData, 'email'),
     name: getFormValue(formData, 'name'),
@@ -159,9 +151,9 @@ export async function updateAccountAction(
 
   if (!parsed.success) {
     return {
-      status: 'error',
-      message: 'Please fix the errors below.',
       fieldErrors: extractFieldErrors(parsed.error),
+      message: 'Please fix the errors below.',
+      status: 'error',
       values,
     };
   }
@@ -177,12 +169,12 @@ export async function updateAccountAction(
     };
   } catch (error) {
     if (error instanceof GatewayError) {
-      return { status: 'error', message: error.message, values };
+      return { message: error.message, status: 'error', values };
     }
 
     return {
-      status: 'error',
       message: 'Something went wrong. Please try again.',
+      status: 'error',
       values,
     };
   }
@@ -196,27 +188,27 @@ export type PasswordFormState =
   | { status: 'idle' }
   | { status: 'success' }
   | {
-      status: 'error';
-      message: string;
       fieldErrors?: Record<string, string>;
+      message: string;
+      status: 'error';
     };
 
 export async function changePasswordAction(
   _previous: PasswordFormState,
-  formData: FormData,
+  formData: FormData
 ): Promise<PasswordFormState> {
   const parsed = changePasswordRequestSchema.safeParse({
+    confirmPassword: getFormValue(formData, 'confirmPassword'),
     currentPassword: getFormValue(formData, 'currentPassword'),
     newPassword: getFormValue(formData, 'newPassword'),
-    confirmPassword: getFormValue(formData, 'confirmPassword'),
     revokeOtherSessions: getFormValue(formData, 'revokeOtherSessions') === 'on',
   });
 
   if (!parsed.success) {
     return {
-      status: 'error',
-      message: 'Please fix the errors below.',
       fieldErrors: extractFieldErrors(parsed.error),
+      message: 'Please fix the errors below.',
+      status: 'error',
     };
   }
 
@@ -226,18 +218,18 @@ export async function changePasswordAction(
     if (error instanceof GatewayError) {
       if (error.status === 401) {
         return {
-          status: 'error',
-          message: 'Please fix the errors below.',
           fieldErrors: { currentPassword: error.message },
+          message: 'Please fix the errors below.',
+          status: 'error',
         };
       }
 
-      return { status: 'error', message: error.message };
+      return { message: error.message, status: 'error' };
     }
 
     return {
-      status: 'error',
       message: 'Something went wrong. Please try again.',
+      status: 'error',
     };
   }
 
@@ -255,23 +247,19 @@ export async function logoutAction(): Promise<void> {
   redirect('/login');
 }
 
-export type RevokeSessionResult =
-  | { status: 'success' }
-  | { status: 'error'; message: string };
+export type RevokeSessionResult = { status: 'success' } | { message: string; status: 'error' };
 
-export async function revokeSessionAction(
-  id: string,
-): Promise<RevokeSessionResult> {
+export async function revokeSessionAction(id: string): Promise<RevokeSessionResult> {
   try {
     await revokeSession(id);
   } catch (error) {
     if (error instanceof GatewayError) {
-      return { status: 'error', message: error.message };
+      return { message: error.message, status: 'error' };
     }
 
     return {
-      status: 'error',
       message: 'Something went wrong. Please try again.',
+      status: 'error',
     };
   }
 

@@ -2,6 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import { Logger } from 'nestjs-pino';
+
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
@@ -12,7 +13,7 @@ async function bootstrap() {
   app.useGlobalFilters(new GlobalExceptionFilter(app.get(Logger)));
   const port = app.get(ConfigService).get<number>('PORT', 8080);
   await app.listen(port);
-  console.log(`Gateway is listening on port ${port}`);
+  console.info(`Gateway is listening on port ${port}`);
 }
 
 void bootstrap();

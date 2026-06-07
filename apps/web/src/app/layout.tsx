@@ -1,23 +1,24 @@
 import type { Metadata } from 'next';
 import { Roboto_Slab, Source_Sans_3 } from 'next/font/google';
+
 import { Header } from '#components/header';
 import { ThemeProvider } from '#components/theme-provider';
 
 import '@postroll/ui/globals.css';
 
 const robotoSlab = Roboto_Slab({
-  variable: '--font-roboto-slab',
   subsets: ['latin'],
+  variable: '--font-roboto-slab',
 });
 
 const sourceSans3 = Source_Sans_3({
-  variable: '--font-source-sans-3',
   subsets: ['latin'],
+  variable: '--font-source-sans-3',
 });
 
 export const metadata: Metadata = {
-  title: 'Postroll',
   description: 'Video files uploader, processor and analyzer',
+  title: 'Postroll',
 };
 
 export default function RootLayout({
@@ -31,10 +32,10 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${robotoSlab.variable} ${sourceSans3.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="flex min-h-full flex-col">
         <ThemeProvider>
           <Header />
-          <main className="flex flex-1 p-16 bg-background">{children}</main>
+          <main className="bg-background flex flex-1 p-16">{children}</main>
         </ThemeProvider>
       </body>
     </html>

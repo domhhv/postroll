@@ -1,6 +1,7 @@
 import { buttonVariants } from '@postroll/ui/components/button';
-import { IconBrandGithub, IconMovie } from '@tabler/icons-react';
+import { IconMovie, IconBrandGithub } from '@tabler/icons-react';
 import Link from 'next/link';
+
 import { UserMenu } from '#components/user-menu';
 import { getUser } from '#lib/dal';
 
@@ -8,24 +9,21 @@ export async function Header() {
   const user = await getUser();
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-border bg-background px-6">
-      <Link
-        href="/"
-        className="flex items-center gap-1 text-foreground hover:opacity-80"
-      >
-        <IconMovie className="size-5 -mt-0.5" />
+    <header className="border-border bg-background flex h-14 items-center justify-between border-b px-6">
+      <Link href="/" className="text-foreground flex items-center gap-1 hover:opacity-80">
+        <IconMovie className="-mt-0.5 size-5" />
         <span className="font-semibold tracking-tight">Postroll</span>
       </Link>
 
       <div className="flex items-center gap-2">
         <a
-          href="https://github.com/domhhv/postroll"
           target="_blank"
-          rel="noopener noreferrer"
           aria-label="GitHub"
+          rel="noopener noreferrer"
+          href="https://github.com/domhhv/postroll"
           className={buttonVariants({
-            variant: 'ghost',
             size: 'icon',
+            variant: 'ghost',
           })}
         >
           <IconBrandGithub />
@@ -48,10 +46,7 @@ export async function Header() {
             >
               Log In
             </Link>
-            <Link
-              href="/register"
-              className={buttonVariants({ variant: 'default' })}
-            >
+            <Link href="/register" className={buttonVariants({ variant: 'default' })}>
               Register
             </Link>
           </>

@@ -20,8 +20,22 @@
     "check-types": {
       "dependsOn": ["^build", "^db:generate"]
     },
-    "biome:check": {},
-    "biome:write": {},
+    "lint": {
+      "dependsOn": ["^lint", "//#lint:root"]
+    },
+    "//#lint:root": {},
+    "lint:fix": {
+      "dependsOn": ["^lint:fix", "//#lint:root:fix"]
+    },
+    "//#lint:root:fix": {},
+    "prettier:check": {
+      "dependsOn": ["//#prettier:check:root"]
+    },
+    "//#prettier:check:root": {},
+    "prettier:write": {
+      "dependsOn": ["^prettier:write", "//#prettier:write:root"]
+    },
+    "//#prettier:write:root": {},
     "build:cf": {
       "dependsOn": ["^build"],
       "outputs": [".next/**", ".open-next/**"]

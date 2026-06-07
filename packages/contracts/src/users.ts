@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
 export const userDtoSchema = z.object({
-  id: z.uuid(),
+  createdAt: z.iso.datetime(),
   email: z.email(),
+  id: z.uuid(),
   name: z.string().nullable(),
   username: z.string().nullable(),
-  createdAt: z.iso.datetime(),
 });
 
 export type UserDto = z.infer<typeof userDtoSchema>;

@@ -1,37 +1,32 @@
 import 'server-only';
-
 import {
-  type ChangePasswordRequest,
+  type UserDto,
+  userDtoSchema,
+  type SessionList,
   type LoginRequest,
+  sessionListSchema,
   type LoginResponse,
   loginResponseSchema,
   type RegisterRequest,
   type RegisterResponse,
   registerResponseSchema,
-  type SessionList,
-  sessionListSchema,
   type UpdateUserRequest,
-  type UserDto,
-  userDtoSchema,
+  type ChangePasswordRequest,
 } from '@postroll/contracts';
 import { headers } from 'next/headers';
+
 import { getServerEnv } from '@/env';
+
 import {
-  CLIENT_IP_HEADER,
-  GATEWAY_REFRESH_COOKIE,
   GatewayError,
-  parseRefreshCookie,
-  type RequestMeta,
-  readRequestMeta,
   refreshTokens,
+  readRequestMeta,
+  CLIENT_IP_HEADER,
+  type RequestMeta,
+  parseRefreshCookie,
+  GATEWAY_REFRESH_COOKIE,
 } from './refresh';
-import {
-  createSession,
-  deleteSession,
-  readSessionCookie,
-  type SessionPayload,
-  updateSession,
-} from './session';
+import { createSession, deleteSession, updateSession, readSessionCookie, type SessionPayload } from './session';
 import { noop } from './utils';
 
 export { GatewayError } from './refresh';
@@ -40,22 +35,25 @@ async function postJson(
   path: string,
   body: unknown,
   errorMap: Record<number, string>,
-  meta: RequestMeta = {},
+  meta: RequestMeta = {}
 ): Promise<Response> {
   const { GATEWAY_URL } = getServerEnv();
   const headers: Record<string, string> = {
     'content-type': 'application/json',
   };
+
   if (meta.userAgent) {
     headers['user-agent'] = meta.userAgent;
   }
+
   if (meta.ip) {
     headers[CLIENT_IP_HEADER] = meta.ip;
   }
+
   const res = await fetch(`${GATEWAY_URL}${path}`, {
-    method: 'POST',
-    headers,
     body: JSON.stringify(body),
+    headers,
+    method: 'POST',
   });
 
   if (!res.ok) {
@@ -67,9 +65,7 @@ async function postJson(
   return res;
 }
 
-export async function registerUser(
-  input: RegisterRequest,
-): Promise<RegisterResponse> {
+export async function registerUser(input: RegisterRequest): Promise<RegisterResponse> {
   const res = await postJson('/auth/register', input, {
     409: 'An account with this email already exists.',
   });
@@ -79,21 +75,16 @@ export async function registerUser(
 
 export async function loginUser(
   input: LoginRequest,
-  meta: RequestMeta = {},
-): Promise<LoginResponse & { refreshToken: string; refreshExpiresAt: string }> {
-  const res = await postJson(
-    '/auth/login',
-    input,
-    { 401: 'Invalid email or password.' },
-    meta,
-  );
+  meta: RequestMeta = {}
+): Promise<LoginResponse & { refreshExpiresAt: string; refreshToken: string }> {
+  const res = await postJson('/auth/login', input, { 401: 'Invalid email or password.' }, meta);
   const body = loginResponseSchema.parse(await res.json());
   const cookie = parseRefreshCookie(res.headers.getSetCookie());
 
   return {
     ...body,
-    refreshToken: cookie.value,
     refreshExpiresAt: cookie.expiresAt,
+    refreshToken: cookie.value,
   };
 }
 
@@ -101,15 +92,12 @@ export async function logoutGateway(session: SessionPayload): Promise<void> {
   const { GATEWAY_URL } = getServerEnv();
 
   await fetch(`${GATEWAY_URL}/auth/logout`, {
-    method: 'POST',
     headers: { cookie: `${GATEWAY_REFRESH_COOKIE}=${session.refreshToken}` },
+    method: 'POST',
   }).catch(noop);
 }
 
-async function gatewayFetch(
-  path: string,
-  init: RequestInit = {},
-): Promise<Response> {
+async function gatewayFetch(path: string, init: RequestInit = {}): Promise<Response> {
   const { GATEWAY_URL } = getServerEnv();
   const session = await readSessionCookie();
 
@@ -117,15 +105,16 @@ async function gatewayFetch(
     throw new GatewayError(401, 'No active session.');
   }
 
-  const doFetch = (accessToken: string) =>
-    fetch(`${GATEWAY_URL}${path}`, {
+  function doFetch(accessToken: string) {
+    return fetch(`${GATEWAY_URL}${path}`, {
       ...init,
+      cache: 'no-store',
       headers: {
         ...(init.headers ?? {}),
         authorization: `Bearer ${accessToken}`,
       },
-      cache: 'no-store',
     });
+  }
 
   const first = await doFetch(session.accessToken);
 
@@ -142,8 +131,8 @@ async function gatewayFetch(
     const next = await refreshTokens(session, meta);
     await updateSession({
       accessToken: next.accessToken,
-      refreshToken: next.refreshToken,
       refreshExpiresAt: next.refreshExpiresAt,
+      refreshToken: next.refreshToken,
     });
 
     return await doFetch(next.accessToken);
@@ -166,16 +155,14 @@ export async function getMe(): Promise<UserDto> {
 
 export async function updateMe(input: UpdateUserRequest): Promise<UserDto> {
   const res = await gatewayFetch('/users/me', {
-    method: 'PATCH',
-    headers: { 'content-type': 'application/json' },
     body: JSON.stringify(input),
+    headers: { 'content-type': 'application/json' },
+    method: 'PATCH',
   });
 
   if (!res.ok) {
     const message =
-      res.status === 409
-        ? 'An account with this email already exists.'
-        : `Request failed (${res.status}).`;
+      res.status === 409 ? 'An account with this email already exists.' : `Request failed (${res.status}).`;
 
     throw new GatewayError(res.status, message);
   }
@@ -183,28 +170,24 @@ export async function updateMe(input: UpdateUserRequest): Promise<UserDto> {
   return userDtoSchema.parse(await res.json());
 }
 
-export async function updatePassword(
-  input: ChangePasswordRequest,
-): Promise<void> {
+export async function updatePassword(input: ChangePasswordRequest): Promise<void> {
   const session = await readSessionCookie();
   const headers: Record<string, string> = {
     'content-type': 'application/json',
   };
+
   if (input.revokeOtherSessions && session) {
     headers['x-postroll-refresh-token'] = session.refreshToken;
   }
 
   const res = await gatewayFetch('/users/me/password', {
-    method: 'PATCH',
-    headers,
     body: JSON.stringify(input),
+    headers,
+    method: 'PATCH',
   });
 
   if (!res.ok) {
-    const message =
-      res.status === 401
-        ? 'Current password is incorrect.'
-        : `Request failed (${res.status}).`;
+    const message = res.status === 401 ? 'Current password is incorrect.' : `Request failed (${res.status}).`;
 
     throw new GatewayError(res.status, message);
   }
@@ -213,6 +196,7 @@ export async function updatePassword(
 export async function listSessions(): Promise<SessionList> {
   const session = await readSessionCookie();
   const headers: Record<string, string> = {};
+
   if (session) {
     headers['x-postroll-refresh-token'] = session.refreshToken;
   }
@@ -232,25 +216,19 @@ export async function revokeSession(id: string): Promise<void> {
   });
 
   if (!res.ok) {
-    const message =
-      res.status === 404
-        ? 'Session not found.'
-        : `Request failed (${res.status}).`;
+    const message = res.status === 404 ? 'Session not found.' : `Request failed (${res.status}).`;
 
     throw new GatewayError(res.status, message);
   }
 }
 
-export async function loginAndCreateSession(
-  input: LoginRequest,
-  meta: RequestMeta = {},
-): Promise<UserDto> {
+export async function loginAndCreateSession(input: LoginRequest, meta: RequestMeta = {}): Promise<UserDto> {
   const result = await loginUser(input, meta);
   await createSession({
-    userId: result.user.id,
     accessToken: result.accessToken,
-    refreshToken: result.refreshToken,
     refreshExpiresAt: result.refreshExpiresAt,
+    refreshToken: result.refreshToken,
+    userId: result.user.id,
   });
 
   return result.user;

@@ -2,12 +2,8 @@
 
 import { IconEye, IconEyeOff } from '@tabler/icons-react';
 import { useState } from 'react';
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from '#components/input-group';
+
+import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupButton } from '#components/input-group';
 
 export function PasswordInput({
   className,
@@ -24,9 +20,13 @@ export function PasswordInput({
         <InputGroupButton
           type="button"
           size="icon-xs"
-          aria-label={visible ? 'Hide password' : 'Show password'}
           aria-pressed={visible}
-          onClick={() => setVisible((prev) => !prev)}
+          aria-label={visible ? 'Hide password' : 'Show password'}
+          onClick={() => {
+            return setVisible((prev) => {
+              return !prev;
+            });
+          }}
         >
           {visible ? <IconEye /> : <IconEyeOff />}
         </InputGroupButton>

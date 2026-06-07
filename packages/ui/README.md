@@ -25,21 +25,21 @@ Add as a workspace dependency:
 Import the global stylesheet once at the app root (e.g. `app/layout.tsx`):
 
 ```ts
-import "@postroll/ui/globals.css";
+import '@postroll/ui/globals.css';
 ```
 
 Import components, hooks, and utilities via subpath exports:
 
 ```tsx
-import { Button } from "@postroll/ui/components/button";
-import { cn } from "@postroll/ui/lib/utils";
+import { Button } from '@postroll/ui/components/button';
+import { cn } from '@postroll/ui/lib/utils';
 ```
 
 Reuse the PostCSS config in consuming apps:
 
 ```js
 // postcss.config.mjs
-export { default } from "@postroll/ui/postcss.config";
+export { default } from '@postroll/ui/postcss.config';
 ```
 
 ## Adding components
@@ -55,5 +55,7 @@ Components are written to `src/components/`, utilities to `src/lib/`, and hooks 
 ## Scripts
 
 - `pnpm --filter @postroll/ui check-types` — type-check with `tsc --noEmit`
-- `pnpm --filter @postroll/ui biome:check` — lint/format check
-- `pnpm --filter @postroll/ui biome:write` — apply lint/format fixes
+- `pnpm --filter @postroll/ui lint` — lint check
+- `pnpm --filter @postroll/ui lint:fix` — lint check with auto-fix
+- `pnpm --filter @postroll/ui prettier:check` — check formatting
+- `pnpm --filter @postroll/ui prettier:write` — apply formatting fixes

@@ -1,26 +1,18 @@
 import type { ZodType, output as zOutput } from 'zod';
+
 import { formatZodEnvError } from './format.js';
 import { loadEnvFile } from './load.js';
 
 export type ValidateEnvOptions = {
-  source?: Record<string, unknown>;
   contextLabel?: string;
+  envFileRelativePath?: string;
   exampleHint?: string;
   importMetaUrl?: string;
-  envFileRelativePath?: string;
+  source?: Record<string, unknown>;
 };
 
-export function validateEnv<S extends ZodType>(
-  schema: S,
-  options: ValidateEnvOptions = {},
-): zOutput<S> {
-  const {
-    source,
-    contextLabel,
-    exampleHint,
-    importMetaUrl,
-    envFileRelativePath,
-  } = options;
+export function validateEnv<S extends ZodType>(schema: S, options: ValidateEnvOptions = {}): zOutput<S> {
+  const { contextLabel, envFileRelativePath, exampleHint, importMetaUrl, source } = options;
 
   if (importMetaUrl) {
     loadEnvFile({
@@ -45,6 +37,6 @@ export function validateEnv<S extends ZodType>(
   return result.data;
 }
 
-export { z } from 'zod';
 export { formatZodEnvError } from './format.js';
 export { loadEnvFile } from './load.js';
+export { z } from 'zod';

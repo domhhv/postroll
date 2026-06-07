@@ -1,28 +1,29 @@
 import type { CSSProperties } from 'react';
+
 import '../styles/hourglass-loader.css';
 
 type HourglassLoaderProps = {
-  size?: number;
-  color?: string;
-  speed?: number;
   bgOpacity?: number;
+  color?: string;
+  size?: number;
+  speed?: number;
 };
 
 export function HourglassLoader({
-  size = 20,
-  color = 'var(--primary-foreground)',
-  speed = 1.75,
   bgOpacity = 0.1,
+  color = 'var(--primary-foreground)',
+  size = 20,
+  speed = 1.75,
 }: HourglassLoaderProps) {
   return (
     <div
       className="hourglass-loader-container"
       style={
         {
-          '--uib-size': `${size}px`,
-          '--uib-color': color,
-          '--uib-speed': `${speed}s`,
           '--uib-bg-opacity': bgOpacity,
+          '--uib-color': color,
+          '--uib-size': `${size}px`,
+          '--uib-speed': `${speed}s`,
         } as CSSProperties
       }
     >

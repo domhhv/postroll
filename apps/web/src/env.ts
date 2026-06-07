@@ -12,9 +12,7 @@ export type WebServerEnv = z.infer<typeof webServerEnvSchema>;
 
 let cached: WebServerEnv | undefined;
 
-export function getServerEnv(
-  source: Record<string, unknown> = process.env,
-): WebServerEnv {
+export function getServerEnv(source: Record<string, unknown> = process.env): WebServerEnv {
   if (cached) {
     return cached;
   }
@@ -26,10 +24,11 @@ export function getServerEnv(
       formatZodEnvError(result.error, {
         contextLabel: '@postroll/web',
         exampleHint: envExampleHint,
-      }),
+      })
     );
   }
 
   cached = result.data;
+
   return cached;
 }

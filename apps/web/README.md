@@ -4,15 +4,15 @@ Next.js 16 app deployed to Cloudflare Workers via [`@opennextjs/cloudflare`](htt
 
 ## Scripts
 
-| Script | Purpose |
-|---|---|
-| `pnpm dev` | `next dev` — local dev (Turbopack). |
-| `pnpm build` | `next build --webpack` — production build. **Uses webpack, not Turbopack** — see "Build engine" below. |
-| `pnpm start` | `next start` — runs the production build locally on Node. |
-| `pnpm preview` | `opennextjs-cloudflare build && opennextjs-cloudflare preview` — boots `wrangler dev` against the OpenNext bundle. Closest local equivalent to the deployed worker. |
-| `pnpm deploy` | OpenNext build + Cloudflare deploy. Normally invoked by Workers Builds, not run by hand. |
-| `pnpm upload` | OpenNext build + `wrangler upload` — uploads a new version without promoting it. |
-| `pnpm cf-typegen` | Regenerate `cloudflare-env.d.ts` types from `wrangler.jsonc`. |
+| Script            | Purpose                                                                                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`        | `next dev` — local dev (Turbopack).                                                                                                                                 |
+| `pnpm build`      | `next build --webpack` — production build. **Uses webpack, not Turbopack** — see "Build engine" below.                                                              |
+| `pnpm start`      | `next start` — runs the production build locally on Node.                                                                                                           |
+| `pnpm preview`    | `opennextjs-cloudflare build && opennextjs-cloudflare preview` — boots `wrangler dev` against the OpenNext bundle. Closest local equivalent to the deployed worker. |
+| `pnpm deploy`     | OpenNext build + Cloudflare deploy. Normally invoked by Workers Builds, not run by hand.                                                                            |
+| `pnpm upload`     | OpenNext build + `wrangler upload` — uploads a new version without promoting it.                                                                                    |
+| `pnpm cf-typegen` | Regenerate `cloudflare-env.d.ts` types from `wrangler.jsonc`.                                                                                                       |
 
 ## Build engine
 
@@ -44,7 +44,7 @@ if (process.env.NEXT_RUNTIME === 'nodejs') {
 
 The Node-only boot validation lives in [`src/instrumentation-node.ts`](src/instrumentation-node.ts) — it loads `.env.local` / `.env` via [`@postroll/env/load`](../../packages/env/README.md) and calls `getServerEnv()` to fail boot if anything's missing.
 
-**Why the split matters:** `register()` runs in every runtime (Node, edge, build), and `@postroll/env/load` pulls in `node:fs` / `node:url` / `dotenv`. webpack only treats a dynamic `import()` as a per-runtime boundary — and thus keeps it out of the edge bundle — when the `import()` sits *inside* the `NEXT_RUNTIME === 'nodejs'` check. A top-level import (or an import after an early-`return` guard) gets bundled for the edge build too, which breaks the OpenNext build with "module not found: node:fs". So the Node-only code must be a separate module imported only inside that branch. This is the same reason validation can't happen on Cloudflare via `instrumentation`: there, env values live in `getCloudflareContext().env`, not `process.env`, so call sites that have the Workers context validate instead.
+**Why the split matters:** `register()` runs in every runtime (Node, edge, build), and `@postroll/env/load` pulls in `node:fs` / `node:url` / `dotenv`. webpack only treats a dynamic `import()` as a per-runtime boundary — and thus keeps it out of the edge bundle — when the `import()` sits _inside_ the `NEXT_RUNTIME === 'nodejs'` check. A top-level import (or an import after an early-`return` guard) gets bundled for the edge build too, which breaks the OpenNext build with "module not found: node:fs". So the Node-only code must be a separate module imported only inside that branch. This is the same reason validation can't happen on Cloudflare via `instrumentation`: there, env values live in `getCloudflareContext().env`, not `process.env`, so call sites that have the Workers context validate instead.
 
 The file lives at `src/instrumentation.ts`, not the project root, because Next.js only discovers it at `<rootDir>/instrumentation.{ts,tsx,...}` where `rootDir` is `src/` when `src/app/` exists. Putting it at the project root works with Turbopack (by accident) but is silently ignored by webpack.
 
@@ -76,7 +76,7 @@ The refresh runs in [`src/middleware.ts`](src/middleware.ts), ahead of any rende
 
 ### Why `middleware.ts`, not `proxy.ts`
 
-Next 16 deprecated the `middleware.ts` filename in favour of `proxy.ts` — **you will see a build warning telling you to rename it. Do not.** `proxy` is locked to the Node.js runtime, and OpenNext/Cloudflare does not support Node.js middleware (`opennextjs-cloudflare build` fails with *"Node.js middleware is not currently supported"*). `middleware.ts` runs on the edge runtime, which OpenNext supports. Per Next's own [v16 upgrade guide](https://nextjs.org/docs/app/guides/upgrading/version-16): *"The edge runtime is NOT supported in `proxy`. If you want to continue using the edge runtime, keep using `middleware`."* Revisit only once OpenNext ships edge support for `proxy`.
+Next 16 deprecated the `middleware.ts` filename in favour of `proxy.ts` — **you will see a build warning telling you to rename it. Do not.** `proxy` is locked to the Node.js runtime, and OpenNext/Cloudflare does not support Node.js middleware (`opennextjs-cloudflare build` fails with _"Node.js middleware is not currently supported"_). `middleware.ts` runs on the edge runtime, which OpenNext supports. Per Next's own [v16 upgrade guide](https://nextjs.org/docs/app/guides/upgrading/version-16): _"The edge runtime is NOT supported in `proxy`. If you want to continue using the edge runtime, keep using `middleware`."_ Revisit only once OpenNext ships edge support for `proxy`.
 
 Because the middleware bundles for the edge runtime, **everything in its import graph must be edge-safe** — no `node:` builtins, no `@postroll/env` barrel (it re-exports the Node-only `load` module; import `@postroll/env/format` instead). zod and `getServerEnv()` (which reads `process.env`) are fine on edge.
 

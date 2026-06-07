@@ -1,27 +1,27 @@
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomUUID, randomBytes } from 'node:crypto';
+
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-// biome-ignore lint/style/useImportType: needed for the decorator
 import { ConfigService } from '@nestjs/config';
-// biome-ignore lint/style/useImportType: needed for the decorator
 import { JwtService } from '@nestjs/jwt';
 import type { PrismaClient } from '@postroll/database/prisma';
+
 import { InjectPrisma } from '../database/database.module';
 
 export type RefreshTokenMeta = {
-  userAgent?: string | undefined;
   ip?: string | undefined;
+  userAgent?: string | undefined;
 };
 
 export type IssuedRefreshToken = {
-  token: string;
-  familyId: string;
   expiresAt: Date;
+  familyId: string;
+  token: string;
 };
 
 export type RotatedTokens = {
   accessToken: string;
-  refreshToken: string;
   expiresAt: Date;
+  refreshToken: string;
 };
 
 /**
@@ -30,11 +30,11 @@ export type RotatedTokens = {
  * its most recent token.
  */
 export type SessionSummary = {
-  familyId: string;
-  userAgent: string | null;
-  ip: string | null;
   createdAt: Date;
+  familyId: string;
+  ip: string | null;
   lastActiveAt: Date;
+  userAgent: string | null;
 };
 
 /**
@@ -49,7 +49,7 @@ export class TokensService {
   constructor(
     @InjectPrisma() private readonly prisma: PrismaClient,
     private readonly jwt: JwtService,
-    private readonly config: ConfigService,
+    private readonly config: ConfigService
   ) {}
 
   signAccessToken(userId: string): string {
@@ -58,7 +58,7 @@ export class TokensService {
 
   async issueRefreshToken(
     userId: string,
-    opts: { familyId?: string } & RefreshTokenMeta = {},
+    opts: { familyId?: string } & RefreshTokenMeta = {}
   ): Promise<IssuedRefreshToken> {
     const token = randomBytes(32).toString('base64url');
     const tokenHash = this.hash(token);
@@ -67,22 +67,19 @@ export class TokensService {
 
     await this.prisma.refreshToken.create({
       data: {
-        userId,
-        tokenHash,
-        familyId,
         expiresAt,
-        userAgent: opts.userAgent ?? null,
+        familyId,
         ip: opts.ip ?? null,
+        tokenHash,
+        userAgent: opts.userAgent ?? null,
+        userId,
       },
     });
 
-    return { token, familyId, expiresAt };
+    return { expiresAt, familyId, token };
   }
 
-  async rotateRefreshToken(
-    rawToken: string,
-    meta: RefreshTokenMeta = {},
-  ): Promise<RotatedTokens> {
+  async rotateRefreshToken(rawToken: string, meta: RefreshTokenMeta = {}): Promise<RotatedTokens> {
     const tokenHash = this.hash(rawToken);
     const row = await this.prisma.refreshToken.findUnique({
       where: { tokenHash },
@@ -93,12 +90,13 @@ export class TokensService {
     }
 
     if (row.revokedAt !== null) {
-      const withinGrace =
-        Date.now() - row.revokedAt.getTime() <= ROTATION_GRACE_MS;
+      const withinGrace = Date.now() - row.revokedAt.getTime() <= ROTATION_GRACE_MS;
+
       if (withinGrace && row.replacedById) {
         const replacement = await this.prisma.refreshToken.findUnique({
           where: { id: row.replacedById },
         });
+
         if (replacement && replacement.revokedAt === null) {
           /**
            * We can't return the original plaintext token (only the hash is
@@ -108,6 +106,7 @@ export class TokensService {
           return this.rotateRow(replacement, meta);
         }
       }
+
       await this.revokeFamily(row.familyId);
       throw new UnauthorizedException('Refresh token reuse detected');
     }
@@ -121,17 +120,18 @@ export class TokensService {
 
   async revokeFamily(familyId: string): Promise<void> {
     await this.prisma.refreshToken.updateMany({
-      where: { familyId, revokedAt: null },
       data: { revokedAt: new Date() },
+      where: { familyId, revokedAt: null },
     });
   }
 
   async revokeByRawToken(rawToken: string): Promise<void> {
     const tokenHash = this.hash(rawToken);
     const row = await this.prisma.refreshToken.findUnique({
-      where: { tokenHash },
       select: { familyId: true },
+      where: { tokenHash },
     });
+
     if (row) {
       await this.revokeFamily(row.familyId);
     }
@@ -142,26 +142,24 @@ export class TokensService {
    * given raw token belongs to. When the token is missing or unknown, all of
    * the user's tokens are revoked.
    */
-  async revokeOtherFamilies(
-    userId: string,
-    keepRawToken: string | undefined,
-  ): Promise<void> {
+  async revokeOtherFamilies(userId: string, keepRawToken: string | undefined): Promise<void> {
     let keepFamilyId: string | undefined;
+
     if (keepRawToken) {
       const row = await this.prisma.refreshToken.findUnique({
-        where: { tokenHash: this.hash(keepRawToken) },
         select: { familyId: true },
+        where: { tokenHash: this.hash(keepRawToken) },
       });
       keepFamilyId = row?.familyId;
     }
 
     await this.prisma.refreshToken.updateMany({
+      data: { revokedAt: new Date() },
       where: {
-        userId,
         revokedAt: null,
+        userId,
         ...(keepFamilyId ? { familyId: { not: keepFamilyId } } : {}),
       },
-      data: { revokedAt: new Date() },
     });
   }
 
@@ -171,46 +169,50 @@ export class TokensService {
    */
   async listSessions(userId: string): Promise<SessionSummary[]> {
     const rows = await this.prisma.refreshToken.findMany({
-      where: { userId, revokedAt: null, expiresAt: { gt: new Date() } },
       orderBy: { createdAt: 'asc' },
+      where: { expiresAt: { gt: new Date() }, revokedAt: null, userId },
       select: {
-        familyId: true,
-        userAgent: true,
-        ip: true,
         createdAt: true,
+        familyId: true,
+        ip: true,
+        userAgent: true,
       },
     });
 
     const families = new Map<string, SessionSummary>();
+
     for (const row of rows) {
       const existing = families.get(row.familyId);
+
       if (!existing) {
         families.set(row.familyId, {
-          familyId: row.familyId,
-          userAgent: row.userAgent,
-          ip: row.ip,
           createdAt: row.createdAt,
+          familyId: row.familyId,
+          ip: row.ip,
           lastActiveAt: row.createdAt,
+          userAgent: row.userAgent,
         });
         continue;
       }
+
       // rows are ascending by createdAt, so each later row is the newer activity.
       existing.lastActiveAt = row.createdAt;
       existing.userAgent = row.userAgent;
       existing.ip = row.ip;
     }
 
-    return [...families.values()].sort(
-      (a, b) => b.lastActiveAt.getTime() - a.lastActiveAt.getTime(),
-    );
+    return [...families.values()].sort((a, b) => {
+      return b.lastActiveAt.getTime() - a.lastActiveAt.getTime();
+    });
   }
 
   /** Resolve a raw refresh token to its owning family id, if it exists. */
   async familyIdForRawToken(rawToken: string): Promise<string | null> {
     const row = await this.prisma.refreshToken.findUnique({
-      where: { tokenHash: this.hash(rawToken) },
       select: { familyId: true },
+      where: { tokenHash: this.hash(rawToken) },
     });
+
     return row?.familyId ?? null;
   }
 
@@ -221,15 +223,16 @@ export class TokensService {
    */
   async revokeSession(userId: string, familyId: string): Promise<number> {
     const { count } = await this.prisma.refreshToken.updateMany({
-      where: { userId, familyId, revokedAt: null },
       data: { revokedAt: new Date() },
+      where: { familyId, revokedAt: null, userId },
     });
+
     return count;
   }
 
   private async rotateRow(
-    row: { id: string; userId: string; familyId: string },
-    meta: RefreshTokenMeta,
+    row: { familyId: string; id: string; userId: string },
+    meta: RefreshTokenMeta
   ): Promise<RotatedTokens> {
     const issued = await this.prisma.$transaction(async (tx) => {
       const next = randomBytes(32).toString('base64url');
@@ -237,30 +240,31 @@ export class TokensService {
       const expiresAt = this.computeRefreshExpiry();
       const created = await tx.refreshToken.create({
         data: {
-          userId: row.userId,
-          tokenHash: nextHash,
-          familyId: row.familyId,
           expiresAt,
-          userAgent: meta.userAgent ?? null,
+          familyId: row.familyId,
           ip: meta.ip ?? null,
+          tokenHash: nextHash,
+          userAgent: meta.userAgent ?? null,
+          userId: row.userId,
         },
       });
 
       const { count } = await tx.refreshToken.updateMany({
+        data: { replacedById: created.id, revokedAt: new Date() },
         where: { id: row.id, revokedAt: null },
-        data: { revokedAt: new Date(), replacedById: created.id },
       });
+
       if (count !== 1) {
         throw new UnauthorizedException('Refresh token rotation conflict');
       }
 
-      return { token: next, expiresAt };
+      return { expiresAt, token: next };
     });
 
     return {
       accessToken: this.signAccessToken(row.userId),
-      refreshToken: issued.token,
       expiresAt: issued.expiresAt,
+      refreshToken: issued.token,
     };
   }
 
@@ -270,6 +274,7 @@ export class TokensService {
 
   private computeRefreshExpiry(): Date {
     const days = this.config.getOrThrow<number>('JWT_REFRESH_TTL_DAYS');
+
     return new Date(Date.now() + days * 86_400_000);
   }
 }

@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
-// biome-ignore lint/style/useImportType: needed for the decorator
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Strategy, ExtractJwt } from 'passport-jwt';
 
 type JwtPayload = { sub: string };
 
@@ -10,8 +9,8 @@ type JwtPayload = { sub: string };
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(config: ConfigService) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: config.getOrThrow<string>('JWT_ACCESS_SECRET'),
     });
   }

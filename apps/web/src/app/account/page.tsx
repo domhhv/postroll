@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+
 import { AccountDetails } from '#components/account-details';
 import { listSessions } from '#lib/api';
 import { getUser, verifySession } from '#lib/dal';
@@ -24,9 +25,7 @@ export default async function AccountPage() {
 
   return (
     <div className="w-full max-w-md space-y-6 self-start">
-      <h1 className="text-3xl font-semibold leading-10 tracking-tight">
-        Account
-      </h1>
+      <h1 className="text-3xl leading-10 font-semibold tracking-tight">Account</h1>
       <AccountDetails user={me} sessions={sessions} />
     </div>
   );

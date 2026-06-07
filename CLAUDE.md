@@ -6,24 +6,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Run from the repo root unless noted; pnpm + Turborepo handles workspace fan-out and ordering.
 
-| Command | Notes |
-|---|---|
-| `pnpm dev` | Builds `@postroll/env`, runs `prisma generate`, boots the local Neon Docker stack, then starts both apps in watch mode. |
-| `pnpm build` | Builds every workspace package and app. |
-| `pnpm check-types` | `tsc --noEmit` across all packages. Depends on `^build` + `^db:generate` — the Prisma client and `@postroll/env`'s `dist/` must exist first, so don't bypass turbo. |
-| `pnpm biome:check` / `pnpm biome:write` | Lint/format check or apply fixes. |
-| `pnpm db:start` / `pnpm db:stop` / `pnpm db:reset` / `pnpm db:studio` | Forwarded to `@postroll/database`. `db:start` needs `NEON_API_KEY`, `NEON_PROJECT_ID`, `PARENT_BRANCH_ID` and a running Docker daemon. |
-| `pnpm --filter @postroll/database db:migrate` | Apply migrations against the local Neon branch. Needs `DIRECT_URL`. |
-| `pnpm ui <component>` | Adds a shadcn component to `packages/ui` via `shadcn add`. |
-| `pnpm --filter @postroll/web preview` | Builds with OpenNext and runs `wrangler dev` — the closest local equivalent to the deployed Cloudflare Worker. |
+| Command                                                               | Notes                                                                                                                                                               |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`                                                            | Builds `@postroll/env`, runs `prisma generate`, boots the local Neon Docker stack, then starts both apps in watch mode.                                             |
+| `pnpm build`                                                          | Builds every workspace package and app.                                                                                                                             |
+| `pnpm check-types`                                                    | `tsc --noEmit` across all packages. Depends on `^build` + `^db:generate` — the Prisma client and `@postroll/env`'s `dist/` must exist first, so don't bypass turbo. |
+| `pnpm lint` / `pnpm lint:fix`                                         | Lint / auto-fix issues.                                                                                                                                             |
+| `pnpm prettier:check` / `pnpm prettier:write`                         | Check formatting / auto-format files.                                                                                                                               |
+| `pnpm db:start` / `pnpm db:stop` / `pnpm db:reset` / `pnpm db:studio` | Forwarded to `@postroll/database`. `db:start` needs `NEON_API_KEY`, `NEON_PROJECT_ID`, `PARENT_BRANCH_ID` and a running Docker daemon.                              |
+| `pnpm --filter @postroll/database db:migrate`                         | Apply migrations against the local Neon branch. Needs `DIRECT_URL`.                                                                                                 |
+| `pnpm ui <component>`                                                 | Adds a shadcn component to `packages/ui` via `shadcn add`.                                                                                                          |
+| `pnpm --filter @postroll/web preview`                                 | Builds with OpenNext and runs `wrangler dev` — the closest local equivalent to the deployed Cloudflare Worker.                                                      |
 
-Single-package work: `pnpm --filter <package> <script>` (e.g. `pnpm --filter @postroll/gateway dev`). There is no test runner wired up yet — `check-types` and `biome:check` are the only verifiers, and they run on pre-commit via lint-staged.
+Single-package work: `pnpm --filter <package> <script>` (e.g. `pnpm --filter @postroll/gateway dev`). There is no test runner wired up yet — `check-types` and `lint` are the only verifiers, and they run on pre-commit via lint-staged.
 
 Node 24 / pnpm 11 (enforced by `engines` and `packageManager`). Commits must follow Conventional Commits — `commitlint` runs in the `commit-msg` hook with custom case rules in `commitlint.config.mjs` (lowercase types/scopes; subject may be lower/camel/kebab/pascal case).
 
 ## Architecture
 
-Two apps, one database, two packages doing real work (`env`, `contracts`, `database`); `ui`, `configs` are shared config/UI. `@postroll/configs` centralizes the Biome config (`@postroll/configs/biome`) and the `tsconfig` presets (`@postroll/configs/typescript/{base,nextjs,nestjs,prisma}`); see `packages/configs/README.md`.
+Two apps, one database, two packages doing real work (`env`, `contracts`, `database`); `ui`, `configs` are shared config/UI. `@postroll/configs` centralizes the ESLint config (`@postroll/configs/eslint`), the Prettier config (`@postroll/configs/prettier`) and the `tsconfig` presets (`@postroll/configs/typescript/{base,nextjs,nestjs,prisma}`); see `packages/configs/README.md`.
 
 ### Gateway is the only thing that talks to Postgres
 

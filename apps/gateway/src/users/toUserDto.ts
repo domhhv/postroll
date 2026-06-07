@@ -3,10 +3,10 @@ import type { User } from '@postroll/database/prisma';
 
 export function toUserDto(user: Omit<User, 'password'>): UserDto {
   return {
-    id: user.id,
+    createdAt: user.createdAt.toISOString(),
     email: user.email,
+    id: user.id,
     name: user.name,
     username: user.username,
-    createdAt: user.createdAt.toISOString(),
   };
 }

@@ -1,17 +1,27 @@
 # `@postroll/configs`
 
-Centralized shared configuration for Postroll. Houses the Biome config and the TypeScript `tsconfig` presets.
+Centralized shared configuration for Postroll. Houses the ESLint and Prettier configs and the TypeScript `tsconfig` presets.
 
-## Biome
+## ESLint
 
-`biome/biome.json` — the base Biome config. Extend it from a package's local `biome.json`:
+`eslint/eslint.config.mjs` — the universal ESLint config. Export it from a package's local `eslint.config.mjs`:
 
-```json
-{
-  "$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
-  "root": false,
-  "extends": ["@postroll/configs/biome"]
-}
+```js
+import eslintConfig from '@postroll/configs/eslint';
+
+/** @type {import("eslint").Linter.Config} */
+export default eslintConfig;
+```
+
+## Prettier
+
+`prettier/prettier.config.mjs` — the universal Prettier config. Export it from a package's local `prettier.config.mjs`:
+
+```js
+import config from '@postroll/configs/prettier';
+
+/** @type {import("prettier").Config} */
+export default config;
 ```
 
 ## TypeScript

@@ -1,18 +1,13 @@
 'use client';
 
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldSet,
-} from '@postroll/ui/components/field';
+import { Field, FieldSet, FieldError, FieldGroup, FieldLabel, FieldDescription } from '@postroll/ui/components/field';
 import { Input } from '@postroll/ui/components/input';
 import { PasswordInput } from '@postroll/ui/components/password-input';
 import Link from 'next/link';
 import { useActionState } from 'react';
-import { type AuthFormState, loginAction } from '#lib/actions';
+
+import { loginAction, type AuthFormState } from '#lib/actions';
+
 import { PendingButton } from './pending-button';
 
 const initialState: AuthFormState = { status: 'idle' };
@@ -26,23 +21,19 @@ export function LoginForm() {
   const emailValue = state.status === 'error' ? state.values.email : undefined;
 
   return (
-    <form
-      action={formAction}
-      className="w-full mx-auto max-w-xs self-center"
-      noValidate
-    >
+    <form noValidate action={formAction} className="mx-auto w-full max-w-xs self-center">
       <FieldSet>
         <FieldGroup>
           <Field data-invalid={emailError ? true : undefined}>
             <FieldLabel htmlFor="email">Email</FieldLabel>
             <Input
+              required
               id="email"
               name="email"
               type="email"
               autoComplete="email"
-              placeholder="me@email.com"
-              required
               defaultValue={emailValue}
+              placeholder="me@email.com"
               aria-invalid={emailError ? true : undefined}
             />
             {emailError && <FieldError errors={[{ message: emailError }]} />}
@@ -50,23 +41,21 @@ export function LoginForm() {
           <Field data-invalid={passwordError ? true : undefined}>
             <FieldLabel htmlFor="password">Password</FieldLabel>
             <PasswordInput
+              required
               id="password"
               name="password"
-              autoComplete="current-password"
               placeholder="••••••••"
-              required
+              autoComplete="current-password"
               aria-invalid={passwordError ? true : undefined}
             />
-            {passwordError && (
-              <FieldError errors={[{ message: passwordError }]} />
-            )}
+            {passwordError && <FieldError errors={[{ message: passwordError }]} />}
           </Field>
           {state.status === 'error' && !fieldErrors && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-destructive text-sm">
               {state.message}
             </p>
           )}
-          <PendingButton idle="Sign in" pendingLabel="Signing in" size="lg" />
+          <PendingButton size="lg" idle="Sign in" pendingLabel="Signing in" />
           <FieldDescription className="text-center">
             New here? <Link href="/register">Create an account</Link>.
           </FieldDescription>
