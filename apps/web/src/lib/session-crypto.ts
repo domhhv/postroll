@@ -8,6 +8,8 @@ export const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
 
 const sessionPayloadSchema = z.object({
   accessToken: z.string(),
+  /** The workspace this session is currently scoped to (X-Workspace-Id source). */
+  activeWorkspaceId: z.string(),
   refreshExpiresAt: z.string(),
   refreshToken: z.string(),
   sid: z.string(),

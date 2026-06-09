@@ -8,33 +8,69 @@ datasource db {
 }
 
 model User {
-  id            String         @db.Uuid @default(uuid()) @id
-  email         String         @unique
-  password      String
-  name          String?
-  username      String?
-  createdAt     DateTime       @db.Timestamptz(3) @default(now()) @map("created_at")
-  updatedAt     DateTime?      @db.Timestamptz(3) @map("updated_at") @updatedAt
-  refreshTokens RefreshToken[]
+  id              String         @id @default(uuid()) @db.Uuid
+  email           String         @unique
+  password        String
+  name            String?
+  username        String?
+  emailVerifiedAt DateTime?      @map("email_verified_at") @db.Timestamptz(3)
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime?      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  refreshTokens   RefreshToken[]
+  memberships     Membership[]
 
   @@map("users")
 }
 
 model RefreshToken {
-  id           String    @db.Uuid @default(uuid()) @id
-  userId       String    @db.Uuid @map("user_id")
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   tokenHash    String    @unique @map("token_hash")
-  familyId     String    @db.Uuid @map("family_id")
-  expiresAt    DateTime  @db.Timestamptz(3) @map("expires_at")
-  revokedAt    DateTime? @db.Timestamptz(3) @map("revoked_at")
-  replacedById String?   @db.Uuid @map("replaced_by_id")
-  createdAt    DateTime  @db.Timestamptz(3) @default(now()) @map("created_at")
-  updatedAt    DateTime? @db.Timestamptz(3) @map("updated_at") @updatedAt
+  familyId     String    @map("family_id") @db.Uuid
+  expiresAt    DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt    DateTime? @map("revoked_at") @db.Timestamptz(3)
+  replacedById String?   @map("replaced_by_id") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime? @updatedAt @map("updated_at") @db.Timestamptz(3)
   userAgent    String?   @map("user_agent")
   ip           String?
 
   @@index([userId])
   @@index([familyId])
   @@map("refresh_tokens")
+}
+
+model Workspace {
+  id        String       @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String       @unique // for URLs, e.g. /w/acme-hiring
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime?    @updatedAt @map("updated_at") @db.Timestamptz(3)
+  members   Membership[]
+
+  @@map("workspaces")
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+  COMMENTER
+  VIEWER
+}
+
+model Membership {
+  id          String        @id @default(uuid()) @db.Uuid
+  userId      String        @map("user_id") @db.Uuid
+  workspaceId String        @map("workspace_id") @db.Uuid
+  role        WorkspaceRole @default(MEMBER)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@index([workspaceId])
+  @@map("memberships")
 }

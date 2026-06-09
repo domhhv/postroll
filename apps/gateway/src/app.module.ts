@@ -7,6 +7,7 @@ import { DatabaseModule } from './database/database.module';
 import { validateGatewayEnv } from './env';
 import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
+import { WorkspacesModule } from './workspaces/workspaces.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { UsersModule } from './users/users.module';
     HealthModule,
     UsersModule,
     AuthModule,
+    WorkspacesModule,
   ],
 })
 export class AppModule {}

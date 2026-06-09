@@ -5,6 +5,7 @@ import { hash, compare } from 'bcryptjs';
 
 import { InjectPrisma } from '../database/database.module';
 import { toUserDto } from '../users/toUserDto';
+import { generateWorkspaceSlug } from '../workspaces/slug';
 
 import { TokensService } from './tokens.service';
 
@@ -26,13 +27,41 @@ export class AuthService {
 
   async register(input: RegisterRequest): Promise<UserDto> {
     const passwordHash = await hash(input.password, this.BCRYPT_COST);
+    const workspaceName = `${this.defaultWorkspaceLabel(input.email)}'s Workspace`;
 
     try {
-      const user = await this.prisma.user.create({
-        data: {
-          email: input.email,
-          password: passwordHash,
-        },
+      /**
+       * Create the user, their personal workspace, and the owner membership
+       * atomically — a half-registered user with no workspace would break
+       * every workspace-scoped flow downstream.
+       *
+       * No email infrastructure yet, so we auto-verify on signup. When email
+       * verification lands (Phase B), drop `emailVerifiedAt` here and gate it
+       * behind a confirmation link instead.
+       */
+      const user = await this.prisma.$transaction(async (tx) => {
+        const created = await tx.user.create({
+          data: {
+            email: input.email,
+            emailVerifiedAt: new Date(),
+            password: passwordHash,
+          },
+        });
+
+        await tx.workspace.create({
+          data: {
+            name: workspaceName,
+            slug: generateWorkspaceSlug(workspaceName),
+            members: {
+              create: {
+                role: 'OWNER',
+                userId: created.id,
+              },
+            },
+          },
+        });
+
+        return created;
       });
 
       return toUserDto(user);
@@ -43,6 +72,13 @@ export class AuthService {
 
       throw error;
     }
+  }
+
+  /** Local-part of the email, used to label the auto-created workspace. */
+  private defaultWorkspaceLabel(email: string): string {
+    const localPart = email.split('@')[0]?.trim();
+
+    return localPart && localPart.length > 0 ? localPart : 'My';
   }
 
   async validateUser(email: string, password: string): Promise<AuthenticatedUser | null> {
@@ -69,13 +105,34 @@ export class AuthService {
   ): Promise<LoginWithRefresh> {
     const accessToken = this.tokens.signAccessToken(user.id);
     const refresh = await this.tokens.issueRefreshToken(user.id, meta);
+    const activeWorkspaceId = await this.defaultWorkspaceId(user.id);
 
     return {
       accessToken,
+      activeWorkspaceId,
       refreshExpiresAt: refresh.expiresAt,
       refreshToken: refresh.token,
       user: toUserDto(user),
     };
+  }
+
+  /**
+   * The workspace a fresh session opens into: the user's oldest membership.
+   * Every user gets an owner workspace at registration, so this is always
+   * present for accounts created through the normal flow.
+   */
+  private async defaultWorkspaceId(userId: string): Promise<string> {
+    const membership = await this.prisma.membership.findFirst({
+      orderBy: { createdAt: 'asc' },
+      select: { workspaceId: true },
+      where: { userId },
+    });
+
+    if (!membership) {
+      throw new Error(`User ${userId} has no workspace membership`);
+    }
+
+    return membership.workspaceId;
   }
 
   private isUniqueViolation(error: unknown): boolean {

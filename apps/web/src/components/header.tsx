@@ -3,10 +3,12 @@ import { IconMovie, IconBrandGithub } from '@tabler/icons-react';
 import Link from 'next/link';
 
 import { UserMenu } from '#components/user-menu';
-import { getUser } from '#lib/dal';
+import { WorkspaceSwitcher } from '#components/workspace-switcher';
+import { getUser, getWorkspaces, getActiveWorkspace } from '#lib/dal';
 
 export async function Header() {
   const user = await getUser();
+  const [workspaces, activeWorkspace] = user ? await Promise.all([getWorkspaces(), getActiveWorkspace()]) : [[], null];
 
   return (
     <header className="border-border bg-background flex h-14 items-center justify-between border-b px-6">
@@ -31,6 +33,7 @@ export async function Header() {
 
         {user ? (
           <>
+            <WorkspaceSwitcher workspaces={workspaces} activeWorkspaceId={activeWorkspace?.id ?? null} />
             <Link href="/dashboard" className={buttonVariants()}>
               Dashboard
             </Link>

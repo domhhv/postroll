@@ -22,6 +22,8 @@ export type LoginRequest = z.infer<typeof loginRequestSchema>;
 
 export const loginResponseSchema = z.object({
   accessToken: z.string(),
+  /** The workspace the session should open into (the user's first membership). */
+  activeWorkspaceId: z.uuid(),
   user: userDtoSchema,
 });
 

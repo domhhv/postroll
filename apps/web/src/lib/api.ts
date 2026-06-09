@@ -4,14 +4,22 @@ import {
   userDtoSchema,
   type SessionList,
   type LoginRequest,
+  type WorkspaceDto,
   sessionListSchema,
+  type WorkspaceList,
   type LoginResponse,
+  workspaceDtoSchema,
   loginResponseSchema,
+  workspaceListSchema,
   type RegisterRequest,
   type RegisterResponse,
   registerResponseSchema,
   type UpdateUserRequest,
+  type WorkspaceMemberList,
+  workspaceMemberListSchema,
   type ChangePasswordRequest,
+  type CreateWorkspaceRequest,
+  type UpdateWorkspaceRequest,
 } from '@postroll/contracts';
 import { headers } from 'next/headers';
 
@@ -105,6 +113,8 @@ async function gatewayFetch(path: string, init: RequestInit = {}): Promise<Respo
     throw new GatewayError(401, 'No active session.');
   }
 
+  const { activeWorkspaceId } = session;
+
   function doFetch(accessToken: string) {
     return fetch(`${GATEWAY_URL}${path}`, {
       ...init,
@@ -112,6 +122,8 @@ async function gatewayFetch(path: string, init: RequestInit = {}): Promise<Respo
       headers: {
         ...(init.headers ?? {}),
         authorization: `Bearer ${accessToken}`,
+        // Tenant scope: the gateway's WorkspaceGuard verifies membership.
+        'x-workspace-id': activeWorkspaceId,
       },
     });
   }
@@ -222,10 +234,99 @@ export async function revokeSession(id: string): Promise<void> {
   }
 }
 
+export async function getWorkspaces(): Promise<WorkspaceList> {
+  const res = await gatewayFetch('/workspaces');
+
+  if (!res.ok) {
+    throw new GatewayError(res.status, `workspaces ${res.status}`);
+  }
+
+  return workspaceListSchema.parse(await res.json());
+}
+
+export async function createWorkspace(input: CreateWorkspaceRequest): Promise<WorkspaceDto> {
+  const res = await gatewayFetch('/workspaces', {
+    body: JSON.stringify(input),
+    headers: { 'content-type': 'application/json' },
+    method: 'POST',
+  });
+
+  if (!res.ok) {
+    throw new GatewayError(res.status, `Request failed (${res.status}).`);
+  }
+
+  return workspaceDtoSchema.parse(await res.json());
+}
+
+export async function renameWorkspace(id: string, input: UpdateWorkspaceRequest): Promise<WorkspaceDto> {
+  const res = await gatewayFetch(`/workspaces/${id}`, {
+    body: JSON.stringify(input),
+    headers: { 'content-type': 'application/json' },
+    method: 'PATCH',
+  });
+
+  if (!res.ok) {
+    const message = res.status === 403 ? 'Only the workspace owner can rename it.' : `Request failed (${res.status}).`;
+
+    throw new GatewayError(res.status, message);
+  }
+
+  return workspaceDtoSchema.parse(await res.json());
+}
+
+export async function getWorkspaceMembers(id: string): Promise<WorkspaceMemberList> {
+  const res = await gatewayFetch(`/workspaces/${id}/members`);
+
+  if (!res.ok) {
+    throw new GatewayError(res.status, `members ${res.status}`);
+  }
+
+  return workspaceMemberListSchema.parse(await res.json());
+}
+
+export async function removeWorkspaceMember(id: string, userId: string): Promise<void> {
+  const res = await gatewayFetch(`/workspaces/${id}/members/${userId}`, {
+    method: 'DELETE',
+  });
+
+  if (!res.ok) {
+    const message =
+      res.status === 403
+        ? 'You do not have permission to remove this member.'
+        : res.status === 404
+          ? 'Member not found.'
+          : `Request failed (${res.status}).`;
+
+    throw new GatewayError(res.status, message);
+  }
+}
+
+/**
+ * Switch the session's active workspace. Verifies the user is a member of the
+ * target (the source of truth is the gateway's membership table, surfaced via
+ * GET /workspaces) before persisting, so a forged id can't scope the session to
+ * a workspace the user doesn't belong to.
+ */
+export async function switchWorkspace(workspaceId: string): Promise<WorkspaceDto> {
+  const workspaces = await getWorkspaces();
+  const target = workspaces.find((workspace) => {
+    return workspace.id === workspaceId;
+  });
+
+  if (!target) {
+    throw new GatewayError(403, 'You do not have access to this workspace.');
+  }
+
+  await updateSession({ activeWorkspaceId: target.id });
+
+  return target;
+}
+
 export async function loginAndCreateSession(input: LoginRequest, meta: RequestMeta = {}): Promise<UserDto> {
   const result = await loginUser(input, meta);
   await createSession({
     accessToken: result.accessToken,
+    activeWorkspaceId: result.activeWorkspaceId,
     refreshExpiresAt: result.refreshExpiresAt,
     refreshToken: result.refreshToken,
     userId: result.user.id,

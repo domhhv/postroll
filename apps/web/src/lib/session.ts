@@ -42,7 +42,7 @@ export async function createSession(payload: Omit<SessionPayload, 'sid'>): Promi
 }
 
 export async function updateSession(
-  patch: Partial<Pick<SessionPayload, 'accessToken' | 'refreshToken' | 'refreshExpiresAt'>>
+  patch: Partial<Pick<SessionPayload, 'accessToken' | 'refreshToken' | 'refreshExpiresAt' | 'activeWorkspaceId'>>
 ): Promise<void> {
   const current = await readSessionCookie();
 
