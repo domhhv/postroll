@@ -6,6 +6,7 @@ import {
   type UpdateUserRequest,
   updateUserRequestSchema,
   changePasswordRequestSchema,
+  createWorkspaceRequestSchema,
 } from '@postroll/contracts';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
@@ -19,6 +20,8 @@ import {
   logoutGateway,
   revokeSession,
   updatePassword,
+  createWorkspace,
+  switchWorkspace,
   loginAndCreateSession,
 } from './api';
 import { readRequestMeta } from './refresh';
@@ -232,6 +235,70 @@ export async function changePasswordAction(
       status: 'error',
     };
   }
+
+  return { status: 'success' };
+}
+
+export type CreateWorkspaceFormState =
+  | { status: 'idle' }
+  | { status: 'success'; workspaceId: string }
+  | {
+      fieldErrors?: Record<string, string>;
+      message: string;
+      status: 'error';
+      values: { name: string };
+    };
+
+export async function createWorkspaceAction(
+  _previous: CreateWorkspaceFormState,
+  formData: FormData
+): Promise<CreateWorkspaceFormState> {
+  const values = { name: getFormValue(formData, 'name') };
+  const parsed = createWorkspaceRequestSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return {
+      fieldErrors: extractFieldErrors(parsed.error),
+      message: 'Please fix the errors below.',
+      status: 'error',
+      values,
+    };
+  }
+
+  let workspaceId: string;
+
+  try {
+    const workspace = await createWorkspace(parsed.data);
+    // Drop the new owner into their workspace immediately.
+    await switchWorkspace(workspace.id);
+    workspaceId = workspace.id;
+  } catch (error) {
+    if (error instanceof GatewayError) {
+      return { message: error.message, status: 'error', values };
+    }
+
+    return { message: 'Something went wrong. Please try again.', status: 'error', values };
+  }
+
+  revalidatePath('/', 'layout');
+
+  return { status: 'success', workspaceId };
+}
+
+export type SwitchWorkspaceResult = { status: 'success' } | { message: string; status: 'error' };
+
+export async function switchWorkspaceAction(workspaceId: string): Promise<SwitchWorkspaceResult> {
+  try {
+    await switchWorkspace(workspaceId);
+  } catch (error) {
+    if (error instanceof GatewayError) {
+      return { message: error.message, status: 'error' };
+    }
+
+    return { message: 'Something went wrong. Please try again.', status: 'error' };
+  }
+
+  revalidatePath('/', 'layout');
 
   return { status: 'success' };
 }

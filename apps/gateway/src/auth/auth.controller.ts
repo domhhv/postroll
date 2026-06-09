@@ -65,6 +65,7 @@ export class AuthController {
 
     return loginResponseSchema.parse({
       accessToken: result.accessToken,
+      activeWorkspaceId: result.activeWorkspaceId,
       user: result.user,
     });
   }
