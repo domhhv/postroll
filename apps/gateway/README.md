@@ -1,6 +1,6 @@
 # `@postroll/gateway`
 
-NestJS HTTP gateway. Deployed to Fly.io. Production deploys via [`gateway-production-deploy.yml`](../../.github/workflows/gateway-production-deploy.yml) on push to `main`; PR previews via [`gateway-preview-deploy.yml`](../../.github/workflows/gateway-preview-deploy.yml).
+NestJS HTTP gateway. Deployed to Fly.io. Production deploys via [`production-deploy.yml`](../../.github/workflows/production-deploy.yml) on push to `main`; PR previews via [`preview-deploy.yml`](../../.github/workflows/preview-deploy.yml).
 
 ## Scripts
 
@@ -70,8 +70,8 @@ A symbol token (rather than the `PrismaClient` class as token) decouples DI from
 
 ## Deployment
 
-- **Production**: pushing to `main` triggers [`gateway-production-deploy.yml`](../../.github/workflows/gateway-production-deploy.yml) which runs `prisma migrate deploy` against the production Neon branch and then `flyctl deploy`.
-- **PR preview**: opening or updating a PR triggers [`gateway-preview-deploy.yml`](../../.github/workflows/gateway-preview-deploy.yml) which creates a Neon branch named `preview/<branch-name>`, runs migrations against it, and deploys a Fly review app. The Fly URL is posted as a PR comment.
+- **Production**: pushing to `main` triggers [`production-deploy.yml`](../../.github/workflows/production-deploy.yml) which runs `prisma migrate deploy` against the production Neon branch and then `flyctl deploy`.
+- **PR preview**: opening or updating a PR triggers [`preview-deploy.yml`](../../.github/workflows/preview-deploy.yml) which creates a Neon branch named `preview/<branch-name>`, runs migrations against it, and deploys a Fly review app. The Fly URL is posted as a PR comment.
 
 Configuration outside the repo:
 
