@@ -9,19 +9,19 @@ jobs:
   commitlint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Install pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: 11.5.2
+          version: 12.14.0
 
       - name: Setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
-          node-version: 24.16.0
+          node-version: 24.22.0
           cache: 'pnpm'
 
       - name: Install commitlint

@@ -12,17 +12,17 @@ jobs:
     concurrency: deploy-group
     steps:
       - name: Get Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: 11.5.2
+          version: 12.14.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
-          node-version: 24.16.0
+          node-version: 24.22.0
           cache: 'pnpm'
 
       - name: Install Dependencies

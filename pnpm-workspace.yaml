@@ -9,3 +9,6 @@ allowBuilds:
   prisma: true
   workerd: true
   msw: true
+
+overrides:
+  glob: "^12"

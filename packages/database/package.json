@@ -30,15 +30,15 @@
   },
   "dependencies": {
     "@postroll/env": "workspace:*",
-    "@prisma/adapter-neon": "^7.8.0",
-    "@prisma/client": "^7.8.0",
-    "@prisma/client-runtime-utils": "^7.8.0",
-    "zod": "^4.1.12"
+    "@prisma/adapter-neon": "^7.10.1",
+    "@prisma/client": "^7.10.1",
+    "@prisma/client-runtime-utils": "^7.10.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@postroll/configs": "workspace:*",
-    "@types/node": "^24.12.4",
-    "prisma": "^7.8.0",
-    "tsx": "^4.22.3"
+    "@types/node": "^24.19.2",
+    "prisma": "^7.10.1",
+    "tsx": "^4.23.15"
   }
 }

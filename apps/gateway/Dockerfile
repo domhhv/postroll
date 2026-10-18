@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:1
 
-ARG NODE_VERSION=24.16.0
+ARG NODE_VERSION=24.22.0
 FROM node:${NODE_VERSION}-slim AS base
 
 LABEL fly_launch_runtime="NestJS"
@@ -12,7 +12,7 @@ WORKDIR /app
 ENV NODE_ENV="production"
 
 # Install pnpm
-ARG PNPM_VERSION=11.5.2
+ARG PNPM_VERSION=12.14.0
 RUN npm install -g pnpm@$PNPM_VERSION
 
 

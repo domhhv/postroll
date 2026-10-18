@@ -40,7 +40,7 @@ Source of truth: [`src/env.ts`](src/env.ts). Local values: [`.env.example`](.env
 
 **Required for migrations.** Non-pooled connection string. Prisma migrations need a direct connection because pooled connections (PgBouncer-style) don't support session-level operations like advisory locks. Read by [`prisma.config.ts`](prisma.config.ts) via Prisma's `env()` helper.
 
-In CI, both the gateway-preview and gateway-production deploy workflows set `DIRECT_URL` from the `DATABASE_URL` secret (they point at the same Neon branch).
+In CI, both the preview and production deploy workflows set `DIRECT_URL` from the `DATABASE_URL` secret (they point at the same Neon branch).
 
 ### `SHADOW_DATABASE_URL`
 

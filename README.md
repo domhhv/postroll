@@ -67,7 +67,7 @@ Every variable that affects build output or runtime is declared in `globalEnv` i
 
 These commands can be run from the monorepo root across all apps and packages via Turbo, leveraging its caching:
 
-- `pnpm lint` — checks lint rules across.
+- `pnpm lint` — checks lint rules across all packages.
 - `pnpm lint:fix` — auto-fixes lint issues.
 - `pnpm prettier:check` - checks formatting.
 - `pnpm prettier:write` - auto-formats files.
@@ -94,9 +94,9 @@ The hook is installed by `pnpm install` (via the `prepare` script).
 GitHub Actions in [`.github/workflows/`](.github/workflows):
 
 - [`code-health.yml`](.github/workflows/code-health.yml) — runs `check-types`, `pnpm lint`, and `pnpm prettier:check` on every PR.
-- [`gateway-preview-deploy.yml`](.github/workflows/gateway-preview-deploy.yml) — creates a Neon preview branch, deploys a Fly review app per PR.
-- [`gateway-preview-cleanup.yml`](.github/workflows/gateway-preview-cleanup.yml) — tears down preview infra on PR close.
-- [`gateway-production-deploy.yml`](.github/workflows/gateway-production-deploy.yml) — runs migrations and deploys to Fly on push to `main`.
+- [`preview-deploy.yml`](.github/workflows/preview-deploy.yml) — creates a Neon preview branch, deploys a Fly review app and Cloudflare Workers preview per PR.
+- [`preview-cleanup.yml`](.github/workflows/preview-cleanup.yml) — tears down preview infra on PR close.
+- [`production-deploy.yml`](.github/workflows/production-deploy.yml) — runs migrations and deploys to Fly on push to `main`.
 
 The Cloudflare Workers Builds integration handles `apps/web` deploys (configured in the Cloudflare dashboard, not in this repo).
 

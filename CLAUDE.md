@@ -82,5 +82,5 @@ Unlike `@postroll/database`, `@postroll/contracts` ships compiled JS (`tsc -p ts
 
 ### Deployment surfaces
 
-- `apps/gateway` → Fly.io. Production deploys on push to `main` (`gateway-production-deploy.yml`); PRs get review apps backed by a Neon preview branch (`gateway-preview-deploy.yml`, cleanup in `gateway-preview-cleanup.yml`).
+- `apps/gateway` → Fly.io. Production deploys on push to `main` (`production-deploy.yml`); PRs get review apps backed by a Neon preview branch (`preview-deploy.yml`, cleanup in `preview-cleanup.yml`).
 - `apps/web` → Cloudflare Workers via OpenNext. Deploys are driven by Cloudflare Workers Builds (configured in the Cloudflare dashboard, **not** in this repo). Runtime vars (e.g. `GATEWAY_URL`, `SESSION_SECRET`) are set in the dashboard under Settings → Variables and Secrets (the running worker), not Build → Variables (the build container).
