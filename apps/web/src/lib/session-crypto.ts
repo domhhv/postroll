@@ -1,7 +1,7 @@
 import { EncryptJWT, jwtDecrypt } from 'jose';
 import { z } from 'zod';
 
-import { getServerEnv } from '@/env';
+import { getServerEnv } from '#env';
 
 export const SESSION_COOKIE = 'postroll_session';
 export const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;

@@ -1,4 +1,5 @@
 .open-next
 .next
 .wrangler
+.agents
 packages/database/src/generated

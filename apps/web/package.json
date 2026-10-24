@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "imports": {
+    "#env": "./src/env.ts",
     "#components/*": "./src/components/*.tsx",
     "#lib/*": "./src/lib/*.ts",
     "#hooks/*": "./src/hooks/*.ts"

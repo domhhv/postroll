@@ -1,6 +1,7 @@
 {
   "name": "postroll",
   "version": "0.1.0",
+  "private": true,
   "description": "A system designed to manage and process media files with an efficient and structured approach, ensuring that they are executed in an organized manner.",
   "keywords": [],
   "repository": {
@@ -8,7 +9,11 @@
     "url": "https://github.com/domhhv/postroll.git"
   },
   "license": "ISC",
-  "author": "Dominik Hryshaiev <domhryshaiev@gmail.com>",
+  "author": {
+    "name": "Dominik Hryshaiev",
+    "email": "domhryshaiev@gmail.com",
+    "url": "https://domhhv.com"
+  },
   "scripts": {
     "build": "turbo build",
     "check-types": "turbo check-types",

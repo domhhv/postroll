@@ -14,17 +14,17 @@ Run from the repo root unless noted; pnpm + Turborepo handles workspace fan-out 
 | `pnpm lint` / `pnpm lint:fix`                                         | Lint / auto-fix issues.                                                                                                                                             |
 | `pnpm prettier:check` / `pnpm prettier:write`                         | Check formatting / auto-format files.                                                                                                                               |
 | `pnpm db:start` / `pnpm db:stop` / `pnpm db:reset` / `pnpm db:studio` | Forwarded to `@postroll/database`. `db:start` needs `NEON_API_KEY`, `NEON_PROJECT_ID`, `PARENT_BRANCH_ID` and a running Docker daemon.                              |
-| `pnpm --filter @postroll/database db:migrate`                         | Apply migrations against the local Neon branch. Needs `DIRECT_URL`.                                                                                                 |
+| `pnpm db:migrate`                                                     | Apply migrations against the local Neon branch. Needs `DIRECT_URL`. `db:deploy` (filter-only) runs `prisma migrate deploy`.                                         |
 | `pnpm ui <component>`                                                 | Adds a shadcn component to `packages/ui` via `shadcn add`.                                                                                                          |
-| `pnpm --filter @postroll/web preview`                                 | Builds with OpenNext and runs `wrangler dev` — the closest local equivalent to the deployed Cloudflare Worker.                                                      |
+| `pnpm --filter @postroll/web preview`                                 | Builds with OpenNext and runs `opennextjs-cloudflare preview` (workerd) — the closest local equivalent to the deployed Cloudflare Worker.                           |
 
-Single-package work: `pnpm --filter <package> <script>` (e.g. `pnpm --filter @postroll/gateway dev`). There is no test runner wired up yet — `check-types` and `lint` are the only verifiers, and they run on pre-commit via lint-staged.
+Single-package work: `pnpm --filter <package> <script>` (e.g. `pnpm --filter @postroll/gateway dev`). There is no test runner wired up yet — `check-types` and `lint` are the only verifiers. Pre-commit (`lint-staged.config.mjs`) runs repo-wide `pnpm lint`, `pnpm prettier:check`, `pnpm check-types` and `sort-package-json` on staged `package.json`s — run `pnpm prettier:write` before committing to avoid a failed hook.
 
-Node 24 / pnpm 11 (enforced by `engines` and `packageManager`). Commits must follow Conventional Commits — `commitlint` runs in the `commit-msg` hook with custom case rules in `commitlint.config.mjs` (lowercase types/scopes; subject may be lower/camel/kebab/pascal case).
+Node 24 / pnpm 12 (enforced by `engines` and `packageManager`). Commits must follow Conventional Commits — `commitlint` runs in the `commit-msg` hook with custom case rules in `commitlint.config.mjs` (lowercase types/scopes; subject may be lower/camel/kebab/pascal case).
 
 ## Architecture
 
-Two apps, one database, two packages doing real work (`env`, `contracts`, `database`); `ui`, `configs` are shared config/UI. `@postroll/configs` centralizes the ESLint config (`@postroll/configs/eslint`), the Prettier config (`@postroll/configs/prettier`) and the `tsconfig` presets (`@postroll/configs/typescript/{base,nextjs,nestjs,prisma}`); see `packages/configs/README.md`.
+Two apps, one database, three packages doing real work (`env`, `contracts`, `database`); `ui`, `configs` are shared config/UI. `@postroll/configs` centralizes the ESLint config (`@postroll/configs/eslint`), the Prettier config (`@postroll/configs/prettier`) and the `tsconfig` presets (`@postroll/configs/typescript/{base,nextjs,nestjs,prisma}`); see `packages/configs/README.md`.
 
 ### Gateway is the only thing that talks to Postgres
 
@@ -38,15 +38,19 @@ The gateway owns identity. Flow:
 
 1. `POST /auth/login` → returns access JWT (`Authorization: Bearer …`) in the body and an opaque refresh token in an `httpOnly` cookie (`postroll_rt`, scoped to `/auth`).
 2. `POST /auth/refresh` rotates the refresh token. The previous row is marked `revokedAt` and points to its replacement via `replacedById`. Refresh tokens belong to a `familyId`.
-3. Reuse detection: presenting an already-revoked token revokes the entire family (`tokens.service.ts:98-100`). To absorb benign races (concurrent requests both hitting 401 → both refreshing), there is a 10-second `ROTATION_GRACE_MS` window during which a revoked token's replacement is rotated again instead of triggering family revocation.
+3. Reuse detection: presenting an already-revoked token revokes the entire family (`TokensService.revokeFamily`). To absorb benign races (concurrent requests both hitting 401 → both refreshing), there is a 10-second `ROTATION_GRACE_MS` window during which a revoked token's replacement is rotated again instead of triggering family revocation.
 
-The web app wraps this in a **session JWE** stored in `postroll_session` (encrypted with `SESSION_SECRET`, see `apps/web/src/lib/session.ts`). The session contains `{ sid, userId, accessToken, refreshToken, refreshExpiresAt }`. `gatewayFetch` (in `apps/web/src/lib/api.ts`) does the access/refresh dance on 401, updates the cookie, and retries — so server components / actions just call `getMe()` and the rotation is transparent.
+The web app wraps this in a **session JWE** stored in `postroll_session` (encrypted with `SESSION_SECRET`, see `apps/web/src/lib/session.ts`). The session contains `{ sid, userId, accessToken, refreshToken, refreshExpiresAt, activeWorkspaceId }`. `gatewayFetch` (in `apps/web/src/lib/api.ts`) does the access/refresh dance on 401, updates the cookie, and retries — so server components / actions just call `getMe()` and the rotation is transparent.
 
 The proactive refresh runs in `apps/web/src/middleware.ts`, ahead of render. **Cookies can only be mutated in middleware, Server Actions, or Route Handlers — never during an RSC render.** Since `getUser()` runs while rendering the layout, a refresh triggered there can't persist the rotated cookie (Next throws "Cookies can only be modified in a Server Action or Route Handler"). Middleware decodes the access token `exp`, refreshes near expiry, and writes the rotated session onto both the request (so the in-flight render sees it) and the response. `updateSession` / `deleteSession` also swallow the read-only-cookie error as a mid-render fallback. The edge-safe refresh primitives live in `lib/refresh.ts` + `lib/session-crypto.ts` (no `server-only`, so middleware can import them); `lib/session.ts` keeps the `next/headers`-bound, `server-only` wrappers.
 
 The middleware file **must stay named `middleware.ts`, not the Next 16 `proxy.ts`** — you'll see a deprecation warning telling you to rename it; ignore it. `proxy` is nodejs-runtime-only and OpenNext rejects Node.js middleware (`opennextjs-cloudflare build` fails: "Node.js middleware is not currently supported"); `middleware` runs on edge, which OpenNext supports. Everything in the middleware import graph must be edge-safe (no `node:` builtins, no `@postroll/env` barrel — use `@postroll/env/format`).
 
 Server-only code lives behind `import 'server-only'` (see `lib/api.ts`, `lib/dal.ts`, `lib/session.ts`). Don't pass the decrypted `SessionPayload` to client components — `accessToken` / `refreshToken` are server-only fields.
+
+### Workspaces: tenant scope via `X-Workspace-Id`
+
+Every user gets a personal workspace (OWNER membership) at registration, created in the same transaction as the user. The web session carries `activeWorkspaceId`; `gatewayFetch` sends it as `x-workspace-id` on every request. Workspace-scoped gateway routes use `@UseGuards(JwtAuthGuard, WorkspaceGuard)` — the guard verifies membership and exposes `{ workspaceId, role }` via `@CurrentWorkspace()`. Scope queries by that verified `workspaceId`, never by a raw path/body id (`WorkspacesController` asserts the `:id` param matches). Switching workspaces goes through the `app/api/workspace/switch` Route Handler because it mutates the session cookie. Roles: `OWNER | ADMIN | MEMBER | COMMENTER | VIEWER`.
 
 ### Env validation is centralized via `@postroll/env`
 
@@ -78,7 +82,7 @@ Unlike `@postroll/database`, `@postroll/contracts` ships compiled JS (`tsc -p ts
 
 ### Workspace import aliases
 
-`apps/web` and `packages/ui` use pnpm `imports` field for internal aliases: `#components/*`, `#lib/*`, `#hooks/*`. Don't add a webpack/tsconfig `paths` alias for the same thing — these are the canonical aliases.
+`apps/web` and `packages/ui` use pnpm `imports` field for internal aliases: `#components/*`, `#lib/*`, `#hooks/*` (plus `#env` in `apps/web`, `#styles/*` in `packages/ui`). Don't add a webpack/tsconfig `paths` alias (e.g. `@/*`) — these are the only aliases.
 
 ### Deployment surfaces
 
