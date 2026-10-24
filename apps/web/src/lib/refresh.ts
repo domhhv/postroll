@@ -1,7 +1,7 @@
 import { refreshResponseSchema } from '@postroll/contracts';
 import { parse as parseSetCookies } from 'set-cookie-parser';
 
-import { getServerEnv } from '@/env';
+import { getServerEnv } from '#env';
 
 import type { SessionPayload } from './session-crypto';
 

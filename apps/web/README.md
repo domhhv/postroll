@@ -54,7 +54,7 @@ The web app does not connect to Postgres. All reads/writes go through the NestJS
 
 ```ts
 import type { User } from '@postroll/database';
-import { getServerEnv } from '@/env';
+import { getServerEnv } from '#env';
 
 export async function getUsers(): Promise<User[]> {
   const { GATEWAY_URL } = getServerEnv();

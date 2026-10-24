@@ -23,7 +23,7 @@ import {
 } from '@postroll/contracts';
 import { headers } from 'next/headers';
 
-import { getServerEnv } from '@/env';
+import { getServerEnv } from '#env';
 
 import {
   GatewayError,

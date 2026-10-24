@@ -12,7 +12,7 @@ jobs:
   deploy-preview:
     name: Deploy to Neon, Fly.io, and Cloudflare Workers
     if: >-
-      !contains(github.event.pull_request.body, '[Skip preview]')
+      !contains(github.event.pull_request.body, '[Skip deploy]')
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
