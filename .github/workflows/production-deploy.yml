@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  NODE_VERSION: 24.22.0
+  NODE_VERSION: 24.22.1
   VERCEL_CLI_VERSION: 65.2.0
   VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
@@ -29,15 +29,15 @@ jobs:
     concurrency: deploy-group
     steps:
       - name: Get Code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@v6.1.0
         with:
           version: 12.14.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
