@@ -4,11 +4,15 @@ on:
     types: [closed]
 
 env:
-  NODE_VERSION: 24.22.0
-  VERCEL_CLI_VERSION: 65.2.0
   VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+# Explicit `bash` turns on `-o pipefail`, so a failing command in a pipe fails
+# the step instead of being masked.
+defaults:
+  run:
+    shell: bash
 
 jobs:
   delete-preview:
@@ -19,30 +23,27 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install Vercel CLI
-        run: npm install --global vercel@${{ env.VERCEL_CLI_VERSION }}
-
       # Preview deploys are tagged with --meta prNumber=<n> in preview-deploy.yml.
-      # `vercel list --json` exposes each deployment's URL (no id), which
-      # `vercel remove` accepts.
+      # Uses the REST API rather than `vercel list` / `vercel remove`: the CLI
+      # resolves the team first, which a project-scoped VERCEL_TOKEN can't read.
       - name: Remove Vercel preview deployments
         env:
           PR_NUMBER: ${{ github.event.number }}
         run: |
-          urls=$(vercel list --meta prNumber="$PR_NUMBER" --limit 100 --json --yes --non-interactive \
-            | jq -r '.deployments[] | select(.target != "production") | .url')
-          if [ -z "$urls" ]; then
+          api="https://api.vercel.com"
+          ids=$(curl -sS --fail-with-body -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "$api/v6/deployments?projectId=$VERCEL_PROJECT_ID&teamId=$VERCEL_ORG_ID&limit=100&meta-prNumber=$PR_NUMBER" \
+            | jq -r --arg pr "$PR_NUMBER" \
+              '.deployments[] | select(.target != "production" and .meta.prNumber == $pr) | .uid')
+          if [[ -z "$ids" ]]; then
             echo "No preview deployments found for PR #$PR_NUMBER."
             exit 0
           fi
-          echo "Removing: $urls"
-          # shellcheck disable=SC2086
-          vercel remove $urls --yes --non-interactive
+          for id in $ids; do
+            curl -sS --fail-with-body -o /dev/null -X DELETE -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "$api/v13/deployments/$id?teamId=$VERCEL_ORG_ID"
+            echo "Removed $id"
+          done
 
       - name: Delete Neon Branch
         if: ${{ !cancelled() }}

@@ -123,7 +123,7 @@ Things to know:
    - Production: `DATABASE_URL` (Neon production branch, pooled), `JWT_ACCESS_SECRET`, `SESSION_SECRET`.
    - Preview: `JWT_ACCESS_SECRET`, `SESSION_SECRET` (different values from production). `DATABASE_URL` is passed per PR by the workflow.
    - Production + Preview: `ENABLE_EXPERIMENTAL_COREPACK=1`, so Vercel uses the `pnpm` version from `packageManager`.
-3. **GitHub**: secret `VERCEL_TOKEN`; variables `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` (from `.vercel/project.json` after linking). Neon keeps using `NEON_API_KEY` / `NEON_PROJECT_ID`, and `DATABASE_URL` for production migrations.
+3. **GitHub**: secret `VERCEL_TOKEN` — create it scoped to just the `postroll` project (Account Tokens → Scope → team → `postroll`); the workflows only use project-level operations; variables `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` (from `.vercel/project.json` after linking). Neon keeps using `NEON_API_KEY` / `NEON_PROJECT_ID`, and `DATABASE_URL` for production migrations.
 4. **First deploy**: run the _Production Deployment_ workflow manually (`workflow_dispatch`) before opening a PR — a new Vercel project's first deployment always becomes production.
 
 ## Common commands
