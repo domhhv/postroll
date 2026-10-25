@@ -56,7 +56,8 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response
   ): Promise<LoginResponse> {
     loginRequestSchema.parse(body);
-    const user = req.user as AuthenticatedUser;
+    // Set by LocalAuthGuard after checking the credentials.
+    const user = (req as Request & { user: AuthenticatedUser }).user;
     const result = await this.authService.login(user, {
       ip: req.get(CLIENT_IP_HEADER) ?? req.ip,
       userAgent: req.get('user-agent') ?? undefined,

@@ -28,19 +28,21 @@ jobs:
         run: npm install --global vercel@${{ env.VERCEL_CLI_VERSION }}
 
       # Preview deploys are tagged with --meta prNumber=<n> in preview-deploy.yml.
+      # `vercel list --json` exposes each deployment's URL (no id), which
+      # `vercel remove` accepts.
       - name: Remove Vercel preview deployments
         env:
           PR_NUMBER: ${{ github.event.number }}
         run: |
-          ids=$(vercel list --meta prNumber="$PR_NUMBER" --limit 100 --json --yes --non-interactive \
-            | jq -r '.deployments[] | select(.target != "production") | .id')
-          if [ -z "$ids" ]; then
+          urls=$(vercel list --meta prNumber="$PR_NUMBER" --limit 100 --json --yes --non-interactive \
+            | jq -r '.deployments[] | select(.target != "production") | .url')
+          if [ -z "$urls" ]; then
             echo "No preview deployments found for PR #$PR_NUMBER."
             exit 0
           fi
-          echo "Removing: $ids"
+          echo "Removing: $urls"
           # shellcheck disable=SC2086
-          vercel remove $ids --yes --non-interactive
+          vercel remove $urls --yes --non-interactive
 
       - name: Delete Neon Branch
         if: ${{ !cancelled() }}
