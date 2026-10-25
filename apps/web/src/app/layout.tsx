@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/next';
 import type { Metadata } from 'next';
 import { Roboto_Slab, Source_Sans_3 } from 'next/font/google';
 
@@ -36,6 +37,7 @@ export default function RootLayout({
         <ThemeProvider>
           <Header />
           <main className="bg-background flex flex-1 p-16">{children}</main>
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>
