@@ -1,0 +1,16 @@
+# Local tooling
+.agents
+.claude
+.idea
+.turbo
+
+# Rebuilt remotely by Vercel
+**/node_modules
+**/.next
+**/dist
+packages/database/src/generated
+
+# Never upload local env files: loadEnvFile() would pick them up at runtime
+**/.env
+**/.env.*
+!**/.env.example

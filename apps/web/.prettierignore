@@ -1,4 +1,3 @@
-.open-next
 .next
-.wrangler
+.vercel
 next-env.d.ts

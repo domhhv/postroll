@@ -12,7 +12,7 @@ The package exposes three subpaths so consumers can pick exactly what they need 
 | `@postroll/database/prisma` | The raw `PrismaClient` class from the generated client. No singleton, no env loading.                                                                                 | `apps/gateway` — constructs its own client inside NestJS DI so it can own the lifecycle and pick its driver adapter. |
 | `@postroll/database/client` | A pre-built `prisma` singleton wired to [`@prisma/adapter-neon`](https://www.npmjs.com/package/@prisma/adapter-neon), with env loading from `packages/database/.env`. | Currently unused. Kept for one-off scripts that want a ready-to-use client outside an app context.                   |
 
-The split matters because `@postroll/database/client` has top-level side effects (calls `loadEnvFile`, constructs `PrismaNeon`). If the web app barrel-imported that, every server-side render would pull the Prisma engine into the OpenNext bundle even when only types are used.
+The split matters because `@postroll/database/client` has top-level side effects (calls `loadEnvFile`, constructs `PrismaNeon`). If the web app barrel-imported that, every server-side render would pull the Prisma engine into the web server bundle even when only types are used.
 
 ## Scripts
 

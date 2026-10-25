@@ -114,15 +114,7 @@ const rules = {
 };
 
 export default defineConfig([
-  globalIgnores([
-    '.turbo/**/*',
-    '.agents/**/*',
-    'dist/**/*',
-    '.next/**/*',
-    '.open-next/**/*',
-    '.wrangler/**/*',
-    'src/generated/**/*',
-  ]),
+  globalIgnores(['.turbo/**/*', '.agents/**/*', 'dist/**/*', '.next/**/*', '.vercel/**/*', 'src/generated/**/*']),
   {
     extends: [js.configs.recommended, tseslint.configs.recommended, switchCase.configs.recommended],
     files: ['**/*.{ts,tsx}'],

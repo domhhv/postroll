@@ -3,21 +3,25 @@ import { z } from 'zod';
 
 export const envExampleHint = 'apps/web/.env.example';
 
-export const webServerEnvSchema = z.object({
-  GATEWAY_URL: z.url(),
+/**
+ * Split in two because the values come from different places on Vercel:
+ * `SESSION_SECRET` is a project env var (available everywhere, including the
+ * proxy), while `GATEWAY_URL` is injected by the `web` → `gateway` service
+ * binding, which only resolves inside functions, never in the proxy.
+ */
+export const sessionEnvSchema = z.object({
   SESSION_SECRET: z.string().min(32),
 });
 
-export type WebServerEnv = z.infer<typeof webServerEnvSchema>;
+export const gatewayEnvSchema = z.object({
+  GATEWAY_URL: z.url(),
+});
 
-let cached: WebServerEnv | undefined;
+export type SessionEnv = z.infer<typeof sessionEnvSchema>;
+export type GatewayEnv = z.infer<typeof gatewayEnvSchema>;
 
-export function getServerEnv(source: Record<string, unknown> = process.env): WebServerEnv {
-  if (cached) {
-    return cached;
-  }
-
-  const result = webServerEnvSchema.safeParse(source);
+function parseEnv<T extends z.ZodType>(schema: T, source: Record<string, unknown>): z.infer<T> {
+  const result = schema.safeParse(source);
 
   if (!result.success) {
     throw new Error(
@@ -28,7 +32,22 @@ export function getServerEnv(source: Record<string, unknown> = process.env): Web
     );
   }
 
-  cached = result.data;
+  return result.data;
+}
 
-  return cached;
+let cachedSession: SessionEnv | undefined;
+let cachedGateway: GatewayEnv | undefined;
+
+/** Safe to call from the proxy. */
+export function getSessionEnv(source: Record<string, unknown> = process.env): SessionEnv {
+  cachedSession ??= parseEnv(sessionEnvSchema, source);
+
+  return cachedSession;
+}
+
+/** Functions only (Server Components, Server Actions, Route Handlers) — never the proxy. */
+export function getGatewayEnv(source: Record<string, unknown> = process.env): GatewayEnv {
+  cachedGateway ??= parseEnv(gatewayEnvSchema, source);
+
+  return cachedGateway;
 }

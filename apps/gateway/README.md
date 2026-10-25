@@ -1,6 +1,6 @@
 # `@postroll/gateway`
 
-NestJS HTTP gateway. Deployed to Fly.io. Production deploys via [`production-deploy.yml`](../../.github/workflows/production-deploy.yml) on push to `main`; PR previews via [`preview-deploy.yml`](../../.github/workflows/preview-deploy.yml).
+NestJS HTTP gateway. Deployed to Vercel as the **internal** `gateway` service of the monorepo's Vercel project (see the [root README](../../README.md#deployment)): it has no public route and is only reachable from the `web` service through the `GATEWAY_URL` service binding. Production deploys via [`production-deploy.yml`](../../.github/workflows/production-deploy.yml) on push to `main`; PR previews via [`preview-deploy.yml`](../../.github/workflows/preview-deploy.yml).
 
 ## Scripts
 
@@ -9,7 +9,7 @@ NestJS HTTP gateway. Deployed to Fly.io. Production deploys via [`production-dep
 | `pnpm dev`                                       | `nest start --watch` — local dev with hot reload. |
 | `pnpm build`                                     | `nest build` — compiles to `dist/`.               |
 | `pnpm start`                                     | Runs the compiled output via `nest start`.        |
-| `pnpm start:prod`                                | `node dist/main` — used inside the Fly container. |
+| `pnpm start:prod`                                | `node dist/main` — runs the production build.     |
 | `pnpm check-types`                               | `tsc --noEmit`.                                   |
 | `pnpm --filter @postroll/gateway lint`           | lint check                                        |
 | `pnpm --filter @postroll/gateway lint:fix`       | lint check with auto-fix                          |
@@ -24,15 +24,15 @@ Validation runs at NestJS boot via `ConfigModule.forRoot({ validate: validateGat
 
 ### `DATABASE_URL`
 
-**Required at runtime.** Postgres connection string. Used by [`src/database/database.module.ts`](src/database/database.module.ts) to construct a `PrismaClient` with the appropriate driver adapter: [`@prisma/adapter-neon`](https://www.npmjs.com/package/@prisma/adapter-neon) for Neon URLs (`*.neon.tech`), [`@prisma/adapter-pg`](https://www.npmjs.com/package/@prisma/adapter-pg) for everything else. The check is on the URL host, not `NODE_ENV` — preview deploys point at Neon branches but run under `NODE_ENV=production`, and local Docker Postgres runs under `NODE_ENV=development`. In production this is set as a Fly secret; in CI previews it's set dynamically from the Neon branch URL created earlier in the workflow.
+**Required at runtime.** Postgres connection string. Used by [`src/database/database.module.ts`](src/database/database.module.ts) to construct a `PrismaClient` with the appropriate driver adapter: [`@prisma/adapter-neon`](https://www.npmjs.com/package/@prisma/adapter-neon) for Neon URLs (`*.neon.tech`), [`@prisma/adapter-pg`](https://www.npmjs.com/package/@prisma/adapter-pg) for everything else. The check is on the URL host, not `NODE_ENV` — preview deploys point at Neon branches but run under `NODE_ENV=production`, and local Docker Postgres runs under `NODE_ENV=development`. In production it's a sensitive Vercel env var (Production environment); for PR previews the workflow passes the PR's Neon branch URL with `vercel deploy --env DATABASE_URL=…`.
 
 ### `PORT`
 
-**Optional, defaults to `8080`.** Coerced to a positive integer. The Fly container reads it from `fly.toml`'s `internal_port`; locally you can override via `.env`. Read in [`src/main.ts`](src/main.ts) via `ConfigService`.
+**Optional, defaults to `8080`.** Coerced to a positive integer. Only matters locally (override via `.env`); on Vercel the NestJS app runs as a Vercel Function and `listen()` is handled by the runtime. Read in [`src/main.ts`](src/main.ts) via `ConfigService`.
 
 ### `NODE_ENV`
 
-**Optional, defaults to `development`.** Constrained to `development | production | test`. Set to `production` in the Dockerfile. Currently informational — no code paths fork on it yet, but the schema validates it so future use is type-safe.
+**Optional, defaults to `development`.** Constrained to `development | production | test`. Vercel sets it to `production` at runtime. In production the logger writes plain JSON instead of using the `pino-pretty` transport (see [`src/app.module.ts`](src/app.module.ts)).
 
 ## How validation is wired
 
@@ -70,11 +70,15 @@ A symbol token (rather than the `PrismaClient` class as token) decouples DI from
 
 ## Deployment
 
-- **Production**: pushing to `main` triggers [`production-deploy.yml`](../../.github/workflows/production-deploy.yml) which runs `prisma migrate deploy` against the production Neon branch and then `flyctl deploy`.
-- **PR preview**: opening or updating a PR triggers [`preview-deploy.yml`](../../.github/workflows/preview-deploy.yml) which creates a Neon branch named `preview/<branch-name>`, runs migrations against it, and deploys a Fly review app. The Fly URL is posted as a PR comment.
+The `gateway` service is defined in the root [`vercel.json`](../../vercel.json): `framework: "nestjs"`, a build command that runs `turbo run build --filter=@postroll/gateway` (so `@postroll/env`, `@postroll/contracts` and the Prisma client are built first), and `outputDirectory: "dist"`, so Vercel serves the `nest build` output (`dist/main.js`) as a single Vercel Function.
+
+- **Production**: pushing to `main` triggers [`production-deploy.yml`](../../.github/workflows/production-deploy.yml), which runs `prisma migrate deploy` against the production Neon branch, deploys web + gateway to Vercel without assigning domains, smoke-tests `/api/health` (web → gateway → database), then promotes the deployment.
+- **PR preview**: opening or updating a PR triggers [`preview-deploy.yml`](../../.github/workflows/preview-deploy.yml), which creates a Neon branch named `preview/<branch-name>`, runs migrations against it, and deploys web + gateway to Vercel with that branch's pooled `DATABASE_URL`. The preview URL is posted as a PR comment.
+
+Because the gateway is internal, Vercel's Firewall and Deployment Protection don't apply to it, and `x-postroll-client-ip` can only come from the web app.
 
 Configuration outside the repo:
 
-- Fly: `DATABASE_URL` (set via `superfly/fly-pr-review-apps` action for previews; via Fly dashboard for production).
-- GitHub Actions secrets: `DATABASE_URL`, `DIRECT_URL`, `NEON_API_KEY`, `FLY_API_TOKEN`.
-- GitHub Actions variables: `NEON_PROJECT_ID`.
+- Vercel env vars: `DATABASE_URL` (Production only), `JWT_ACCESS_SECRET` (Production and Preview, different values). `JWT_ACCESS_TTL`, `JWT_REFRESH_TTL_DAYS` and `COOKIE_SECURE` fall back to their defaults.
+- GitHub Actions secrets: `DATABASE_URL` (production migrations), `DIRECT_URL`, `NEON_API_KEY`, `VERCEL_TOKEN`.
+- GitHub Actions variables: `NEON_PROJECT_ID`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`.

@@ -5,7 +5,6 @@
 node_modules/
 
 # build output
-.open-next/
 .next/
 dist/
 
@@ -16,7 +15,9 @@ next-env.d.ts
 # logs
 .pnpm-debug.log*
 .turbo/
-.wrangler/
+
+# vercel
+.vercel/
 
 # local env files
 .env

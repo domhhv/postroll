@@ -1,7 +1,7 @@
 import { refreshResponseSchema } from '@postroll/contracts';
 import { parse as parseSetCookies } from 'set-cookie-parser';
 
-import { getServerEnv } from '#env';
+import { getGatewayEnv } from '#env';
 
 import type { SessionPayload } from './session-crypto';
 
@@ -17,12 +17,26 @@ export type RequestMeta = {
 };
 
 /**
+ * Build an absolute gateway URL for `path`.
+ *
+ * On Vercel, `GATEWAY_URL` is injected by the `web` → `gateway` service binding
+ * as a URL base, so resolve paths relative to it (with a guaranteed trailing
+ * slash) instead of concatenating strings. Locally it's `http://localhost:8080`.
+ */
+export function gatewayUrl(path: string): URL {
+  const { GATEWAY_URL } = getGatewayEnv();
+  const base = GATEWAY_URL.endsWith('/') ? GATEWAY_URL : `${GATEWAY_URL}/`;
+
+  return new URL(path.replace(/^\/+/, ''), base);
+}
+
+/**
  * Extract the originating client's user-agent and IP from an incoming request's
- * headers. On Cloudflare the true client IP is in `cf-connecting-ip`; we fall
- * back to the first hop of `x-forwarded-for` otherwise.
+ * headers. Vercel sets `x-real-ip` to the client IP; fall back to the first hop
+ * of `x-forwarded-for` elsewhere (e.g. local dev behind a proxy).
  */
 export function readRequestMeta(headers: Headers): RequestMeta {
-  const ip = headers.get('cf-connecting-ip') ?? headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined;
+  const ip = headers.get('x-real-ip') ?? headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined;
 
   return {
     ip: ip || undefined,
@@ -85,8 +99,7 @@ export function parseRefreshCookie(setCookies: string[]): RefreshCookie {
 }
 
 export async function refreshTokens(session: SessionPayload, meta: RequestMeta = {}): Promise<RefreshResult> {
-  const { GATEWAY_URL } = getServerEnv();
-  const res = await fetch(`${GATEWAY_URL}/auth/refresh`, {
+  const res = await fetch(gatewayUrl('/auth/refresh'), {
     method: 'POST',
     headers: {
       cookie: `${GATEWAY_REFRESH_COOKIE}=${session.refreshToken}`,

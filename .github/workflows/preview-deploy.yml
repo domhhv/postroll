@@ -1,16 +1,18 @@
-name: Preview App
+name: Preview Deployment
 on:
   pull_request:
     types: [opened, reopened, synchronize]
 
 env:
-  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-  FLY_REGION: jnb
-  FLY_ORG: personal
+  NODE_VERSION: 24.22.0
+  VERCEL_CLI_VERSION: 65.2.0
+  VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
 jobs:
   deploy-preview:
-    name: Deploy to Neon, Fly.io, and Cloudflare Workers
+    name: Deploy to Neon and Vercel
     if: >-
       !contains(github.event.pull_request.body, '[Skip deploy]')
     runs-on: ubuntu-latest
@@ -46,11 +48,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24.22.0
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Get git branch name
         id: branch-name
@@ -66,17 +68,12 @@ jobs:
           branch_name: preview/${{ steps.branch-name.outputs.current_branch }}
           api_key: ${{ secrets.NEON_API_KEY }}
 
-      - name: Set DATABASE_URL and DIRECT_URL env vars
-        run: |
-          echo "DATABASE_URL=${{ steps.create-neon-branch.outputs.db_url_pooled }}" >> "$GITHUB_ENV"
-          echo "DIRECT_URL=${{ steps.create-neon-branch.outputs.db_url }}" >> "$GITHUB_ENV"
-
       - name: Deploy database migrations to preview branch on Neon
         run: pnpm turbo run db:deploy --filter @postroll/database
         env:
-          DIRECT_URL: ${{ env.DIRECT_URL }}
+          DIRECT_URL: ${{ steps.create-neon-branch.outputs.db_url }}
 
-      - name: Update comment with branch and database status
+      - name: Update comment with database status
         uses: marocchino/sticky-pull-request-comment@v3.0.5
         with:
           header: deploy-preview
@@ -84,56 +81,41 @@ jobs:
           message: |
             ## :rocket: Deploying preview app...
             Neon DB branch ready: https://console.neon.tech/app/projects/${{ vars.NEON_PROJECT_ID }}/branches/${{ steps.create-neon-branch.outputs.branch_id }}
-            Deploying gateway...
+            Deploying web + gateway to Vercel...
             Log runs [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
 
-      - name: Deploy Gateway PR Review App to Fly.io
+      - name: Install Vercel CLI
+        run: npm install --global vercel@${{ env.VERCEL_CLI_VERSION }}
+
+      # One deployment ships both services. The web → gateway binding URL is
+      # deployment-aware, so only the Neon branch's DATABASE_URL has to be passed.
+      # Every other secret comes from the project's Preview env vars on Vercel.
+      - name: Deploy web + gateway to Vercel
         id: deploy
-        uses: superfly/fly-pr-review-apps@1.6.0
-        with:
-          config: apps/gateway/fly.toml
-          secrets: |
-            DATABASE_URL=${{ env.DATABASE_URL }}
-            JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET_PREVIEW }}
-            JWT_ACCESS_TTL=15m
-            JWT_REFRESH_TTL_DAYS=30
-            COOKIE_SECURE=true
-          launch_options: --dockerfile apps/gateway/Dockerfile
-          deploy_options: --dockerfile apps/gateway/Dockerfile
-
-      - name: Update comment with gateway status
-        uses: marocchino/sticky-pull-request-comment@v3.0.5
-        with:
-          header: deploy-preview
-          skip_unchanged: true
-          message: |
-            ## :rocket: Deploying preview app...
-            Neon DB branch ready: https://console.neon.tech/app/projects/${{ vars.NEON_PROJECT_ID }}/branches/${{ steps.create-neon-branch.outputs.branch_id }}
-            Gateway ready: ${{ steps.deploy.outputs.url }}
-            Deploying Cloudflare Worker...
-            Log runs [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
-
-      - name: Set GATEWAY_URL var for Cloudflare Worker deployment
-        run: |
-          echo "GATEWAY_URL=${{ steps.deploy.outputs.url }}" >> "$GITHUB_ENV"
-
-      - name: Write Cloudflare secrets file
         env:
-          SESSION_SECRET: ${{ secrets.SESSION_SECRET_PREVIEW }}
+          DATABASE_URL: ${{ steps.create-neon-branch.outputs.db_url_pooled }}
+          PR_NUMBER: ${{ github.event.number }}
         run: |
-          umask 077
-          jq -n --arg v "$SESSION_SECRET" '{SESSION_SECRET: $v}' > "${RUNNER_TEMP}/cf-secrets.json"
+          url=$(vercel deploy --yes --non-interactive \
+            --env DATABASE_URL="$DATABASE_URL" \
+            --meta prNumber="$PR_NUMBER")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
 
-      - name: Deploy Cloudflare Worker for Gateway PR Review App
-        id: deploy-worker
-        uses: cloudflare/wrangler-action@v4
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          gitHubToken: ${{ secrets.GH_TOKEN }}
-          workingDirectory: 'apps/web'
-          preCommands: pnpm turbo run build:cf --filter @postroll/web
-          command: versions upload --var GATEWAY_URL:${{ steps.deploy.outputs.url }} --secrets-file "${{ runner.temp }}/cf-secrets.json"
+      # The gateway is internal-only, so check it end to end through web's
+      # /api/health (web → binding → gateway → Neon).
+      - name: Smoke test deployment
+        env:
+          URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          for attempt in 1 2 3; do
+            body=$(vercel curl /api/health --deployment "$URL" --yes --non-interactive || true)
+            echo "Attempt $attempt: $body"
+            if echo "$body" | grep -q '"status":"ok"'; then
+              exit 0
+            fi
+            sleep 10
+          done
+          exit 1
 
       - name: Update comment with success
         uses: marocchino/sticky-pull-request-comment@v3.0.5
@@ -143,8 +125,7 @@ jobs:
           message: |
             ## Preview deployed successfully! :tada:
             :elephant: Neon DB branch: https://console.neon.tech/app/projects/${{ vars.NEON_PROJECT_ID }}/branches/${{ steps.create-neon-branch.outputs.branch_id }}
-            :balloon: Gateway URL: ${{ steps.deploy.outputs.url }}
-            :cloud: Cloudflare Worker: ${{ steps.deploy-worker.outputs.deployment-url }}
+            :triangular_flag_on_post: Vercel preview (web + gateway): ${{ steps.deploy.outputs.url }}
 
       - name: Update comment on failure
         if: failure()
