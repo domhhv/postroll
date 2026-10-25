@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { PrismaClient } from '@postroll/database/prisma';
 
-import { InjectPrisma } from '../database/database.module';
+import { InjectPrisma } from '../database/database.module.js';
 
 export type RefreshTokenMeta = {
   ip?: string | undefined;

@@ -1,28 +1,26 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule, type JwtModuleOptions } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
 
-import { UsersModule } from '../users/users.module';
+import { UsersModule } from '../users/users.module.js';
 
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import { LocalStrategy } from './strategies/local.strategy';
-import { TokensService } from './tokens.service';
+import { AuthController } from './auth.controller.js';
+import { AuthService } from './auth.service.js';
+import { TokensService } from './tokens.service.js';
 
 type ExpiresIn = NonNullable<NonNullable<JwtModuleOptions['signOptions']>['expiresIn']>;
 
 @Module({
   controllers: [AuthController],
   exports: [TokensService],
-  providers: [AuthService, TokensService, LocalStrategy, JwtStrategy],
+  providers: [AuthService, TokensService],
   imports: [
-    PassportModule,
     forwardRef(() => {
       return UsersModule;
     }),
     JwtModule.registerAsync({
+      // Global so JwtAuthGuard can inject JwtService in any controller's module.
+      global: true,
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService): JwtModuleOptions => {

@@ -23,12 +23,12 @@ import {
   updateWorkspaceRequestSchema,
 } from '@postroll/contracts';
 
-import { CurrentUser, type RequestUser } from '../auth/decorators/current-user.decorator';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser, type RequestUser } from '../auth/decorators/current-user.decorator.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 
-import { CurrentWorkspace, type RequestWorkspace } from './decorators/current-workspace.decorator';
-import { WorkspaceGuard } from './guards/workspace.guard';
-import { WorkspacesService } from './workspaces.service';
+import { CurrentWorkspace, type RequestWorkspace } from './decorators/current-workspace.decorator.js';
+import { WorkspaceGuard } from './guards/workspace.guard.js';
+import { WorkspacesService } from './workspaces.service.js';
 
 @Controller('workspaces')
 export class WorkspacesController {

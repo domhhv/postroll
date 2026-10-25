@@ -22,9 +22,9 @@ import {
 } from '@postroll/contracts';
 import type { Request, Response, CookieOptions } from 'express';
 
-import { AuthService, type AuthenticatedUser } from './auth.service';
-import { LocalAuthGuard } from './guards/local-auth.guard';
-import { TokensService } from './tokens.service';
+import { AuthService, type AuthenticatedUser } from './auth.service.js';
+import { LocalAuthGuard } from './guards/local-auth.guard.js';
+import { TokensService } from './tokens.service.js';
 
 const REFRESH_COOKIE = 'postroll_rt';
 
@@ -56,7 +56,8 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response
   ): Promise<LoginResponse> {
     loginRequestSchema.parse(body);
-    const user = req.user as AuthenticatedUser;
+    // Set by LocalAuthGuard after checking the credentials.
+    const user = (req as Request & { user: AuthenticatedUser }).user;
     const result = await this.authService.login(user, {
       ip: req.get(CLIENT_IP_HEADER) ?? req.ip,
       userAgent: req.get('user-agent') ?? undefined,

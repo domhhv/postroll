@@ -21,8 +21,7 @@
     "gateway": {
       "root": "apps/gateway",
       "framework": "nestjs",
-      "buildCommand": "cd ../.. && pnpm turbo run build --filter=@postroll/gateway",
-      "outputDirectory": "dist"
+      "buildCommand": "rm -rf dist && cd ../.. && pnpm turbo run build db:generate --filter=@postroll/gateway^..."
     }
   },
   "rewrites": [
