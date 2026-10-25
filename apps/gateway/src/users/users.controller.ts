@@ -21,13 +21,13 @@ import {
   changePasswordRequestSchema,
 } from '@postroll/contracts';
 
-import type { RequestUser } from '../auth/decorators/current-user.decorator';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { TokensService } from '../auth/tokens.service';
-import { parseUserAgent } from '../common/user-agent';
+import type { RequestUser } from '../auth/decorators/current-user.decorator.js';
+import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { TokensService } from '../auth/tokens.service.js';
+import { parseUserAgent } from '../common/user-agent.js';
 
-import { UsersService } from './users.service';
+import { UsersService } from './users.service.js';
 
 @Controller('users')
 export class UsersController {

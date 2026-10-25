@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 
-import { WorkspaceGuard } from './guards/workspace.guard';
-import { WorkspacesController } from './workspaces.controller';
-import { WorkspacesService } from './workspaces.service';
+import { WorkspaceGuard } from './guards/workspace.guard.js';
+import { WorkspacesController } from './workspaces.controller.js';
+import { WorkspacesService } from './workspaces.service.js';
 
 @Module({
   controllers: [WorkspacesController],

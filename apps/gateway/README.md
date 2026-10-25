@@ -72,6 +72,8 @@ A symbol token (rather than the `PrismaClient` class as token) decouples DI from
 
 The `gateway` service is defined in the root [`vercel.json`](../../vercel.json) with `framework: "nestjs"`. Its build command only builds the gateway's workspace dependencies (`@postroll/env`, `@postroll/contracts`, and the Prisma client via `db:generate`) and removes any `dist/`; Vercel then bundles [`src/main.ts`](src/main.ts) itself into a single Vercel Function, using this package's `tsconfig.json` (including `emitDecoratorMetadata`). `pnpm build` / `dist/` are for local use only — a prebuilt `dist/` breaks module resolution in Vercel's monorepo function layout (see CLAUDE.md, "Deployment").
 
+The package is ESM (`"type": "module"`): write relative imports with a `.js` extension (`'./app.module.js'`), as Node's ESM resolution requires. NestJS 12 itself is ESM-only, and Vercel's runtime can't `require()` ES modules, so a CommonJS gateway that works locally fails on Vercel with `ERR_REQUIRE_ESM`.
+
 Auth guards are plain Nest guards in [`src/auth/guards/`](src/auth/guards): `JwtAuthGuard` verifies the bearer access token with `@nestjs/jwt` (registered globally in `AuthModule`), and `LocalAuthGuard` checks email/password via `AuthService.validateUser`. Both set `req.user`.
 
 - **Production**: pushing to `main` triggers [`production-deploy.yml`](../../.github/workflows/production-deploy.yml), which runs `prisma migrate deploy` against the production Neon branch, deploys web + gateway to Vercel without assigning domains, smoke-tests `/api/health` (web → gateway → database), then promotes the deployment.

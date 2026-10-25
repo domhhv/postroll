@@ -3,11 +3,11 @@ import type { UserDto, LoginResponse, RegisterRequest } from '@postroll/contract
 import type { User, PrismaClient } from '@postroll/database/prisma';
 import { hash, compare } from 'bcryptjs';
 
-import { InjectPrisma } from '../database/database.module';
-import { toUserDto } from '../users/toUserDto';
-import { generateWorkspaceSlug } from '../workspaces/slug';
+import { InjectPrisma } from '../database/database.module.js';
+import { toUserDto } from '../users/toUserDto.js';
+import { generateWorkspaceSlug } from '../workspaces/slug.js';
 
-import { TokensService } from './tokens.service';
+import { TokensService } from './tokens.service.js';
 
 export type AuthenticatedUser = Omit<User, 'password'>;
 

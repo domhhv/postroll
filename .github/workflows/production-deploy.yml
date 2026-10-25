@@ -51,8 +51,16 @@ jobs:
       # yet, so a broken build never goes live.
       - name: Deploy web + gateway to Vercel (not yet live)
         id: deploy
+        # In non-interactive mode the CLI prints a JSON payload on stdout
+        # ({ status, deployment: { url, … } }), not a bare URL.
         run: |
-          url=$(vercel deploy --prod --skip-domain --yes --non-interactive)
+          vercel deploy --prod --skip-domain --yes --non-interactive > "$RUNNER_TEMP/deploy.json"
+          url=$(jq -r '.deployment.url // .url // empty' "$RUNNER_TEMP/deploy.json")
+          if [[ "$url" != https://* ]]; then
+            echo "Could not read the deployment URL from the Vercel CLI output:"
+            cat "$RUNNER_TEMP/deploy.json"
+            exit 1
+          fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
       - name: Smoke test deployment
@@ -60,7 +68,8 @@ jobs:
           URL: ${{ steps.deploy.outputs.url }}
         run: |
           for attempt in 1 2 3; do
-            body=$(vercel curl /api/health --deployment "$URL" --yes --non-interactive || true)
+            # No --non-interactive here: `vercel curl` passes unknown flags to curl.
+            body=$(vercel curl /api/health --deployment "$URL" --yes || true)
             echo "Attempt $attempt: $body"
             if echo "$body" | grep -q '"status":"ok"'; then
               exit 0

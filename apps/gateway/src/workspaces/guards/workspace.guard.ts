@@ -9,9 +9,9 @@ import {
 import type { PrismaClient } from '@postroll/database/prisma';
 import type { Request } from 'express';
 
-import type { RequestUser } from '../../auth/decorators/current-user.decorator';
-import { InjectPrisma } from '../../database/database.module';
-import { WORKSPACE_CONTEXT_KEY, type RequestWorkspace } from '../decorators/current-workspace.decorator';
+import type { RequestUser } from '../../auth/decorators/current-user.decorator.js';
+import { InjectPrisma } from '../../database/database.module.js';
+import { WORKSPACE_CONTEXT_KEY, type RequestWorkspace } from '../decorators/current-workspace.decorator.js';
 
 /** Header the web app sets from the session's `activeWorkspaceId`. */
 const WORKSPACE_HEADER = 'x-workspace-id';

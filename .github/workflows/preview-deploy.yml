@@ -95,11 +95,21 @@ jobs:
         env:
           DATABASE_URL: ${{ steps.create-neon-branch.outputs.db_url_pooled }}
           PR_NUMBER: ${{ github.event.number }}
+        # In non-interactive mode the CLI prints a JSON payload on stdout
+        # ({ status, deployment: { url, inspectorUrl, … } }), not a bare URL.
         run: |
-          url=$(vercel deploy --yes --non-interactive \
+          vercel deploy --yes --non-interactive \
             --env DATABASE_URL="$DATABASE_URL" \
-            --meta prNumber="$PR_NUMBER")
+            --meta prNumber="$PR_NUMBER" > "$RUNNER_TEMP/deploy.json"
+          url=$(jq -r '.deployment.url // .url // empty' "$RUNNER_TEMP/deploy.json")
+          inspector=$(jq -r '.deployment.inspectorUrl // .inspectorUrl // empty' "$RUNNER_TEMP/deploy.json")
+          if [[ "$url" != https://* ]]; then
+            echo "Could not read the deployment URL from the Vercel CLI output:"
+            cat "$RUNNER_TEMP/deploy.json"
+            exit 1
+          fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "inspector=$inspector" >> "$GITHUB_OUTPUT"
 
       # The gateway is internal-only, so check it end to end through web's
       # /api/health (web → binding → gateway → Neon).
@@ -108,7 +118,8 @@ jobs:
           URL: ${{ steps.deploy.outputs.url }}
         run: |
           for attempt in 1 2 3; do
-            body=$(vercel curl /api/health --deployment "$URL" --yes --non-interactive || true)
+            # No --non-interactive here: `vercel curl` passes unknown flags to curl.
+            body=$(vercel curl /api/health --deployment "$URL" --yes || true)
             echo "Attempt $attempt: $body"
             if echo "$body" | grep -q '"status":"ok"'; then
               exit 0
@@ -126,6 +137,7 @@ jobs:
             ## Preview deployed successfully! :tada:
             :elephant: Neon DB branch: https://console.neon.tech/app/projects/${{ vars.NEON_PROJECT_ID }}/branches/${{ steps.create-neon-branch.outputs.branch_id }}
             :triangular_flag_on_post: Vercel preview (web + gateway): ${{ steps.deploy.outputs.url }}
+            :mag: Vercel deployment details: ${{ steps.deploy.outputs.inspector }}
 
       - name: Update comment on failure
         if: failure()

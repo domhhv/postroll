@@ -3,9 +3,9 @@ import type { UserDto, UpdateUserRequest } from '@postroll/contracts';
 import type { Prisma, PrismaClient } from '@postroll/database/prisma';
 import { hash, compare } from 'bcryptjs';
 
-import { InjectPrisma } from '../database/database.module';
+import { InjectPrisma } from '../database/database.module.js';
 
-import { toUserDto } from './toUserDto';
+import { toUserDto } from './toUserDto.js';
 
 const BCRYPT_COST = 12;
 

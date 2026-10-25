@@ -2,12 +2,12 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 
-import { AuthModule } from './auth/auth.module';
-import { DatabaseModule } from './database/database.module';
-import { validateGatewayEnv } from './env';
-import { HealthModule } from './health/health.module';
-import { UsersModule } from './users/users.module';
-import { WorkspacesModule } from './workspaces/workspaces.module';
+import { AuthModule } from './auth/auth.module.js';
+import { DatabaseModule } from './database/database.module.js';
+import { validateGatewayEnv } from './env.js';
+import { HealthModule } from './health/health.module.js';
+import { UsersModule } from './users/users.module.js';
+import { WorkspacesModule } from './workspaces/workspaces.module.js';
 
 const isProduction = process.env['NODE_ENV'] === 'production';
 

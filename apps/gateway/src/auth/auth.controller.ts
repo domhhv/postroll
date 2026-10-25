@@ -22,9 +22,9 @@ import {
 } from '@postroll/contracts';
 import type { Request, Response, CookieOptions } from 'express';
 
-import { AuthService, type AuthenticatedUser } from './auth.service';
-import { LocalAuthGuard } from './guards/local-auth.guard';
-import { TokensService } from './tokens.service';
+import { AuthService, type AuthenticatedUser } from './auth.service.js';
+import { LocalAuthGuard } from './guards/local-auth.guard.js';
+import { TokensService } from './tokens.service.js';
 
 const REFRESH_COOKIE = 'postroll_rt';
 

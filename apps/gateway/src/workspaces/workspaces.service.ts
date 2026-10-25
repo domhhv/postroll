@@ -9,9 +9,9 @@ import type {
 } from '@postroll/contracts';
 import type { PrismaClient } from '@postroll/database/prisma';
 
-import { InjectPrisma } from '../database/database.module';
+import { InjectPrisma } from '../database/database.module.js';
 
-import { generateWorkspaceSlug } from './slug';
+import { generateWorkspaceSlug } from './slug.js';
 
 /** Roles allowed to remove members, in descending privilege. */
 const MEMBER_MANAGEMENT_ROLES: ReadonlySet<WorkspaceRole> = new Set(['OWNER', 'ADMIN']);

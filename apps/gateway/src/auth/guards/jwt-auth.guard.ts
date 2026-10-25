@@ -2,7 +2,7 @@ import { Injectable, type CanActivate, type ExecutionContext, UnauthorizedExcept
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 
-import type { RequestUser } from '../decorators/current-user.decorator';
+import type { RequestUser } from '../decorators/current-user.decorator.js';
 
 type AccessTokenPayload = { sub?: unknown };
 

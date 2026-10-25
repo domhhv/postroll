@@ -1,7 +1,7 @@
 import { Injectable, type CanActivate, type ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import type { Request } from 'express';
 
-import { AuthService, type AuthenticatedUser } from '../auth.service';
+import { AuthService, type AuthenticatedUser } from '../auth.service.js';
 
 function readStringField(body: unknown, key: string): string | undefined {
   if (typeof body !== 'object' || body === null) {
