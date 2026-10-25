@@ -14,6 +14,12 @@ env:
   VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
+# Explicit `bash` turns on `-o pipefail`, so a failing command in a pipe fails
+# the step instead of being masked.
+defaults:
+  run:
+    shell: bash
+
 jobs:
   deploy:
     name: Deploy to Neon and Vercel
@@ -62,6 +68,7 @@ jobs:
             exit 1
           fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "id=$(jq -r '.deployment.id // .id' "$RUNNER_TEMP/deploy.json")" >> "$GITHUB_OUTPUT"
 
       - name: Smoke test deployment
         env:
@@ -78,7 +85,33 @@ jobs:
           done
           exit 1
 
+      # Not `vercel promote`: the CLI looks up the user and team first, which a
+      # project-scoped VERCEL_TOKEN isn't allowed to read ("User not found").
+      # These REST endpoints are project-level, so the scoped token suffices.
       - name: Promote deployment to production
         env:
-          URL: ${{ steps.deploy.outputs.url }}
-        run: vercel promote "$URL" --yes --non-interactive
+          DEPLOYMENT_ID: ${{ steps.deploy.outputs.id }}
+        run: |
+          api="https://api.vercel.com"
+          project="$api/v9/projects/$VERCEL_PROJECT_ID?teamId=$VERCEL_ORG_ID"
+          status=$(curl -sS -o "$RUNNER_TEMP/promote.json" -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "$api/v10/projects/$VERCEL_PROJECT_ID/promote/$DEPLOYMENT_ID?teamId=$VERCEL_ORG_ID")
+          echo "Promote request for $DEPLOYMENT_ID: HTTP $status"
+          if [[ "$status" != 201 && "$status" != 202 ]]; then
+            cat "$RUNNER_TEMP/promote.json"
+            exit 1
+          fi
+          # Wait until the project's production target points at this deployment.
+          for attempt in $(seq 1 18); do
+            current=$(curl -sS --fail-with-body -H "Authorization: Bearer $VERCEL_TOKEN" "$project" \
+              | jq -r '.targets.production.id // empty')
+            if [[ "$current" == "$DEPLOYMENT_ID" ]]; then
+              echo "Production now serves $DEPLOYMENT_ID."
+              exit 0
+            fi
+            echo "Attempt $attempt: production still serves ${current:-nothing}, waiting…"
+            sleep 10
+          done
+          echo "Timed out waiting for $DEPLOYMENT_ID to become the production deployment."
+          exit 1

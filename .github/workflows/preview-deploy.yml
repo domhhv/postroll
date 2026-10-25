@@ -10,6 +10,12 @@ env:
   VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
+# Explicit `bash` turns on `-o pipefail`, so a failing command in a pipe fails
+# the step instead of being masked.
+defaults:
+  run:
+    shell: bash
+
 jobs:
   deploy-preview:
     name: Deploy to Neon and Vercel
