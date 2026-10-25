@@ -14,10 +14,10 @@ export {
 /**
  * Cookie mutation is only legal in Server Actions and Route Handlers. When a
  * write is attempted during an RSC render (e.g. a token refresh triggered by
- * gatewayFetch while rendering the layout), Next throws. Middleware refreshes
- * the session ahead of render, so swallowing that specific failure here is a
- * safe fallback — the rotated tokens are still used for the current request and
- * persisted on the next mutating request or middleware pass.
+ * gatewayFetch while rendering the layout), Next throws. The proxy bounces
+ * near-expiry requests through the refresh Route Handler ahead of render, so
+ * swallowing that specific failure here is a safe fallback — the rotated tokens
+ * are still used for the current request.
  */
 function isReadonlyCookieError(error: unknown): boolean {
   return error instanceof Error && error.message.includes('can only be modified in a Server Action');

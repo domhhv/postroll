@@ -9,6 +9,8 @@ import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
 
+const isProduction = process.env['NODE_ENV'] === 'production';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -16,16 +18,24 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
       validate: validateGatewayEnv,
     }),
     LoggerModule.forRoot({
-      pinoHttp: {
-        transport: {
-          target: 'pino-pretty',
-          options: {
-            colorize: true,
-            levelFirst: true,
-            translateTime: 'SYS:standard',
+      /**
+       * Pretty logs locally only. In production (Vercel Functions) log plain
+       * JSON: it's what Vercel's log viewer expects, and the pino-pretty
+       * transport runs in a worker thread that resolves the package by name,
+       * which function file tracing doesn't pick up.
+       */
+      pinoHttp: isProduction
+        ? {}
+        : {
+            transport: {
+              target: 'pino-pretty',
+              options: {
+                colorize: true,
+                levelFirst: true,
+                translateTime: 'SYS:standard',
+              },
+            },
           },
-        },
-      },
     }),
     DatabaseModule,
     HealthModule,

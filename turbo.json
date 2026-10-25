@@ -10,7 +10,11 @@
     "PARENT_BRANCH_ID",
     "PORT",
     "NODE_ENV",
-    "SESSION_SECRET"
+    "SESSION_SECRET",
+    "JWT_ACCESS_SECRET",
+    "JWT_ACCESS_TTL",
+    "JWT_REFRESH_TTL_DAYS",
+    "COOKIE_SECURE"
   ],
   "tasks": {
     "build": {
@@ -36,10 +40,6 @@
       "dependsOn": ["^prettier:write", "//#prettier:write:root"]
     },
     "//#prettier:write:root": {},
-    "build:cf": {
-      "dependsOn": ["^build"],
-      "outputs": [".next/**", ".open-next/**"]
-    },
     "sort-package-json": {
       "outputs": ["**/package.json"]
     },

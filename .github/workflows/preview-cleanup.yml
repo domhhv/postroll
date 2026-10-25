@@ -4,21 +4,46 @@ on:
     types: [closed]
 
 env:
-  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+  NODE_VERSION: 24.22.0
+  VERCEL_CLI_VERSION: 65.2.0
+  VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
 jobs:
   delete-preview:
-    name: Destroy Neon database preview branch and Fly.io preview app
+    name: Remove Vercel preview deployments and Neon database branch
     if: >-
       !contains(github.event.pull_request.body, '[Skip deploy]')
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     steps:
-      - name: Delete Fly app
-        uses: superfly/fly-pr-review-apps@1.6.0
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@${{ env.VERCEL_CLI_VERSION }}
+
+      # Preview deploys are tagged with --meta prNumber=<n> in preview-deploy.yml.
+      - name: Remove Vercel preview deployments
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          ids=$(vercel list --meta prNumber="$PR_NUMBER" --limit 100 --json --yes --non-interactive \
+            | jq -r '.deployments[] | select(.target != "production") | .id')
+          if [ -z "$ids" ]; then
+            echo "No preview deployments found for PR #$PR_NUMBER."
+            exit 0
+          fi
+          echo "Removing: $ids"
+          # shellcheck disable=SC2086
+          vercel remove $ids --yes --non-interactive
 
       - name: Delete Neon Branch
+        if: ${{ !cancelled() }}
         uses: neondatabase/delete-branch-action@v3.2.1
         with:
           project_id: ${{ vars.NEON_PROJECT_ID }}
@@ -32,4 +57,4 @@ jobs:
           only_update: true
           skip_unchanged: true
           message: |
-            :broom: Preview cleaned up — Fly app destroyed, Neon branch deleted.
+            :broom: Preview cleaned up — Vercel preview deployments removed, Neon branch deleted.

@@ -7,7 +7,6 @@ allowBuilds:
   esbuild: true
   sharp: true
   prisma: true
-  workerd: true
   msw: true
 
 overrides:

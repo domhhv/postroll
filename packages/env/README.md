@@ -31,7 +31,7 @@ const env = validateEnv(z.object({ DATABASE_URL: z.url() }), {
 
 Options:
 
-- `source` — defaults to `process.env`. Pass `getCloudflareContext().env` for Cloudflare Workers code.
+- `source` — defaults to `process.env`.
 - `contextLabel` — prefix in error header, e.g. `Invalid environment for <contextLabel>:`.
 - `exampleHint` — printed in the error footer; should be a repo-relative path to the package's `.env.example`.
 - `importMetaUrl` — if set, calls `loadEnvFile` before parsing so the file gets loaded relative to the package.
@@ -39,7 +39,7 @@ Options:
 
 ### `loadEnvFile({ importMetaUrl, relativePath? })`
 
-Resolves a `.env` file relative to a module via `import.meta.url` (not `cwd`), then loads it with `dotenv.config({ override: false })`. Silently no-ops if the file doesn't exist — important for production runtimes (Cloudflare Workers, Fly containers) where `.env` files aren't shipped.
+Resolves a `.env` file relative to a module via `import.meta.url` (not `cwd`), then loads it with `dotenv.config({ override: false })`. Silently no-ops if the file doesn't exist — important for production runtimes (Vercel Functions) where `.env` files aren't shipped.
 
 ```ts
 import { loadEnvFile } from '@postroll/env';
@@ -48,7 +48,7 @@ loadEnvFile({ importMetaUrl: import.meta.url });
 loadEnvFile({ importMetaUrl: import.meta.url, relativePath: '../.env.local' });
 ```
 
-`override: false` means values already set in `process.env` (e.g. by CI, Cloudflare secrets, Fly env) take precedence over the `.env` file.
+`override: false` means values already set in `process.env` (e.g. by CI or Vercel env vars) take precedence over the `.env` file.
 
 ### `formatZodEnvError(error, options?)`
 
@@ -80,14 +80,14 @@ Example, from `packages/database/package.json:9`:
 | -------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | CLI guard in script chain (`postroll-check-env … && actual-command`) | [`packages/database/package.json`](../database/package.json)               | Per-script gating: `db:start` needs Neon vars, `db:migrate` needs `DIRECT_URL` — same package, different env contract per script. pnpm v7+ disables `pre*` hooks by default, so inline `&&` is more explicit. |
 | `ConfigModule.forRoot({ validate })`                                 | [`apps/gateway/src/app.module.ts`](../../apps/gateway/src/app.module.ts)   | NestJS calls the `validate` hook once at boot, before any provider is instantiated. The gateway never starts with a bad config.                                                                               |
-| Next.js `instrumentation.ts` hook                                    | [`apps/web/src/instrumentation.ts`](../../apps/web/src/instrumentation.ts) | Runs once per server boot in the Node runtime. Skipped on Cloudflare Workers — there the env source is `getCloudflareContext().env`, not `process.env`, so validation defers to call sites.                   |
+| Next.js `instrumentation.ts` hook                                    | [`apps/web/src/instrumentation.ts`](../../apps/web/src/instrumentation.ts) | Runs once per server boot in the Node runtime and validates `SESSION_SECRET`. `GATEWAY_URL` comes from a Vercel service binding that only resolves in functions, so it's validated at first use instead.      |
 | Module-load validation                                               | [`packages/database/src/client.ts`](../database/src/client.ts)             | Validates `DATABASE_URL` when the Prisma client is first imported.                                                                                                                                            |
 
 ## How `.env` resolution works
 
 `loadEnvFile` resolves paths via `import.meta.url`, not `cwd`. This fixes a class of bugs where a script run from the repo root vs. the package directory would look at different `.env` files (or none at all). The `postroll-check-env` CLI uses the same primitive: env-file paths are anchored to the schema module, so `pnpm --filter @postroll/database db:start` works identically whether invoked from anywhere in the repo.
 
-For Cloudflare Workers and Fly containers, no `.env` file ships with the deployment — `loadEnvFile` no-ops, and the validator reads from `process.env` (Fly) or the explicitly-passed source (Cloudflare bindings via `getCloudflareContext().env`).
+On Vercel, no `.env` file ships with the deployment (the root `.vercelignore` excludes them) — `loadEnvFile` no-ops, and the validators read from `process.env`, where Vercel puts project env vars and service-binding URLs.
 
 ## When to add a new schema
 

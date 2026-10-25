@@ -16,7 +16,6 @@ Run from the repo root unless noted; pnpm + Turborepo handles workspace fan-out 
 | `pnpm db:start` / `pnpm db:stop` / `pnpm db:reset` / `pnpm db:studio` | Forwarded to `@postroll/database`. `db:start` needs `NEON_API_KEY`, `NEON_PROJECT_ID`, `PARENT_BRANCH_ID` and a running Docker daemon.                              |
 | `pnpm db:migrate`                                                     | Apply migrations against the local Neon branch. Needs `DIRECT_URL`. `db:deploy` (filter-only) runs `prisma migrate deploy`.                                         |
 | `pnpm ui <component>`                                                 | Adds a shadcn component to `packages/ui` via `shadcn add`.                                                                                                          |
-| `pnpm --filter @postroll/web preview`                                 | Builds with OpenNext and runs `opennextjs-cloudflare preview` (workerd) — the closest local equivalent to the deployed Cloudflare Worker.                           |
 
 Single-package work: `pnpm --filter <package> <script>` (e.g. `pnpm --filter @postroll/gateway dev`). There is no test runner wired up yet — `check-types` and `lint` are the only verifiers. Pre-commit (`lint-staged.config.mjs`) runs repo-wide `pnpm lint`, `pnpm prettier:check`, `pnpm check-types` and `sort-package-json` on staged `package.json`s — run `pnpm prettier:write` before committing to avoid a failed hook.
 
@@ -28,7 +27,7 @@ Two apps, one database, three packages doing real work (`env`, `contracts`, `dat
 
 ### Gateway is the only thing that talks to Postgres
 
-`apps/web` never connects to the database. All reads/writes go through `apps/gateway` over HTTP. This is enforced at the package level: `@postroll/database` (the bare import) is **types-only** — it re-exports `export type *` of the generated Prisma client. The live `PrismaClient` lives behind the `@postroll/database/prisma` subpath and is only imported by the gateway. If you find yourself importing `@postroll/database/prisma` or `@postroll/database/client` from `apps/web`, you're about to pull the Prisma engine + `pg` into the OpenNext bundle — stop and route the call through the gateway instead.
+`apps/web` never connects to the database. All reads/writes go through `apps/gateway` over HTTP. This is enforced at the package level: `@postroll/database` (the bare import) is **types-only** — it re-exports `export type *` of the generated Prisma client. The live `PrismaClient` lives behind the `@postroll/database/prisma` subpath and is only imported by the gateway. If you find yourself importing `@postroll/database/prisma` or `@postroll/database/client` from `apps/web`, you're about to pull the Prisma engine + `pg` into the web server bundle — stop and route the call through the gateway instead.
 
 When the web app needs a type, prefer `@postroll/contracts` (Zod schemas + inferred types for request/response DTOs, shared by both apps). Use `@postroll/database` types only when no contract type exists yet.
 
@@ -42,9 +41,9 @@ The gateway owns identity. Flow:
 
 The web app wraps this in a **session JWE** stored in `postroll_session` (encrypted with `SESSION_SECRET`, see `apps/web/src/lib/session.ts`). The session contains `{ sid, userId, accessToken, refreshToken, refreshExpiresAt, activeWorkspaceId }`. `gatewayFetch` (in `apps/web/src/lib/api.ts`) does the access/refresh dance on 401, updates the cookie, and retries — so server components / actions just call `getMe()` and the rotation is transparent.
 
-The proactive refresh runs in `apps/web/src/middleware.ts`, ahead of render. **Cookies can only be mutated in middleware, Server Actions, or Route Handlers — never during an RSC render.** Since `getUser()` runs while rendering the layout, a refresh triggered there can't persist the rotated cookie (Next throws "Cookies can only be modified in a Server Action or Route Handler"). Middleware decodes the access token `exp`, refreshes near expiry, and writes the rotated session onto both the request (so the in-flight render sees it) and the response. `updateSession` / `deleteSession` also swallow the read-only-cookie error as a mid-render fallback. The edge-safe refresh primitives live in `lib/refresh.ts` + `lib/session-crypto.ts` (no `server-only`, so middleware can import them); `lib/session.ts` keeps the `next/headers`-bound, `server-only` wrappers.
+The proactive refresh happens ahead of render. **Cookies can only be mutated in the proxy, Server Actions, or Route Handlers — never during an RSC render.** Since `getUser()` runs while rendering the layout, a refresh triggered there can't persist the rotated cookie (Next throws "Cookies can only be modified in a Server Action or Route Handler"). And the refresh can't happen in the proxy either: **Vercel service bindings (the source of `GATEWAY_URL`) don't resolve in the proxy, only in functions.** So `apps/web/src/proxy.ts` (Next 16 proxy, Node runtime) makes no network calls — it decodes the access token `exp` and, near expiry, 307-redirects GET/HEAD requests to the `app/api/session/refresh` Route Handler, which rotates the tokens, sets the cookie on its response, and redirects back to the (same-origin-validated) `next` path. Server Actions aren't bounced; `gatewayFetch`'s 401 path persists the rotation there. `updateSession` / `deleteSession` also swallow the read-only-cookie error as a mid-render fallback. The proxy-safe primitives (`decryptSession`, `accessTokenExpiresSoon`, …) live in `lib/session-crypto.ts` (no `server-only`); `lib/session.ts` keeps the `next/headers`-bound, `server-only` wrappers.
 
-The middleware file **must stay named `middleware.ts`, not the Next 16 `proxy.ts`** — you'll see a deprecation warning telling you to rename it; ignore it. `proxy` is nodejs-runtime-only and OpenNext rejects Node.js middleware (`opennextjs-cloudflare build` fails: "Node.js middleware is not currently supported"); `middleware` runs on edge, which OpenNext supports. Everything in the middleware import graph must be edge-safe (no `node:` builtins, no `@postroll/env` barrel — use `@postroll/env/format`).
+**The proxy must never call the gateway** (directly or via `lib/refresh.ts` / `lib/api.ts`) — on Vercel it would fail because the binding isn't there. Anything that needs the gateway belongs in a function (Server Component, Server Action, Route Handler).
 
 Server-only code lives behind `import 'server-only'` (see `lib/api.ts`, `lib/dal.ts`, `lib/session.ts`). Don't pass the decrypted `SessionPayload` to client components — `accessToken` / `refreshToken` are server-only fields.
 
@@ -57,18 +56,12 @@ Every user gets a personal workspace (OWNER membership) at registration, created
 Three contexts, one set of primitives:
 
 - **Shell-time gating**: `postroll-check-env <module> <export>` runs before scripts that need a contract (e.g. `db:migrate` checks `migrationEnvSchema` before invoking `prisma`). Fails with formatted Zod errors before anything destructive runs.
-- **Boot-time**: `apps/gateway/src/app.module.ts` passes `validateGatewayEnv` to `ConfigModule.forRoot({ validate })`. `apps/web/src/instrumentation.ts`'s `register()` does the Node-only env load (`.env.local` / `.env` + `getServerEnv()`) by `await import('./instrumentation-node')` **inside** an `if (process.env.NEXT_RUNTIME === 'nodejs')` check. The import must sit inside that branch (not top-level, not after an early-return guard) or webpack bundles `@postroll/env/load`'s `node:fs` for the edge build and the OpenNext build fails. On Cloudflare, env lives in `getCloudflareContext().env`, not `process.env`, so validation defers to call sites with the Workers context.
+- **Boot-time**: `apps/gateway/src/app.module.ts` passes `validateGatewayEnv` to `ConfigModule.forRoot({ validate })`. `apps/web/src/instrumentation.ts`'s `register()` does the Node-only env load (`.env.local` / `.env` + `getSessionEnv()`) by `await import('./instrumentation-node')` **inside** an `if (process.env.NEXT_RUNTIME === 'nodejs')` check (keeps `@postroll/env/load`'s `node:` builtins out of any edge bundle). It checks only `SESSION_SECRET`: `GATEWAY_URL` comes from the Vercel service binding, which doesn't exist in the proxy, so `getGatewayEnv()` validates it lazily on the first gateway call. `src/instrumentation.ts` must live under `src/` — Next discovers it at `<rootDir>`, which is `src/` when `src/app/` exists.
 - **Module-load**: `packages/database/src/client.ts` validates `DATABASE_URL` on import.
 
-`@postroll/env`'s barrel (`.`) re-exports the Node-only `load` module (`node:fs` / `node:url` / `dotenv`). From edge-runtime code (anything in the `apps/web` middleware graph), import `@postroll/env/format` for `formatZodEnvError`, never the barrel — the barrel drags `node:` builtins into the edge bundle. `loadEnvFile` / `validateEnv` (Node-only) stay on `.` and `./load`.
+`@postroll/env`'s barrel (`.`) re-exports the Node-only `load` module (`node:fs` / `node:url` / `dotenv`). `apps/web` imports `@postroll/env/format` for `formatZodEnvError` so `#env` stays importable from any runtime; `loadEnvFile` / `validateEnv` (Node-only) stay on `.` and `./load`.
 
-When adding a new env var: define its schema in the consuming package's `env.ts`, add it to that package's `.env.example`, and — if it affects build output or runtime — add it to `globalEnv` in the root `turbo.json` so turbo's cache invalidates correctly.
-
-### Web build engine: webpack, not Turbopack
-
-`apps/web` runs `next build --webpack` in production despite Next 16 defaulting to Turbopack. OpenNext's `copyTracedFiles` depends on the standalone output that webpack produces and Turbopack omits. Dev uses Turbopack. If you change the build script, you'll break Cloudflare deploys — see `apps/web/README.md` for the upstream issue link.
-
-`src/instrumentation.ts` must live under `src/` (not the project root). Next discovers `instrumentation.ts` at `<rootDir>` where `rootDir` is `src/` when `src/app/` exists; Turbopack happens to find it at the root, webpack doesn't. Its Node-only env work lives in `src/instrumentation-node.ts`, imported only inside the `NEXT_RUNTIME === 'nodejs'` branch so it stays out of the edge bundle (see the env section).
+When adding a new env var: define its schema in the consuming package's `env.ts`, add it to that package's `.env.example`, and — if it affects build output or runtime — add it to `globalEnv` in the root `turbo.json` so turbo's cache invalidates correctly (Turbo also warns on Vercel builds about project env vars missing from `turbo.json`). Vercel env vars are shared by both services. **Never create `GATEWAY_URL` in Vercel** — a user-defined value overrides the binding.
 
 ### Gateway database adapter selection
 
@@ -84,7 +77,12 @@ Unlike `@postroll/database`, `@postroll/contracts` ships compiled JS (`tsc -p ts
 
 `apps/web` and `packages/ui` use pnpm `imports` field for internal aliases: `#components/*`, `#lib/*`, `#hooks/*` (plus `#env` in `apps/web`, `#styles/*` in `packages/ui`). Don't add a webpack/tsconfig `paths` alias (e.g. `@/*`) — these are the only aliases.
 
-### Deployment surfaces
+### Deployment: one Vercel project, two services
 
-- `apps/gateway` → Fly.io. Production deploys on push to `main` (`production-deploy.yml`); PRs get review apps backed by a Neon preview branch (`preview-deploy.yml`, cleanup in `preview-cleanup.yml`).
-- `apps/web` → Cloudflare Workers via OpenNext. Deploys are driven by Cloudflare Workers Builds (configured in the Cloudflare dashboard, **not** in this repo). Runtime vars (e.g. `GATEWAY_URL`, `SESSION_SECRET`) are set in the dashboard under Settings → Variables and Secrets (the running worker), not Build → Variables (the build container).
+Both apps deploy as a single Vercel project using Vercel Services (root `vercel.json`); Neon stays the database.
+
+- `web` (`apps/web`, `framework: nextjs`) — the only public service, on `/(.*)`. Declares a binding to `gateway` that injects `GATEWAY_URL` (deployment-aware: a preview reaches its own gateway). Build gateway URLs with `gatewayUrl(path)` from `lib/refresh.ts` (resolves against the binding's URL base).
+- `gateway` (`apps/gateway`, `framework: nestjs`, `outputDirectory: dist`) — **internal only**, no public rewrite. Vercel serves the `nest build` output as one Vercel Function. Production logs are plain JSON (`pino-pretty` only outside production).
+- Both build through turbo (`pnpm turbo run build --filter=…`) so workspace deps and the Prisma client are built first. Functions run in `fra1`, next to Neon.
+- Deploys are driven by GitHub Actions, not Vercel's Git integration (`git.deploymentEnabled: false`), because migrations run first: `preview-deploy.yml` (Neon branch → migrations → `vercel deploy --env DATABASE_URL=<branch url>` → smoke test `/api/health`), `production-deploy.yml` (migrations → `vercel deploy --prod --skip-domain` → smoke test → `vercel promote`), `preview-cleanup.yml` (removes the PR's deployments by `--meta prNumber` and deletes the Neon branch).
+- Secrets (`DATABASE_URL` for production, `JWT_ACCESS_SECRET`, `SESSION_SECRET`) are Vercel env vars per environment; workflows only pass the per-PR `DATABASE_URL`. The root `.vercelignore` keeps local `.env` files out of uploads.

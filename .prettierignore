@@ -1,5 +1,4 @@
-.open-next
 .next
-.wrangler
+.vercel
 .agents
 packages/database/src/generated

@@ -23,9 +23,8 @@ import {
 } from '@postroll/contracts';
 import { headers } from 'next/headers';
 
-import { getServerEnv } from '#env';
-
 import {
+  gatewayUrl,
   GatewayError,
   refreshTokens,
   readRequestMeta,
@@ -45,7 +44,6 @@ async function postJson(
   errorMap: Record<number, string>,
   meta: RequestMeta = {}
 ): Promise<Response> {
-  const { GATEWAY_URL } = getServerEnv();
   const headers: Record<string, string> = {
     'content-type': 'application/json',
   };
@@ -58,7 +56,7 @@ async function postJson(
     headers[CLIENT_IP_HEADER] = meta.ip;
   }
 
-  const res = await fetch(`${GATEWAY_URL}${path}`, {
+  const res = await fetch(gatewayUrl(path), {
     body: JSON.stringify(body),
     headers,
     method: 'POST',
@@ -97,16 +95,13 @@ export async function loginUser(
 }
 
 export async function logoutGateway(session: SessionPayload): Promise<void> {
-  const { GATEWAY_URL } = getServerEnv();
-
-  await fetch(`${GATEWAY_URL}/auth/logout`, {
+  await fetch(gatewayUrl('/auth/logout'), {
     headers: { cookie: `${GATEWAY_REFRESH_COOKIE}=${session.refreshToken}` },
     method: 'POST',
   }).catch(noop);
 }
 
 async function gatewayFetch(path: string, init: RequestInit = {}): Promise<Response> {
-  const { GATEWAY_URL } = getServerEnv();
   const session = await readSessionCookie();
 
   if (!session) {
@@ -116,7 +111,7 @@ async function gatewayFetch(path: string, init: RequestInit = {}): Promise<Respo
   const { activeWorkspaceId } = session;
 
   function doFetch(accessToken: string) {
-    return fetch(`${GATEWAY_URL}${path}`, {
+    return fetch(gatewayUrl(path), {
       ...init,
       cache: 'no-store',
       headers: {

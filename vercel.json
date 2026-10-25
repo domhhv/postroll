@@ -1,0 +1,36 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": false
+  },
+  "regions": ["fra1"],
+  "services": {
+    "web": {
+      "root": "apps/web",
+      "framework": "nextjs",
+      "buildCommand": "cd ../.. && pnpm turbo run build --filter=@postroll/web",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "gateway",
+          "format": "url",
+          "env": "GATEWAY_URL"
+        }
+      ]
+    },
+    "gateway": {
+      "root": "apps/gateway",
+      "framework": "nestjs",
+      "buildCommand": "cd ../.. && pnpm turbo run build --filter=@postroll/gateway",
+      "outputDirectory": "dist"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "web"
+      }
+    }
+  ]
+}

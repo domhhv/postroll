@@ -9,24 +9,18 @@
     "#hooks/*": "./src/hooks/*.ts"
   },
   "scripts": {
-    "build": "next build --webpack",
-    "build:cf": "opennextjs-cloudflare build",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "build": "next build",
     "check-types": "tsc --noEmit",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "dev": "next dev",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "prettier:check": "prettier --check .",
     "prettier:write": "prettier --write .",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "sort-package-json": "sort-package-json",
     "sort-package-json:check": "sort-package-json --check",
-    "start": "next start",
-    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload"
+    "start": "next start"
   },
   "dependencies": {
-    "@opennextjs/cloudflare": "^1.20.12",
     "@postroll/contracts": "workspace:*",
     "@postroll/env": "workspace:*",
     "@tabler/icons-react": "^3.49.0",
@@ -46,7 +40,6 @@
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "tailwindcss": "^4.3.3",
-    "wrangler": "^4.151.1"
+    "tailwindcss": "^4.3.3"
   }
 }
