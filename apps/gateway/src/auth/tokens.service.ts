@@ -53,8 +53,13 @@ export class TokensService {
     private readonly config: ConfigService
   ) {}
 
-  signAccessToken(userId: string): string {
-    return this.jwt.sign({ sub: userId });
+  /**
+   * `sid` is the session (token family) id. `JwtAuthGuard` checks it on every
+   * request, so terminating a session cuts off its access token immediately
+   * instead of when the token expires.
+   */
+  signAccessToken(userId: string, familyId: string): string {
+    return this.jwt.sign({ sid: familyId, sub: userId });
   }
 
   async issueRefreshToken(
@@ -270,7 +275,7 @@ export class TokensService {
     });
 
     return {
-      accessToken: this.signAccessToken(row.userId),
+      accessToken: this.signAccessToken(row.userId, row.familyId),
       expiresAt: issued.expiresAt,
       refreshToken: issued.token,
     };

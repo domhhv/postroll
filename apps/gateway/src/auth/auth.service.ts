@@ -100,8 +100,8 @@ export class AuthService {
   }
 
   async login(user: AuthenticatedUser, meta: RefreshTokenMeta = {}): Promise<LoginWithRefresh> {
-    const accessToken = this.tokens.signAccessToken(user.id);
     const refresh = await this.tokens.issueRefreshToken(user.id, meta);
+    const accessToken = this.tokens.signAccessToken(user.id, refresh.familyId);
     const activeWorkspaceId = await this.defaultWorkspaceId(user.id);
 
     return {

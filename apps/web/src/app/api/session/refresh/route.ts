@@ -40,14 +40,21 @@ function resolveNext(request: NextRequest): URL {
  * The proxy redirects here when the access token is about to expire, because
  * the gateway is only reachable through the `GATEWAY_URL` service binding, which
  * resolves in functions (like this one) but not in the proxy.
+ *
+ * Pages redirect here with `force=1` when the gateway rejected a still-unexpired
+ * access token (e.g. the session was terminated from another device). A render
+ * can't clear the cookie, so without this the stale cookie would bounce the user
+ * between /login and the protected page until the token expired.
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const response = NextResponse.redirect(resolveNext(request), 307);
   const raw = request.cookies.get(SESSION_COOKIE)?.value;
   const session = raw ? await decryptSession(raw) : null;
 
+  const force = request.nextUrl.searchParams.get('force') === '1';
+
   // Nothing to refresh, or a parallel request already rotated the cookie.
-  if (!session || !accessTokenExpiresSoon(session.accessToken)) {
+  if (!session || (!force && !accessTokenExpiresSoon(session.accessToken))) {
     return response;
   }
 

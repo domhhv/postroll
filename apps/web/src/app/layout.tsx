@@ -1,3 +1,4 @@
+import { Toaster } from '@postroll/ui/components/toast';
 import { Analytics } from '@vercel/analytics/next';
 import type { Metadata } from 'next';
 import { Roboto_Slab, Source_Sans_3 } from 'next/font/google';
@@ -35,8 +36,10 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col">
         <ThemeProvider>
-          <Header />
-          <main className="bg-background flex flex-1 p-16">{children}</main>
+          <Toaster>
+            <Header />
+            <main className="bg-background flex flex-1 p-16">{children}</main>
+          </Toaster>
           <Analytics />
         </ThemeProvider>
       </body>
