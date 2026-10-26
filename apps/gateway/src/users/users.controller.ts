@@ -25,6 +25,7 @@ import type { RequestUser } from '../auth/decorators/current-user.decorator.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { TokensService } from '../auth/tokens.service.js';
+import { formatLocation } from '../common/client-meta.js';
 import { parseUserAgent } from '../common/user-agent.js';
 
 import { UsersService } from './users.service.js';
@@ -87,6 +88,8 @@ export class UsersController {
 
         return {
           browser: ua.browser,
+          city: session.city,
+          country: session.country,
           createdAt: session.createdAt.toISOString(),
           current: session.familyId === currentFamilyId,
           deviceType: ua.deviceType,
@@ -94,7 +97,9 @@ export class UsersController {
           ip: session.ip,
           label: ua.label,
           lastActiveAt: session.lastActiveAt.toISOString(),
+          location: formatLocation(session),
           os: ua.os,
+          region: session.region,
           userAgent: session.userAgent,
         };
       })

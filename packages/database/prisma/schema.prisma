@@ -35,6 +35,12 @@ model RefreshToken {
   updatedAt    DateTime? @updatedAt @map("updated_at") @db.Timestamptz(3)
   userAgent    String?   @map("user_agent")
   ip           String?
+  /// Approximate client location from edge geo headers (Vercel), not a GeoIP lookup.
+  city         String?
+  /// ISO 3166-2 subdivision code without the country prefix, e.g. "BE".
+  region       String?
+  /// ISO 3166-1 alpha-2 country code, e.g. "DE".
+  country      String?   @db.Char(2)
 
   @@index([userId])
   @@index([familyId])
