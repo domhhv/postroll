@@ -1,9 +1,11 @@
 import 'server-only';
 import type { UserDto, WorkspaceDto, WorkspaceList } from '@postroll/contracts';
+import { redirect } from 'next/navigation';
 import { cache } from 'react';
 
 import { getMe, GatewayError, getWorkspaces as fetchWorkspaces } from './api';
 import { readSessionCookie, type SessionPayload } from './session';
+import { SESSION_REFRESH_PATH } from './session-crypto';
 
 /**
  * Returns the decrypted session. Never pass the raw payload to client
@@ -12,6 +14,19 @@ import { readSessionCookie, type SessionPayload } from './session';
 export const verifySession = cache(async (): Promise<SessionPayload | null> => {
   return readSessionCookie();
 });
+
+/**
+ * For pages whose session cookie exists but the gateway rejected it (e.g. the
+ * session was terminated elsewhere). Renders can't clear cookies, so hand off
+ * to the refresh Route Handler: it either rotates a still-valid session or
+ * clears the dead cookie, then returns to `next` (which sends a logged-out
+ * user to /login without looping).
+ */
+export function redirectToSessionCheck(next: string): never {
+  const params = new URLSearchParams({ force: '1', next });
+
+  redirect(`${SESSION_REFRESH_PATH}?${params.toString()}`);
+}
 
 export const getUser = cache(async (): Promise<UserDto | null> => {
   const session = await verifySession();

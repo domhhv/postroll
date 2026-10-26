@@ -25,10 +25,10 @@ import { headers } from 'next/headers';
 
 import {
   gatewayUrl,
+  metaHeaders,
   GatewayError,
   refreshTokens,
   readRequestMeta,
-  CLIENT_IP_HEADER,
   type RequestMeta,
   parseRefreshCookie,
   GATEWAY_REFRESH_COOKIE,
@@ -44,21 +44,9 @@ async function postJson(
   errorMap: Record<number, string>,
   meta: RequestMeta = {}
 ): Promise<Response> {
-  const headers: Record<string, string> = {
-    'content-type': 'application/json',
-  };
-
-  if (meta.userAgent) {
-    headers['user-agent'] = meta.userAgent;
-  }
-
-  if (meta.ip) {
-    headers[CLIENT_IP_HEADER] = meta.ip;
-  }
-
   const res = await fetch(gatewayUrl(path), {
     body: JSON.stringify(body),
-    headers,
+    headers: { 'content-type': 'application/json', ...metaHeaders(meta) },
     method: 'POST',
   });
 

@@ -1,7 +1,11 @@
 import { createParamDecorator, type ExecutionContext } from '@nestjs/common';
 import type { Request } from 'express';
 
-export type RequestUser = { id: string };
+export type RequestUser = {
+  id: string;
+  /** The session (refresh-token family) the access token belongs to; null for legacy tokens. */
+  sessionId: string | null;
+};
 
 export const CurrentUser = createParamDecorator((_: unknown, ctx: ExecutionContext): RequestUser => {
   // Set by JwtAuthGuard after verifying the access token.

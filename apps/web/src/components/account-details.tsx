@@ -247,10 +247,10 @@ export function AccountDetails({ sessions, user }: AccountDetailsProps) {
         <TabsTrigger value="security">Security</TabsTrigger>
         <TabsTrigger value="sessions">Sessions</TabsTrigger>
       </TabsList>
-      <TabsContent value="profile" className="pt-4">
+      <TabsContent value="profile" className="max-w-md pt-4">
         <ProfileTab user={user} />
       </TabsContent>
-      <TabsContent value="security" className="pt-4">
+      <TabsContent value="security" className="max-w-md pt-4">
         <SecurityTab />
       </TabsContent>
       <TabsContent value="sessions" className="pt-4">

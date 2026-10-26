@@ -2,7 +2,7 @@ import { buttonVariants } from '@postroll/ui/components/button';
 import { IconUpload, IconUsersPlus } from '@tabler/icons-react';
 import { redirect } from 'next/navigation';
 
-import { getUser, verifySession, getActiveWorkspace } from '#lib/dal';
+import { getUser, verifySession, getActiveWorkspace, redirectToSessionCheck } from '#lib/dal';
 
 export const metadata = {
   title: 'Postroll | Dashboard',
@@ -18,7 +18,7 @@ export default async function DashboardPage() {
   const me = await getUser();
 
   if (!me) {
-    redirect('/login');
+    redirectToSessionCheck('/dashboard');
   }
 
   const workspace = await getActiveWorkspace();

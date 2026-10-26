@@ -7,12 +7,25 @@ import type { SessionPayload } from './session-crypto';
 
 export const GATEWAY_REFRESH_COOKIE = 'postroll_rt';
 
-/** Header the gateway reads to recover the real client IP behind our proxy. */
-export const CLIENT_IP_HEADER = 'x-postroll-client-ip';
+/**
+ * Headers the gateway reads to recover the real client IP and approximate
+ * location behind our proxy (it's internal-only, so it never sees Vercel's
+ * edge headers itself). Must match apps/gateway/src/common/client-meta.ts.
+ */
+const CLIENT_IP_HEADER = 'x-postroll-client-ip';
+const CLIENT_CITY_HEADER = 'x-postroll-client-city';
+const CLIENT_REGION_HEADER = 'x-postroll-client-region';
+const CLIENT_COUNTRY_HEADER = 'x-postroll-client-country';
 
 /** Per-request client metadata forwarded to the gateway on auth calls. */
 export type RequestMeta = {
+  /** URI-encoded, as Vercel sends it; the gateway decodes it. */
+  city?: string | undefined;
+  /** ISO 3166-1 alpha-2. */
+  country?: string | undefined;
   ip?: string | undefined;
+  /** ISO 3166-2 subdivision code, e.g. "BE". */
+  region?: string | undefined;
   userAgent?: string | undefined;
 };
 
@@ -31,32 +44,38 @@ export function gatewayUrl(path: string): URL {
 }
 
 /**
- * Extract the originating client's user-agent and IP from an incoming request's
- * headers. Vercel sets `x-real-ip` to the client IP; fall back to the first hop
- * of `x-forwarded-for` elsewhere (e.g. local dev behind a proxy).
+ * Extract the originating client's user-agent, IP and location from an
+ * incoming request's headers. Vercel sets `x-real-ip` to the client IP; fall
+ * back to the first hop of `x-forwarded-for` elsewhere (e.g. local dev behind a
+ * proxy). The `x-vercel-ip-*` geo headers only exist on Vercel.
  */
 export function readRequestMeta(headers: Headers): RequestMeta {
   const ip = headers.get('x-real-ip') ?? headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined;
 
   return {
+    city: headers.get('x-vercel-ip-city') || undefined,
+    country: headers.get('x-vercel-ip-country') || undefined,
     ip: ip || undefined,
+    region: headers.get('x-vercel-ip-country-region') || undefined,
     userAgent: headers.get('user-agent') ?? undefined,
   };
 }
 
 /** Build the forwarding headers for a given request meta. */
-function metaHeaders(meta: RequestMeta = {}): Record<string, string> {
-  const headers: Record<string, string> = {};
+export function metaHeaders(meta: RequestMeta = {}): Record<string, string> {
+  const entries: [string, string | undefined][] = [
+    ['user-agent', meta.userAgent],
+    [CLIENT_IP_HEADER, meta.ip],
+    [CLIENT_CITY_HEADER, meta.city],
+    [CLIENT_REGION_HEADER, meta.region],
+    [CLIENT_COUNTRY_HEADER, meta.country],
+  ];
 
-  if (meta.userAgent) {
-    headers['user-agent'] = meta.userAgent;
-  }
-
-  if (meta.ip) {
-    headers[CLIENT_IP_HEADER] = meta.ip;
-  }
-
-  return headers;
+  return Object.fromEntries(
+    entries.filter((entry): entry is [string, string] => {
+      return Boolean(entry[1]);
+    })
+  );
 }
 
 export class GatewayError extends Error {
