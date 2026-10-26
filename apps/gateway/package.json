@@ -19,9 +19,9 @@
   },
   "dependencies": {
     "@nestjs/config": "^12.0.1",
-    "@nestjs/core": "^12.1.3",
+    "@nestjs/core": "^12.2.0",
     "@nestjs/jwt": "^12.0.3",
-    "@nestjs/platform-express": "^12.1.3",
+    "@nestjs/platform-express": "^12.2.0",
     "@postroll/contracts": "workspace:*",
     "@postroll/env": "workspace:*",
     "@prisma/adapter-neon": "^7.10.1",
@@ -38,9 +38,9 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@nestjs/cli": "^12.0.8",
-    "@nestjs/common": "^12.1.3",
-    "@nestjs/schematics": "^12.0.7",
+    "@nestjs/cli": "^12.0.10",
+    "@nestjs/common": "^12.2.0",
+    "@nestjs/schematics": "^12.0.10",
     "@postroll/configs": "workspace:*",
     "@postroll/database": "workspace:*",
     "@types/cookie-parser": "^1.4.10",

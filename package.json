@@ -37,8 +37,8 @@
     "ui": "pnpm --filter @postroll/ui ui"
   },
   "devDependencies": {
-    "@commitlint/cli": "^21.2.3",
-    "@commitlint/config-conventional": "^21.2.3",
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
     "@postroll/configs": "workspace:*",
     "eslint": "^10.13.0",
     "husky": "^9.1.7",
@@ -46,10 +46,10 @@
     "prettier": "3.9.10",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "sort-package-json": "^4.1.0",
-    "turbo": "^2.11.9",
+    "turbo": "^2.11.10",
     "typescript": "^6.0.3"
   },
-  "packageManager": "pnpm@12.14.0",
+  "packageManager": "pnpm@12.15.0",
   "engines": {
     "node": "^24.22.1"
   }
