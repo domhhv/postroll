@@ -7,7 +7,7 @@ import { InjectPrisma } from '../database/database.module.js';
 import { toUserDto } from '../users/toUserDto.js';
 import { generateWorkspaceSlug } from '../workspaces/slug.js';
 
-import { TokensService } from './tokens.service.js';
+import { TokensService, type RefreshTokenMeta } from './tokens.service.js';
 
 export type AuthenticatedUser = Omit<User, 'password'>;
 
@@ -99,10 +99,7 @@ export class AuthService {
     return rest;
   }
 
-  async login(
-    user: AuthenticatedUser,
-    meta: { ip?: string | undefined; userAgent?: string | undefined } = {}
-  ): Promise<LoginWithRefresh> {
+  async login(user: AuthenticatedUser, meta: RefreshTokenMeta = {}): Promise<LoginWithRefresh> {
     const accessToken = this.tokens.signAccessToken(user.id);
     const refresh = await this.tokens.issueRefreshToken(user.id, meta);
     const activeWorkspaceId = await this.defaultWorkspaceId(user.id);

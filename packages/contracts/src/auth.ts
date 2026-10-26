@@ -57,6 +57,10 @@ export type ChangePasswordRequest = z.infer<typeof changePasswordRequestSchema>;
 export const sessionDtoSchema = z.object({
   /** Friendly browser name, e.g. "Chrome" (null when unknown). */
   browser: z.string().nullable(),
+  /** City the session was last active from (edge geolocation, approximate). */
+  city: z.string().nullable(),
+  /** ISO 3166-1 alpha-2 country code, e.g. "DE". */
+  country: z.string().length(2).nullable(),
   /** When this session was first created (initial login). */
   createdAt: z.iso.datetime(),
   /** True for the session making the request. */
@@ -70,8 +74,12 @@ export const sessionDtoSchema = z.object({
   label: z.string(),
   /** Last activity (most recent token issued in the family). */
   lastActiveAt: z.iso.datetime(),
+  /** Single human-readable line, e.g. "Berlin, Germany" (null when unknown). */
+  location: z.string().nullable(),
   /** Friendly OS name, e.g. "macOS" (null when unknown). */
   os: z.string().nullable(),
+  /** ISO 3166-2 subdivision code without the country prefix, e.g. "BE". */
+  region: z.string().nullable(),
   /** Raw User-Agent header, kept for forensics / tooltip. */
   userAgent: z.string().nullable(),
 });

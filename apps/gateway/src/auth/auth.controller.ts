@@ -22,14 +22,13 @@ import {
 } from '@postroll/contracts';
 import type { Request, Response, CookieOptions } from 'express';
 
+import { readClientMeta } from '../common/client-meta.js';
+
 import { AuthService, type AuthenticatedUser } from './auth.service.js';
 import { LocalAuthGuard } from './guards/local-auth.guard.js';
 import { TokensService } from './tokens.service.js';
 
 const REFRESH_COOKIE = 'postroll_rt';
-
-/** Set by the web app (which terminates the browser TLS) to relay the real client IP. */
-const CLIENT_IP_HEADER = 'x-postroll-client-ip';
 
 @Controller('auth')
 export class AuthController {
@@ -58,10 +57,7 @@ export class AuthController {
     loginRequestSchema.parse(body);
     // Set by LocalAuthGuard after checking the credentials.
     const user = (req as Request & { user: AuthenticatedUser }).user;
-    const result = await this.authService.login(user, {
-      ip: req.get(CLIENT_IP_HEADER) ?? req.ip,
-      userAgent: req.get('user-agent') ?? undefined,
-    });
+    const result = await this.authService.login(user, readClientMeta(req));
     res.cookie(REFRESH_COOKIE, result.refreshToken, this.cookieOptions());
 
     return loginResponseSchema.parse({
@@ -80,10 +76,7 @@ export class AuthController {
       throw new UnauthorizedException('Missing refresh token');
     }
 
-    const rotated = await this.tokens.rotateRefreshToken(raw, {
-      ip: req.get(CLIENT_IP_HEADER) ?? req.ip,
-      userAgent: req.get('user-agent') ?? undefined,
-    });
+    const rotated = await this.tokens.rotateRefreshToken(raw, readClientMeta(req));
     res.cookie(REFRESH_COOKIE, rotated.refreshToken, this.cookieOptions());
 
     return refreshResponseSchema.parse({ accessToken: rotated.accessToken });

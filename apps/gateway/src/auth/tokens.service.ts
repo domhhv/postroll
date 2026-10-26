@@ -5,12 +5,10 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { PrismaClient } from '@postroll/database/prisma';
 
+import type { ClientMeta } from '../common/client-meta.js';
 import { InjectPrisma } from '../database/database.module.js';
 
-export type RefreshTokenMeta = {
-  ip?: string | undefined;
-  userAgent?: string | undefined;
-};
+export type RefreshTokenMeta = ClientMeta;
 
 export type IssuedRefreshToken = {
   expiresAt: Date;
@@ -26,14 +24,17 @@ export type RotatedTokens = {
 
 /**
  * One active login, derived by collapsing a token family. `createdAt` is the
- * family's first token (initial login); `lastActiveAt` and the UA/IP come from
- * its most recent token.
+ * family's first token (initial login); `lastActiveAt`, the UA/IP and the
+ * location come from its most recent token.
  */
 export type SessionSummary = {
+  city: string | null;
+  country: string | null;
   createdAt: Date;
   familyId: string;
   ip: string | null;
   lastActiveAt: Date;
+  region: string | null;
   userAgent: string | null;
 };
 
@@ -67,11 +68,10 @@ export class TokensService {
 
     await this.prisma.refreshToken.create({
       data: {
+        ...this.metaColumns(opts),
         expiresAt,
         familyId,
-        ip: opts.ip ?? null,
         tokenHash,
-        userAgent: opts.userAgent ?? null,
         userId,
       },
     });
@@ -172,9 +172,12 @@ export class TokensService {
       orderBy: { createdAt: 'asc' },
       where: { expiresAt: { gt: new Date() }, revokedAt: null, userId },
       select: {
+        city: true,
+        country: true,
         createdAt: true,
         familyId: true,
         ip: true,
+        region: true,
         userAgent: true,
       },
     });
@@ -186,10 +189,13 @@ export class TokensService {
 
       if (!existing) {
         families.set(row.familyId, {
+          city: row.city,
+          country: row.country,
           createdAt: row.createdAt,
           familyId: row.familyId,
           ip: row.ip,
           lastActiveAt: row.createdAt,
+          region: row.region,
           userAgent: row.userAgent,
         });
         continue;
@@ -199,6 +205,9 @@ export class TokensService {
       existing.lastActiveAt = row.createdAt;
       existing.userAgent = row.userAgent;
       existing.ip = row.ip;
+      existing.city = row.city;
+      existing.region = row.region;
+      existing.country = row.country;
     }
 
     return [...families.values()].sort((a, b) => {
@@ -240,11 +249,10 @@ export class TokensService {
       const expiresAt = this.computeRefreshExpiry();
       const created = await tx.refreshToken.create({
         data: {
+          ...this.metaColumns(meta),
           expiresAt,
           familyId: row.familyId,
-          ip: meta.ip ?? null,
           tokenHash: nextHash,
-          userAgent: meta.userAgent ?? null,
           userId: row.userId,
         },
       });
@@ -265,6 +273,16 @@ export class TokensService {
       accessToken: this.signAccessToken(row.userId),
       expiresAt: issued.expiresAt,
       refreshToken: issued.token,
+    };
+  }
+
+  private metaColumns(meta: RefreshTokenMeta) {
+    return {
+      city: meta.city ?? null,
+      country: meta.country ?? null,
+      ip: meta.ip ?? null,
+      region: meta.region ?? null,
+      userAgent: meta.userAgent ?? null,
     };
   }
 
