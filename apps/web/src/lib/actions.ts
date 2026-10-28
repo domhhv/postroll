@@ -127,19 +127,22 @@ export async function loginAction(_previous: AuthFormState, formData: FormData):
   redirect('/dashboard');
 }
 
-export type AccountValues = { email: string; name: string; username: string };
+export type SettingsValues = { email: string; name: string; username: string };
 
-export type AccountFormState =
+export type SettingsFormState =
   | { status: 'idle' }
-  | { status: 'success'; values: AccountValues }
+  | { status: 'success'; values: SettingsValues }
   | {
       fieldErrors?: Record<string, string>;
       message: string;
       status: 'error';
-      values: AccountValues;
+      values: SettingsValues;
     };
 
-export async function updateAccountAction(_previous: AccountFormState, formData: FormData): Promise<AccountFormState> {
+export async function updateSettingsAction(
+  _previous: SettingsFormState,
+  formData: FormData
+): Promise<SettingsFormState> {
   const values = {
     email: getFormValue(formData, 'email'),
     name: getFormValue(formData, 'name'),
@@ -161,7 +164,7 @@ export async function updateAccountAction(_previous: AccountFormState, formData:
     };
   }
 
-  let updated: AccountValues;
+  let updated: SettingsValues;
 
   try {
     const user = await updateMe(parsed.data);
@@ -182,7 +185,7 @@ export async function updateAccountAction(_previous: AccountFormState, formData:
     };
   }
 
-  revalidatePath('/account');
+  revalidatePath('/settings');
 
   return { status: 'success', values: updated };
 }
@@ -330,7 +333,7 @@ export async function revokeSessionAction(id: string): Promise<RevokeSessionResu
     };
   }
 
-  revalidatePath('/account');
+  revalidatePath('/settings');
 
   return { status: 'success' };
 }

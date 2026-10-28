@@ -89,3 +89,18 @@ Both apps deploy as a single Vercel project using Vercel Services (root `vercel.
 - Deploys are driven by GitHub Actions, not Vercel's Git integration (`git.deploymentEnabled: false`), because migrations run first: `preview-deploy.yml` (Neon branch → migrations → `vercel deploy --env DATABASE_URL=<branch url>` → smoke test `/api/health`), `production-deploy.yml` (migrations → `vercel deploy --prod --skip-domain` → smoke test → promote via REST, then wait until `targets.production.id` is the new deployment), `preview-cleanup.yml` (deletes the PR's deployments found by `meta-prNumber` via REST and deletes the Neon branch).
 - **`VERCEL_TOKEN` is project-scoped** (least privilege). Such a token can't read user- or team-level resources, so CLI commands that resolve the user/team first fail with it — `vercel promote` ("User not found"), `vercel list` / `vercel remove` ("Could not retrieve Project Settings"). `vercel deploy` and `vercel curl` work. For anything else in CI, call the project-level REST endpoints with `curl` (see the workflows). The workflows set `defaults.run.shell: bash` so `pipefail` is on — without it a failing `vercel …` piped into `jq` passes silently.
 - Secrets (`DATABASE_URL` for production, `JWT_ACCESS_SECRET`, `SESSION_SECRET`) are Vercel env vars per environment; workflows only pass the per-PR `DATABASE_URL`. The root `.vercelignore` keeps local `.env` files out of uploads.
+
+### Important Conventions
+
+#### Comments
+
+Never add explanatory comments unless absolutely necessary.
+
+Code must be clean, readable, and self-documenting.
+
+If a comment is necessary, use the multi-line comments (block comments) format. JSDoc and TODO comments are allowed.
+
+Never use single-line comments except for ESLint or TypeScript directives.
+
+- **Types Inference**: Prefer inferred types over explicit annotations where possible
+- **Object Shapes**: Prefer TypeScript's type aliases over interfaces for defining object shapes

@@ -4,7 +4,7 @@ import type { WorkspaceList } from '@postroll/contracts';
 import { Button } from '@postroll/ui/components/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@postroll/ui/components/popover';
 import { Separator } from '@postroll/ui/components/separator';
-import { IconPlus, IconCheck, IconSelector } from '@tabler/icons-react';
+import { IconPlus, IconCheck, IconSelector, IconDeviceWorkstation } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
@@ -16,9 +16,6 @@ type WorkspaceSwitcherProps = {
   activeWorkspaceId: string | null;
   workspaces: WorkspaceList;
 };
-
-const itemBase =
-  'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:bg-muted disabled:opacity-60';
 
 export function WorkspaceSwitcher({ activeWorkspaceId, workspaces }: WorkspaceSwitcherProps) {
   const router = useRouter();
@@ -57,10 +54,11 @@ export function WorkspaceSwitcher({ activeWorkspaceId, workspaces }: WorkspaceSw
                 {...props}
                 variant="outline"
                 aria-label="Switch workspace"
-                className="max-w-48 justify-between gap-2"
+                className="max-w-48 justify-between gap-1 sm:gap-2"
               >
-                <span className="truncate">{active?.name ?? 'Select workspace'}</span>
-                <IconSelector className="size-4 shrink-0 opacity-60" />
+                <span className="truncate max-sm:hidden">{active?.name ?? 'Select workspace'}</span>
+                <IconDeviceWorkstation className="sm:hidden" />
+                <IconSelector className="max-sm:hiddene size-4 shrink-0 opacity-60" />
               </Button>
             );
           }}
@@ -71,11 +69,11 @@ export function WorkspaceSwitcher({ activeWorkspaceId, workspaces }: WorkspaceSw
             const isActive = workspace.id === active?.id;
 
             return (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 key={workspace.id}
                 disabled={pending}
-                className={itemBase}
                 onClick={() => {
                   return handleSwitch(workspace.id);
                 }}
@@ -83,13 +81,14 @@ export function WorkspaceSwitcher({ activeWorkspaceId, workspaces }: WorkspaceSw
                 <IconCheck className={`size-4 shrink-0 ${isActive ? 'opacity-100' : 'opacity-0'}`} />
                 <span className="flex-1 truncate text-left">{workspace.name}</span>
                 <span className="text-muted-foreground text-xs">{workspace.role.toLowerCase()}</span>
-              </button>
+              </Button>
             );
           })}
           <Separator className="my-1 h-px" />
-          <button
+          <Button
             type="button"
-            className={itemBase}
+            variant="ghost"
+            className="justify-start"
             onClick={() => {
               setOpen(false);
               setCreating(true);
@@ -97,7 +96,7 @@ export function WorkspaceSwitcher({ activeWorkspaceId, workspaces }: WorkspaceSw
           >
             <IconPlus className="size-4 shrink-0" />
             <span>Create workspace</span>
-          </button>
+          </Button>
         </PopoverContent>
       </Popover>
       <CreateWorkspaceDialog open={creating} onOpenChange={setCreating} />

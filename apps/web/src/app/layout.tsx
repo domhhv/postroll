@@ -38,7 +38,7 @@ export default function RootLayout({
         <ThemeProvider>
           <Toaster>
             <Header />
-            <main className="bg-background flex flex-1 p-16">{children}</main>
+            <main className="bg-background flex flex-1 p-8 sm:p-16">{children}</main>
           </Toaster>
           <Analytics />
         </ThemeProvider>

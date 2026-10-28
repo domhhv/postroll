@@ -8,17 +8,23 @@ import { PasswordInput } from '@postroll/ui/components/password-input';
 import { Tabs, TabsList, TabsContent, TabsTrigger } from '@postroll/ui/components/tabs';
 import { useState, useEffect, useActionState } from 'react';
 
-import { updateAccountAction, changePasswordAction, type AccountFormState, type PasswordFormState } from '#lib/actions';
+import { useMediaQuery } from '#hooks/use-media-query';
+import {
+  updateSettingsAction,
+  changePasswordAction,
+  type SettingsFormState,
+  type PasswordFormState,
+} from '#lib/actions';
 
 import { PendingButton } from './pending-button';
 import { SessionsList } from './sessions-list';
 
-type AccountDetailsProps = {
+type SettingsDetailsProps = {
   sessions: SessionDto[];
   user: UserDto;
 };
 
-export const profileInitialState: AccountFormState = { status: 'idle' };
+export const profileInitialState: SettingsFormState = { status: 'idle' };
 const passwordInitialState: PasswordFormState = { status: 'idle' };
 
 const profileFields = [
@@ -46,7 +52,7 @@ const profileFields = [
 ] as const;
 
 function ProfileTab({ user }: { user: UserDto }) {
-  const [state, formAction] = useActionState(updateAccountAction, profileInitialState);
+  const [state, formAction] = useActionState(updateSettingsAction, profileInitialState);
   const [editing, setEditing] = useState(false);
 
   const values =
@@ -239,22 +245,27 @@ function SecurityTab() {
   );
 }
 
-export function AccountDetails({ sessions, user }: AccountDetailsProps) {
+export function SettingsDetails({ sessions, user }: SettingsDetailsProps) {
+  // Vertical from the `sm` breakpoint up, horizontal on narrow screens.
+  const isSmUp = useMediaQuery('(min-width: 40rem)', true);
+
   return (
-    <Tabs defaultValue="profile">
-      <TabsList>
+    <Tabs defaultValue="profile" className="gap-6 sm:gap-8" orientation={isSmUp ? 'vertical' : 'horizontal'}>
+      <TabsList variant="line" className="sm:w-40 sm:shrink-0">
         <TabsTrigger value="profile">Profile</TabsTrigger>
         <TabsTrigger value="security">Security</TabsTrigger>
-        <TabsTrigger value="sessions">Sessions</TabsTrigger>
       </TabsList>
-      <TabsContent value="profile" className="max-w-md pt-4">
+      <TabsContent value="profile" className="max-w-md">
         <ProfileTab user={user} />
       </TabsContent>
-      <TabsContent value="security" className="max-w-md pt-4">
-        <SecurityTab />
-      </TabsContent>
-      <TabsContent value="sessions" className="pt-4">
-        <SessionsList sessions={sessions} />
+      <TabsContent value="security" className="min-w-0 space-y-10">
+        <section className="max-w-md">
+          <SecurityTab />
+        </section>
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold tracking-tight">Sessions</h2>
+          <SessionsList sessions={sessions} />
+        </section>
       </TabsContent>
     </Tabs>
   );
