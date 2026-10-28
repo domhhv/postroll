@@ -23,7 +23,7 @@
   "dependencies": {
     "@postroll/contracts": "workspace:*",
     "@postroll/env": "workspace:*",
-    "@tabler/icons-react": "^3.49.0",
+    "@tabler/icons-react": "^3.50.0",
     "@vercel/analytics": "^2.0.1",
     "add": "^2.0.9",
     "jose": "^6.2.13",
