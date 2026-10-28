@@ -1,12 +1,14 @@
 import { Toaster } from '@postroll/ui/components/toast';
+import { cn } from '@postroll/ui/lib/utils';
 import { Analytics } from '@vercel/analytics/next';
 import type { Metadata } from 'next';
 import { Roboto_Slab, Source_Sans_3 } from 'next/font/google';
 
 import { Header } from '#components/header';
-import { ThemeProvider } from '#components/theme-provider';
 
 import '@postroll/ui/globals.css';
+
+import { ThemeProvider } from '#components/theme-provider';
 
 const robotoSlab = Roboto_Slab({
   subsets: ['latin'],
@@ -32,7 +34,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${robotoSlab.variable} ${sourceSans3.variable} h-full antialiased`}
+      className={cn(robotoSlab.variable, sourceSans3.variable, 'h-full antialiased')}
     >
       <body className="flex min-h-full flex-col">
         <ThemeProvider>
