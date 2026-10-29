@@ -51,22 +51,26 @@ The file lives at `src/instrumentation.ts`, not the project root, because Next.j
 
 ## Data access
 
-The web app does not connect to Postgres. All reads/writes go through the NestJS gateway over HTTP, fetched from server components (or route handlers / server actions, eventually). The data layer lives in [`src/lib/api.ts`](src/lib/api.ts):
+The web app does not connect to Postgres and does not depend on `@postroll/database`. All reads/writes go through the NestJS gateway over HTTP, fetched from server components, route handlers, or server actions. The data layer lives in [`src/lib/api.ts`](src/lib/api.ts).
+
+Request/response types and runtime schemas come from [`@postroll/contracts`](../../packages/contracts/README.md). The web app validates gateway responses at the boundary before returning data to UI code:
 
 ```ts
-import type { User } from '@postroll/database';
-import { gatewayUrl } from '#lib/refresh';
+import { type UserDto, userDtoSchema, type LoginRequest, type LoginResponse, loginResponseSchema, } from '@postroll/contracts';
+import { gatewayUrl } from './refresh';
 
-export async function getUsers(): Promise<User[]> {
-  const res = await fetch(gatewayUrl('/users'), { cache: 'no-store' });
-  if (!res.ok) throw new Error(`gateway ${res.status}`);
-  return res.json();
+export async function getMe() {
+  const res = await fetch(gatewayUrl('/users/me'), { cache: 'no-store' });
+
+  if (!res.ok) {
+    throw new Error(`getMe() request failed: ${res.status}`);
+  }
+
+  return userDtoSchema.parse(await res.json()); }
 }
 ```
 
-`@postroll/database` is depended on **only for its types** — `import type { User }` is erased at compile time, so no Prisma runtime, engine, or `pg` driver ends up in the web server bundle. The package's main entrypoint is intentionally a type-only re-export to make this safe; the live `PrismaClient` lives behind the `@postroll/database/prisma` subpath and is only imported by the gateway.
-
-If gateway response shapes diverge from raw Prisma models (e.g. via `select` / `include`), define the shape on the gateway with `Prisma.UserGetPayload<{...}>` and import that type instead of `User`.
+`@postroll/contracts` is the shared API boundary between the gateway and web app. If gateway response shapes change, update the DTOs and schemas in the contracts package rather than importing database or Prisma model types into the web app.
 
 ## Auth session & token refresh
 
