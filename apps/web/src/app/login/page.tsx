@@ -5,7 +5,7 @@ import { verifySession } from '#lib/dal';
 
 export const metadata = {
   description: 'Log in to Postroll',
-  title: 'Postroll | Log In',
+  title: 'Postroll | Sign In',
 };
 
 export default async function LoginPage() {

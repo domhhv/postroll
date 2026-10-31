@@ -52,10 +52,10 @@ export async function Header() {
                 variant: 'secondary',
               })}
             >
-              Log In
+              Sign In
             </Link>
             <Link href="/register" className={buttonVariants({ size: 'lg', variant: 'default' })}>
-              Register
+              Join
             </Link>
           </>
         )}

@@ -57,7 +57,10 @@ export function LoginForm() {
           )}
           <PendingButton size="lg" idle="Sign in" pendingLabel="Signing in" />
           <FieldDescription className="text-center">
-            New here? <Link href="/register">Create an account</Link>.
+            New here?{' '}
+            <Link href="/register" className="text-primary">
+              Join
+            </Link>
           </FieldDescription>
         </FieldGroup>
       </FieldSet>

@@ -4,7 +4,7 @@ import { useCallback, useSyncExternalStore } from 'react';
  * Tracks a CSS media query. Returns `serverValue` during SSR and hydration,
  * then the live match on the client.
  */
-export function useMediaQuery(query: string, serverValue = false): boolean {
+export function useMediaQuery(query: string, serverValue: boolean | null = false): boolean | null {
   const subscribe = useCallback(
     (onChange: () => void) => {
       const media = window.matchMedia(query);
