@@ -127,6 +127,38 @@ export async function loginAction(_previous: AuthFormState, formData: FormData):
   redirect('/dashboard');
 }
 
+export async function logoutAction(): Promise<void> {
+  const session = await readSessionCookie();
+
+  if (session) {
+    await logoutGateway(session);
+  }
+
+  await deleteSession();
+  redirect('/login');
+}
+
+export type RevokeSessionResult = { status: 'success' } | { message: string; status: 'error' };
+
+export async function revokeSessionAction(id: string): Promise<RevokeSessionResult> {
+  try {
+    await revokeSession(id);
+  } catch (error) {
+    if (error instanceof GatewayError) {
+      return { message: error.message, status: 'error' };
+    }
+
+    return {
+      message: 'Something went wrong. Please try again.',
+      status: 'error',
+    };
+  }
+
+  revalidatePath('/settings', 'layout');
+
+  return { status: 'success' };
+}
+
 export type SettingsValues = { email: string; name: string; username: string };
 
 export type SettingsFormState =
@@ -185,7 +217,7 @@ export async function updateSettingsAction(
     };
   }
 
-  revalidatePath('/settings');
+  revalidatePath('/settings', 'layout');
 
   return { status: 'success', values: updated };
 }
@@ -302,38 +334,6 @@ export async function switchWorkspaceAction(workspaceId: string): Promise<Switch
   }
 
   revalidatePath('/', 'layout');
-
-  return { status: 'success' };
-}
-
-export async function logoutAction(): Promise<void> {
-  const session = await readSessionCookie();
-
-  if (session) {
-    await logoutGateway(session);
-  }
-
-  await deleteSession();
-  redirect('/login');
-}
-
-export type RevokeSessionResult = { status: 'success' } | { message: string; status: 'error' };
-
-export async function revokeSessionAction(id: string): Promise<RevokeSessionResult> {
-  try {
-    await revokeSession(id);
-  } catch (error) {
-    if (error instanceof GatewayError) {
-      return { message: error.message, status: 'error' };
-    }
-
-    return {
-      message: 'Something went wrong. Please try again.',
-      status: 'error',
-    };
-  }
-
-  revalidatePath('/settings');
 
   return { status: 'success' };
 }

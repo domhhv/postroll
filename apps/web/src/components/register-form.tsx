@@ -62,7 +62,10 @@ export function RegisterForm() {
           )}
           <PendingButton size="lg" idle="Create account" pendingLabel="Creating account" />
           <FieldDescription className="text-center">
-            Already have an account? <Link href="/login">Log in</Link>.
+            Already have an account?{' '}
+            <Link href="/login" className="text-primary">
+              Sign In
+            </Link>
           </FieldDescription>
         </FieldGroup>
       </FieldSet>
