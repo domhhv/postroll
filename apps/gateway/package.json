@@ -40,7 +40,7 @@
   "devDependencies": {
     "@nestjs/cli": "^12.0.11",
     "@nestjs/common": "^12.3.2",
-    "@nestjs/schematics": "^12.0.11",
+    "@nestjs/schematics": "^12.0.12",
     "@postroll/configs": "workspace:*",
     "@postroll/database": "workspace:*",
     "@types/cookie-parser": "^1.4.10",
