@@ -22,7 +22,7 @@
     "db:start": "pnpm --filter @postroll/database db:start",
     "db:stop": "pnpm --filter @postroll/database db:stop",
     "db:studio": "pnpm --filter @postroll/database studio",
-    "dev": "turbo dev",
+    "dev": "TURBO_UI=1 turbo dev",
     "lint": "turbo lint",
     "lint:fix": "turbo lint:fix",
     "lint:root": "eslint './*.{js,mjs,cjs}' --config ./eslint.config.mjs",

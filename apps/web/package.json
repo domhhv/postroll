@@ -11,7 +11,7 @@
   "scripts": {
     "build": "next build",
     "check-types": "tsc --noEmit",
-    "dev": "next dev",
+    "dev": "node ./scripts/wait-for-gateway.mjs && next dev",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "prettier:check": "prettier --check .",
