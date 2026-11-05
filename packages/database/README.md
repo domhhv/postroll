@@ -16,15 +16,16 @@ The split matters because `@postroll/database/client` has top-level side effects
 
 ## Scripts
 
-| Script        | What it does                                                                                | Env vars validated                                                                                      |
-| ------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `db:generate` | `prisma generate` — produces the Prisma client to `src/generated/`.                         | None (no env access needed).                                                                            |
-| `db:start`    | Starts the local Neon-compatible Postgres stack via Docker Compose.                         | `NEON_API_KEY`, `NEON_PROJECT_ID`, `PARENT_BRANCH_ID`. Also checks that the Docker daemon is reachable. |
-| `db:stop`     | `docker compose down`.                                                                      | None.                                                                                                   |
-| `db:migrate`  | `prisma migrate dev` — apply migrations against the local dev branch.                       | `DIRECT_URL` (+ optional `SHADOW_DATABASE_URL`).                                                        |
-| `db:deploy`   | `prisma migrate deploy` — apply migrations against a production/preview branch. Used by CI. | `DIRECT_URL`.                                                                                           |
-| `db:reset`    | `prisma migrate reset` — wipe and re-apply all migrations.                                  | `DIRECT_URL`.                                                                                           |
-| `studio`      | Opens Prisma Studio against the configured DB.                                              | `DIRECT_URL`.                                                                                           |
+| Script        | What it does                                                                                                                                             | Env vars validated                                                                                                    |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `db:generate` | `prisma generate` — produces the Prisma client to `src/generated/`.                                                                                      | None (no env access needed).                                                                                          |
+| `db:start`    | Starts the local Neon-compatible Postgres stack via Docker Compose, then runs `prisma migrate deploy` so the fresh branch matches the repo's migrations. | `NEON_API_KEY`, `NEON_PROJECT_ID`, `PARENT_BRANCH_ID`, `DIRECT_URL`. Also checks that the Docker daemon is reachable. |
+| `db:stop`     | `docker compose down`.                                                                                                                                   | None.                                                                                                                 |
+| `dev`         | Idles during `pnpm dev`; on Ctrl+C runs `docker compose down`, which removes the containers and makes neon_local delete its branch.                      | None.                                                                                                                 |
+| `db:migrate`  | `prisma migrate dev` — apply migrations against the local dev branch.                                                                                    | `DIRECT_URL` (+ optional `SHADOW_DATABASE_URL`).                                                                      |
+| `db:deploy`   | `prisma migrate deploy` — apply migrations against a production/preview branch. Used by CI.                                                              | `DIRECT_URL`.                                                                                                         |
+| `db:reset`    | `prisma migrate reset` — wipe and re-apply all migrations.                                                                                               | `DIRECT_URL`.                                                                                                         |
+| `studio`      | Opens Prisma Studio against the configured DB.                                                                                                           | `DIRECT_URL`.                                                                                                         |
 
 Each script that needs env vars is gated by [`postroll-check-env`](../env/README.md#postroll-check-env-cli), which fails fast with a friendly Zod error before invoking Prisma or Docker.
 
@@ -55,11 +56,10 @@ The `docker-compose.yml` also uses Compose's `${VAR:?msg}` syntax as a second li
 ## Getting started locally
 
 1. Copy `.env.example` to `.env` and fill in the Neon-related vars.
-2. `pnpm db:start` — boots the Neon local proxy + shadow Postgres.
-3. `pnpm db:migrate` — applies migrations to your local branch.
-4. `pnpm studio` (optional) — opens Prisma Studio.
+2. `pnpm dev` from the repo root — boots the Neon local proxy + shadow Postgres, applies migrations to the new branch, then starts the apps.
+3. `pnpm db:studio` (optional) — opens Prisma Studio.
 
-To stop: `pnpm db:stop`.
+Stopping `pnpm dev` removes the containers and deletes the Neon branch. Use `pnpm db:start` / `pnpm db:stop` to run the database on its own, and `pnpm db:migrate` when creating a new migration.
 
 ## How validation is wired
 

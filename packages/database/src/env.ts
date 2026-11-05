@@ -16,3 +16,5 @@ export const migrationEnvSchema = z.object({
 export const runtimeEnvSchema = z.object({
   DATABASE_URL: z.url(),
 });
+
+export const localDevEnvSchema = dockerEnvSchema.extend(migrationEnvSchema.shape);
