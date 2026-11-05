@@ -5,11 +5,14 @@ import { useFormStatus } from 'react-dom';
 
 type PendingButtonProps = {
   idle: string;
+  pending?: boolean;
   pendingLabel: string;
 } & ButtonProps;
 
-export function PendingButton({ className, idle, pendingLabel, ...props }: PendingButtonProps) {
-  const { pending } = useFormStatus();
+export function PendingButton({ className, idle, pending: parentPending, pendingLabel, ...props }: PendingButtonProps) {
+  const { pending: formPending } = useFormStatus();
+
+  const pending = parentPending || formPending;
 
   return (
     <Button {...props} type="submit" disabled={pending} className={cn('flex items-center gap-2', className)}>

@@ -3,6 +3,7 @@ import { Button } from '@postroll/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuItem,
+  DropdownMenuGroup,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@postroll/ui/components/dropdown-menu';
@@ -16,39 +17,39 @@ export function SessionActions({ session }: { session: SessionDto }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
-    !session.current && (
-      <>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                aria-label="Session actions"
-                className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-popup-open:opacity-100 [@media(hover:none)]:opacity-100"
-              />
-            }
-          >
-            <IconDots />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              aria-label="Session actions"
+              className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-popup-open:opacity-100 [@media(hover:none)]:opacity-100"
+            />
+          }
+        >
+          <IconDots />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuGroup>
             <DropdownMenuItem
               variant="destructive"
               onClick={() => {
                 return setConfirmOpen(true);
               }}
             >
-              Terminate
+              {session.current ? 'Sign out' : 'Terminate'}
             </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <TerminateSessionDialog
-          open={confirmOpen}
-          sessionId={session.id}
-          onOpenChange={setConfirmOpen}
-          device={formatDevice(session)}
-        />
-      </>
-    )
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <TerminateSessionDialog
+        session={session}
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        device={formatDevice(session)}
+      />
+    </>
   );
 }

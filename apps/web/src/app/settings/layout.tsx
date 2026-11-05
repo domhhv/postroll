@@ -29,7 +29,7 @@ export default async function SettingsLayout({ children }: PropsWithChildren) {
   }
 
   return (
-    <div className="w-full max-w-3xl space-y-6 self-start">
+    <div className="w-full max-w-4xl space-y-6 self-start">
       <h1 className="text-3xl leading-10 font-semibold tracking-tight">Settings</h1>
       <SettingsTabsWrapper>
         <TabsList variant="line" className="sm:w-40 sm:shrink-0">

@@ -3,6 +3,7 @@
 import type { SessionDto } from '@postroll/contracts';
 import { Badge } from '@postroll/ui/components/badge';
 import { Table, TableRow, TableBody, TableHead, TableCell, TableHeader } from '@postroll/ui/components/table';
+import { cn } from '@postroll/ui/lib/utils';
 
 import { DateTime } from '#components/date-time';
 import { SessionActions } from '#components/session-actions';
@@ -32,7 +33,7 @@ export function Sessions({ sessions }: SessionsListProps) {
 
           return (
             <TableRow key={session.id} className="group">
-              <TableCell>
+              <TableCell className="whitespace-normal">
                 <span className="font-medium" title={session.userAgent ?? undefined}>
                   {formatDevice(session)}
                 </span>
@@ -42,11 +43,13 @@ export function Sessions({ sessions }: SessionsListProps) {
                   </Badge>
                 )}
               </TableCell>
-              <TableCell className={location ? undefined : 'text-muted-foreground'}>{location ?? 'Unknown'}</TableCell>
-              <TableCell>
+              <TableCell className={cn('whitespace-normal', !location && 'text-muted-foreground')}>
+                {location ?? 'Unknown'}
+              </TableCell>
+              <TableCell className="whitespace-normal">
                 <DateTime iso={session.createdAt} />
               </TableCell>
-              <TableCell>
+              <TableCell className="whitespace-normal">
                 <DateTime iso={session.lastActiveAt} />
               </TableCell>
               <TableCell className="w-10 text-right">
