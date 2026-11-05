@@ -1,10 +1,12 @@
 'use client';
 
 import { Button } from '@postroll/ui/components/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@postroll/ui/components/popover';
+import { Popover, createHandle, PopoverContent, PopoverTrigger } from '@postroll/ui/components/popover';
 import { Separator } from '@postroll/ui/components/separator';
 import { IconUserCircle } from '@tabler/icons-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
 
 import { LogoutForm } from '#components/logout-form';
 
@@ -13,9 +15,17 @@ type UserMenuProps = {
 };
 
 export function UserMenu({ email }: UserMenuProps) {
+  const pathname = usePathname();
+  const handle = createHandle();
+
+  useEffect(() => {
+    handle.close();
+  }, [pathname]);
+
   return (
-    <Popover>
+    <Popover handle={handle}>
       <PopoverTrigger
+        handle={handle}
         render={(props) => {
           return (
             <Button {...props} size="icon" variant="ghost" aria-label="Settings menu" className="max-sm:border-border">

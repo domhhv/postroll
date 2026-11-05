@@ -1,3 +1,4 @@
+import type { SessionDto } from '@postroll/contracts';
 import { Button } from '@postroll/ui/components/button';
 import {
   Dialog,
@@ -10,26 +11,30 @@ import {
 import { toast } from '@postroll/ui/components/toast';
 import { useState, useTransition } from 'react';
 
-import { revokeSessionAction } from '#lib/actions';
+import { PendingButton } from '#components/pending-button';
+import { logoutAction, revokeSessionAction } from '#lib/actions';
 
-export function TerminateSessionDialog({
-  device,
-  onOpenChange,
-  open,
-  sessionId,
-}: {
+type TerminateSessionDialogProps = {
   device: string;
   open: boolean;
-  sessionId: string;
+  session: SessionDto;
   onOpenChange: (open: boolean) => void;
-}) {
+};
+
+export function TerminateSessionDialog({ device, onOpenChange, open, session }: TerminateSessionDialogProps) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   function terminate() {
     setError(null);
     startTransition(async () => {
-      const result = await revokeSessionAction(sessionId);
+      if (session.current) {
+        await logoutAction();
+
+        return;
+      }
+
+      const result = await revokeSessionAction(session.id);
 
       if (result.status === 'error') {
         setError(result.message);
@@ -60,9 +65,10 @@ export function TerminateSessionDialog({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Terminate session</DialogTitle>
+          <DialogTitle>{session.current ? 'Sign Out' : 'Terminate session'}</DialogTitle>
           <DialogDescription>
-            Are you sure you want to terminate this session? The device will lose access to your account.
+            Are you sure you want to {session.current ? 'sign out? This' : 'terminate this session? The'} device will
+            lose access to your account.
           </DialogDescription>
         </DialogHeader>
         {error && (
@@ -80,9 +86,13 @@ export function TerminateSessionDialog({
           >
             Cancel
           </Button>
-          <Button disabled={pending} onClick={terminate} variant="destructive">
-            {pending ? 'Terminating…' : 'Terminate'}
-          </Button>
+          <PendingButton
+            pending={pending}
+            onClick={terminate}
+            variant="destructive"
+            idle={session.current ? 'Sign Out' : 'Terminate'}
+            pendingLabel={session.current ? 'Signing Out' : 'Terminating'}
+          />
         </DialogFooter>
       </DialogContent>
     </Dialog>
