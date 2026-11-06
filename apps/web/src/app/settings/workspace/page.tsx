@@ -4,13 +4,17 @@ import { DeleteWorkspace } from '#components/delete-workspace';
 import { WorkspaceForm } from '#components/workspace-form';
 import { WorkspaceMembers } from '#components/workspace-members';
 import { getWorkspaceMembers } from '#lib/api';
-import { getUser, getWorkspaces, getActiveWorkspace, redirectToSessionCheck } from '#lib/dal';
+import { getUser, getWorkspaces, redirectToSessionCheck, requireActiveWorkspace } from '#lib/dal';
 import { GatewayError } from '#lib/refresh';
 
 export default async function WorkspaceSettingsPage() {
-  const [user, workspace, workspaces] = await Promise.all([getUser(), getActiveWorkspace(), getWorkspaces()]);
+  const [user, workspace, workspaces] = await Promise.all([
+    getUser(),
+    requireActiveWorkspace('/settings/workspace'),
+    getWorkspaces(),
+  ]);
 
-  if (!user || !workspace) {
+  if (!user) {
     redirectToSessionCheck('/settings/workspace');
   }
 

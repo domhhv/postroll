@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
-import { refreshTokens, readRequestMeta } from '#lib/refresh';
+import { refreshTokens, readRequestMeta, resolveActiveWorkspaceId } from '#lib/refresh';
 import {
   cookieOptions,
   SESSION_COOKIE,
@@ -44,7 +44,9 @@ function resolveNext(request: NextRequest): URL {
  * Pages redirect here with `force=1` when the gateway rejected a still-unexpired
  * access token (e.g. the session was terminated from another device). A render
  * can't clear the cookie, so without this the stale cookie would bounce the user
- * between /login and the protected page until the token expired.
+ * between /login and the protected page until the token expired. Forced checks
+ * also move a stale `activeWorkspaceId` (a workspace the user no longer belongs
+ * to) onto one of their remaining workspaces.
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const response = NextResponse.redirect(resolveNext(request), 307);
@@ -60,9 +62,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   try {
     const next = await refreshTokens(session, readRequestMeta(request.headers));
+    const activeWorkspaceId = force
+      ? await resolveActiveWorkspaceId(next.accessToken, session.activeWorkspaceId).catch(
+          () => session.activeWorkspaceId
+        )
+      : session.activeWorkspaceId;
     const jwe = await encryptSession({
       ...session,
       accessToken: next.accessToken,
+      activeWorkspaceId,
       refreshExpiresAt: next.refreshExpiresAt,
       refreshToken: next.refreshToken,
     });

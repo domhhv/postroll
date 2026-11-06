@@ -26,7 +26,7 @@ export function WorkspaceSwitcher({ activeWorkspaceId, workspaces }: WorkspaceSw
   const active = workspaces.find((workspace) => workspace.id === activeWorkspaceId) ?? workspaces[0] ?? null;
 
   function handleSwitch(workspaceId: string) {
-    if (workspaceId === active?.id) {
+    if (workspaceId === activeWorkspaceId) {
       setOpen(false);
 
       return;
