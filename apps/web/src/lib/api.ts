@@ -241,7 +241,7 @@ export async function createWorkspace(input: CreateWorkspaceRequest): Promise<Wo
   return workspaceDtoSchema.parse(await res.json());
 }
 
-export async function renameWorkspace(id: string, input: UpdateWorkspaceRequest): Promise<WorkspaceDto> {
+export async function updateWorkspace(id: string, input: UpdateWorkspaceRequest): Promise<WorkspaceDto> {
   const res = await gatewayFetch(`/workspaces/${id}`, {
     body: JSON.stringify(input),
     headers: { 'content-type': 'application/json' },
@@ -249,7 +249,7 @@ export async function renameWorkspace(id: string, input: UpdateWorkspaceRequest)
   });
 
   if (!res.ok) {
-    const message = res.status === 403 ? 'Only the workspace owner can rename it.' : `Request failed (${res.status}).`;
+    const message = res.status === 403 ? 'Only the workspace owner can update it.' : `Request failed (${res.status}).`;
 
     throw new GatewayError(res.status, message);
   }

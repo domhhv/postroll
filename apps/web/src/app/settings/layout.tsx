@@ -13,6 +13,7 @@ export const metadata = {
 const tabs = [
   { label: 'Profile', value: 'profile' },
   { label: 'Security', value: 'security' },
+  { label: 'Workspace', value: 'workspace' },
 ] as const;
 
 export default async function SettingsLayout({ children }: PropsWithChildren) {

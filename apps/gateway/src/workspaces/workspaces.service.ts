@@ -62,16 +62,16 @@ export class WorkspacesService {
   }
 
   /**
-   * Rename a workspace. Owner-only — the caller's role is already verified as a
-   * member by {@link WorkspaceGuard}; here we additionally require OWNER.
+   * Update a workspace's details. Owner-only — the caller's role is already
+   * verified as a member by {@link WorkspaceGuard}; here we additionally require OWNER.
    */
-  async rename(workspaceId: string, callerRole: WorkspaceRole, input: UpdateWorkspaceRequest): Promise<WorkspaceDto> {
+  async update(workspaceId: string, callerRole: WorkspaceRole, input: UpdateWorkspaceRequest): Promise<WorkspaceDto> {
     if (callerRole !== 'OWNER') {
-      throw new ForbiddenException('Only the workspace owner can rename it');
+      throw new ForbiddenException('Only the workspace owner can update it');
     }
 
     const workspace = await this.prisma.workspace.update({
-      data: { name: input.name },
+      data: input,
       where: { id: workspaceId },
     });
 

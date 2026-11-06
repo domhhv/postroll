@@ -7,6 +7,7 @@ import {
   updateUserRequestSchema,
   changePasswordRequestSchema,
   createWorkspaceRequestSchema,
+  updateWorkspaceRequestSchema,
 } from '@postroll/contracts';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
@@ -22,6 +23,7 @@ import {
   updatePassword,
   createWorkspace,
   switchWorkspace,
+  updateWorkspace,
   loginAndCreateSession,
 } from './api';
 import { readRequestMeta } from './refresh';
@@ -318,6 +320,58 @@ export async function createWorkspaceAction(
   revalidatePath('/', 'layout');
 
   return { status: 'success', workspaceId };
+}
+
+export type WorkspaceValues = { name: string };
+
+export type WorkspaceFormState =
+  | { status: 'idle' }
+  | { status: 'success'; values: WorkspaceValues }
+  | {
+      fieldErrors?: Record<string, string>;
+      message: string;
+      status: 'error';
+      values: WorkspaceValues;
+    };
+
+export async function updateWorkspaceAction(
+  _previous: WorkspaceFormState,
+  formData: FormData
+): Promise<WorkspaceFormState> {
+  const values = { name: getFormValue(formData, 'name') };
+  const parsed = updateWorkspaceRequestSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return {
+      fieldErrors: extractFieldErrors(parsed.error),
+      message: 'Please fix the errors below.',
+      status: 'error',
+      values,
+    };
+  }
+
+  const session = await readSessionCookie();
+
+  if (!session) {
+    return { message: 'No active session.', status: 'error', values };
+  }
+
+  let updated: WorkspaceValues;
+
+  try {
+    const workspace = await updateWorkspace(session.activeWorkspaceId, parsed.data);
+    updated = { name: workspace.name };
+  } catch (error) {
+    if (error instanceof GatewayError) {
+      return { message: error.message, status: 'error', values };
+    }
+
+    return { message: 'Something went wrong. Please try again.', status: 'error', values };
+  }
+
+  revalidatePath('/', 'layout');
+
+  return { status: 'success', values: updated };
 }
 
 export type SwitchWorkspaceResult = { status: 'success' } | { message: string; status: 'error' };
