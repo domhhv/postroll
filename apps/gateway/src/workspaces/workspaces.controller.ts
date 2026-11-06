@@ -51,7 +51,7 @@ export class WorkspacesController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, WorkspaceGuard)
-  async rename(
+  async update(
     @Param('id', new ParseUUIDPipe()) id: string,
     @CurrentWorkspace() workspace: RequestWorkspace,
     @Body() body: unknown
@@ -59,7 +59,7 @@ export class WorkspacesController {
     this.assertPathMatchesContext(id, workspace);
     const input = updateWorkspaceRequestSchema.parse(body);
 
-    return workspaceDtoSchema.parse(await this.workspaces.rename(workspace.workspaceId, workspace.role, input));
+    return workspaceDtoSchema.parse(await this.workspaces.update(workspace.workspaceId, workspace.role, input));
   }
 
   @Get(':id/members')

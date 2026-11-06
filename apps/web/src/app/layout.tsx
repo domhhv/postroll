@@ -1,13 +1,12 @@
 import { Toaster } from '@postroll/ui/components/toast';
+import { TooltipProvider } from '@postroll/ui/components/tooltip';
 import { cn } from '@postroll/ui/lib/utils';
 import { Analytics } from '@vercel/analytics/next';
 import type { Metadata } from 'next';
 import { Roboto_Slab, Source_Sans_3 } from 'next/font/google';
-
-import { Header } from '#components/header';
-
 import '@postroll/ui/globals.css';
 
+import { Header } from '#components/header';
 import { ThemeProvider } from '#components/theme-provider';
 
 const robotoSlab = Roboto_Slab({
@@ -38,10 +37,12 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col">
         <ThemeProvider>
-          <Toaster>
-            <Header />
-            <main className="bg-background flex flex-1 p-8 sm:p-16">{children}</main>
-          </Toaster>
+          <TooltipProvider>
+            <Toaster>
+              <Header />
+              <main className="bg-background flex flex-1 p-8 sm:p-16">{children}</main>
+            </Toaster>
+          </TooltipProvider>
           <Analytics />
         </ThemeProvider>
       </body>

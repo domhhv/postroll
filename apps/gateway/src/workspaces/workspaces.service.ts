@@ -13,8 +13,8 @@ import { InjectPrisma } from '../database/database.module.js';
 
 import { generateWorkspaceSlug } from './slug.js';
 
-/** Roles allowed to remove members, in descending privilege. */
-const MEMBER_MANAGEMENT_ROLES: ReadonlySet<WorkspaceRole> = new Set(['OWNER', 'ADMIN']);
+/** Roles allowed to update workspace details and remove members, in descending privilege. */
+const WORKSPACE_MANAGER_ROLES: ReadonlySet<WorkspaceRole> = new Set(['OWNER', 'ADMIN']);
 
 @Injectable()
 export class WorkspacesService {
@@ -62,16 +62,16 @@ export class WorkspacesService {
   }
 
   /**
-   * Rename a workspace. Owner-only — the caller's role is already verified as a
-   * member by {@link WorkspaceGuard}; here we additionally require OWNER.
+   * Update a workspace's details. Admin+ only — the caller's membership is
+   * already verified by {@link WorkspaceGuard}; here we additionally require OWNER or ADMIN.
    */
-  async rename(workspaceId: string, callerRole: WorkspaceRole, input: UpdateWorkspaceRequest): Promise<WorkspaceDto> {
-    if (callerRole !== 'OWNER') {
-      throw new ForbiddenException('Only the workspace owner can rename it');
+  async update(workspaceId: string, callerRole: WorkspaceRole, input: UpdateWorkspaceRequest): Promise<WorkspaceDto> {
+    if (!WORKSPACE_MANAGER_ROLES.has(callerRole)) {
+      throw new ForbiddenException('Only admins or the owner can update the workspace');
     }
 
     const workspace = await this.prisma.workspace.update({
-      data: { name: input.name },
+      data: input,
       where: { id: workspaceId },
     });
 
@@ -114,7 +114,7 @@ export class WorkspacesService {
     callerRole: WorkspaceRole,
     targetUserId: string
   ): Promise<void> {
-    if (!MEMBER_MANAGEMENT_ROLES.has(callerRole)) {
+    if (!WORKSPACE_MANAGER_ROLES.has(callerRole)) {
       throw new ForbiddenException('Only admins or the owner can remove members');
     }
 
