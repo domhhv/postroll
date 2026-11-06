@@ -42,15 +42,10 @@ export const changePasswordRequestSchema = z
     newPassword: z.string().min(8).max(128),
     revokeOtherSessions: z.boolean().default(false),
   })
-  .refine(
-    (data) => {
-      return data.newPassword === data.confirmPassword;
-    },
-    {
-      message: 'Passwords do not match.',
-      path: ['confirmPassword'],
-    }
-  );
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Passwords do not match.',
+    path: ['confirmPassword'],
+  });
 
 export type ChangePasswordRequest = z.infer<typeof changePasswordRequestSchema>;
 

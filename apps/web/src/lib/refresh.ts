@@ -71,11 +71,7 @@ export function metaHeaders(meta: RequestMeta = {}): Record<string, string> {
     [CLIENT_COUNTRY_HEADER, meta.country],
   ];
 
-  return Object.fromEntries(
-    entries.filter((entry): entry is [string, string] => {
-      return Boolean(entry[1]);
-    })
-  );
+  return Object.fromEntries(entries.filter((entry): entry is [string, string] => Boolean(entry[1])));
 }
 
 export class GatewayError extends Error {
@@ -97,9 +93,7 @@ export type RefreshResult = {
 };
 
 export function parseRefreshCookie(setCookies: string[]): RefreshCookie {
-  const cookie = parseSetCookies(setCookies).find((c) => {
-    return c.name === GATEWAY_REFRESH_COOKIE;
-  });
+  const cookie = parseSetCookies(setCookies).find((c) => c.name === GATEWAY_REFRESH_COOKIE);
 
   if (!cookie) {
     throw new GatewayError(502, 'Gateway did not return a refresh cookie.');

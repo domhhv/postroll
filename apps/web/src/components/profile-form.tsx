@@ -1,9 +1,11 @@
 'use client';
 
 import type { UserDto } from '@postroll/contracts';
+import { Alert, AlertTitle, AlertDescription } from '@postroll/ui/components/alert';
 import { Button } from '@postroll/ui/components/button';
 import { Field, FieldError, FieldLabel } from '@postroll/ui/components/field';
 import { Input } from '@postroll/ui/components/input';
+import { IconAlertSquareRounded } from '@tabler/icons-react';
 import { useState, useEffect, useActionState } from 'react';
 
 import { PendingButton } from '#components/pending-button';
@@ -59,12 +61,7 @@ export function ProfileForm({ user }: { user: UserDto }) {
   if (!editing) {
     return (
       <div className="space-y-6">
-        <Button
-          variant="outline"
-          onClick={() => {
-            return setEditing(true);
-          }}
-        >
+        <Button variant="outline" onClick={() => setEditing(true)}>
           Edit details
         </Button>
         <dl className="space-y-4">
@@ -87,13 +84,7 @@ export function ProfileForm({ user }: { user: UserDto }) {
     <form noValidate action={formAction} className="space-y-6">
       <div className="flex gap-2">
         <PendingButton idle="Save" pendingLabel="Saving" />
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => {
-            return setEditing(false);
-          }}
-        >
+        <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
           Cancel
         </Button>
       </div>
@@ -119,9 +110,11 @@ export function ProfileForm({ user }: { user: UserDto }) {
         })}
       </div>
       {state.status === 'error' && !fieldErrors && (
-        <p role="alert" className="text-destructive text-sm">
-          {state.message}
-        </p>
+        <Alert variant="destructive">
+          <IconAlertSquareRounded />
+          <AlertTitle>Failed to sign create workspace</AlertTitle>
+          <AlertDescription>{state.message}</AlertDescription>
+        </Alert>
       )}
     </form>
   );

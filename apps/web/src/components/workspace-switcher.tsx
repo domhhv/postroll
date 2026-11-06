@@ -23,12 +23,7 @@ export function WorkspaceSwitcher({ activeWorkspaceId, workspaces }: WorkspaceSw
   const [creating, setCreating] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  const active =
-    workspaces.find((workspace) => {
-      return workspace.id === activeWorkspaceId;
-    }) ??
-    workspaces[0] ??
-    null;
+  const active = workspaces.find((workspace) => workspace.id === activeWorkspaceId) ?? workspaces[0] ?? null;
 
   function handleSwitch(workspaceId: string) {
     if (workspaceId === active?.id) {
@@ -48,20 +43,18 @@ export function WorkspaceSwitcher({ activeWorkspaceId, workspaces }: WorkspaceSw
     <>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger
-          render={(props) => {
-            return (
-              <Button
-                {...props}
-                variant="outline"
-                aria-label="Switch workspace"
-                className="max-w-48 justify-between gap-1 sm:gap-2"
-              >
-                <span className="truncate max-sm:hidden">{active?.name ?? 'Select workspace'}</span>
-                <IconDeviceWorkstation className="sm:hidden" />
-                <IconSelector className="max-sm:hiddene size-4 shrink-0 opacity-60" />
-              </Button>
-            );
-          }}
+          render={(props) => (
+            <Button
+              {...props}
+              variant="outline"
+              aria-label="Switch workspace"
+              className="max-w-48 justify-between gap-1 sm:gap-2"
+            >
+              <span className="truncate max-sm:hidden">{active?.name ?? 'Select workspace'}</span>
+              <IconDeviceWorkstation className="sm:hidden" />
+              <IconSelector className="max-sm:hiddene size-4 shrink-0 opacity-60" />
+            </Button>
+          )}
         />
         <PopoverContent align="start" className="w-64 gap-1 p-2">
           <div className="text-muted-foreground px-2 py-1 text-xs font-medium tracking-wide uppercase">Workspaces</div>
@@ -74,9 +67,7 @@ export function WorkspaceSwitcher({ activeWorkspaceId, workspaces }: WorkspaceSw
                 variant="ghost"
                 key={workspace.id}
                 disabled={pending}
-                onClick={() => {
-                  return handleSwitch(workspace.id);
-                }}
+                onClick={() => handleSwitch(workspace.id)}
               >
                 <IconCheck className={`size-4 shrink-0 ${isActive ? 'opacity-100' : 'opacity-0'}`} />
                 <span className="flex-1 truncate text-left">{workspace.name}</span>

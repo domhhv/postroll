@@ -1,4 +1,5 @@
 import type { SessionDto } from '@postroll/contracts';
+import { Alert, AlertTitle, AlertDescription } from '@postroll/ui/components/alert';
 import { Button } from '@postroll/ui/components/button';
 import {
   Dialog,
@@ -9,6 +10,7 @@ import {
   DialogDescription,
 } from '@postroll/ui/components/dialog';
 import { toast } from '@postroll/ui/components/toast';
+import { IconAlertSquareRounded } from '@tabler/icons-react';
 import { useState, useTransition } from 'react';
 
 import { PendingButton } from '#components/pending-button';
@@ -72,18 +74,14 @@ export function TerminateSessionDialog({ device, onOpenChange, open, session }: 
           </DialogDescription>
         </DialogHeader>
         {error && (
-          <p role="alert" className="text-destructive text-sm">
-            {error}
-          </p>
+          <Alert variant="destructive">
+            <IconAlertSquareRounded />
+            <AlertTitle>Failed to terminate workspace</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
         <DialogFooter>
-          <Button
-            variant="outline"
-            disabled={pending}
-            onClick={() => {
-              return onOpenChange(false);
-            }}
-          >
+          <Button variant="outline" disabled={pending} onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <PendingButton

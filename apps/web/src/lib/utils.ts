@@ -32,9 +32,7 @@ export function formatLocation({
   country: string | null;
   region: string | null;
 }) {
-  const parts = [city, region, country ? countryName(country) : null].filter((part): part is string => {
-    return Boolean(part);
-  });
+  const parts = [city, region, country ? countryName(country) : null].filter((part): part is string => Boolean(part));
 
   return parts.length > 0 ? parts.join(', ') : null;
 }

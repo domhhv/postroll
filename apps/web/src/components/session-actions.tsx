@@ -33,12 +33,7 @@ export function SessionActions({ session }: { session: SessionDto }) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuGroup>
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() => {
-                return setConfirmOpen(true);
-              }}
-            >
+            <DropdownMenuItem variant="destructive" onClick={() => setConfirmOpen(true)}>
               {session.current ? 'Sign out' : 'Terminate'}
             </DropdownMenuItem>
           </DropdownMenuGroup>

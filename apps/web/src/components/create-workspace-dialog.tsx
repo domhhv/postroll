@@ -1,5 +1,6 @@
 'use client';
 
+import { Alert, AlertTitle, AlertDescription } from '@postroll/ui/components/alert';
 import { Button } from '@postroll/ui/components/button';
 import {
   Dialog,
@@ -12,6 +13,7 @@ import {
 } from '@postroll/ui/components/dialog';
 import { Field, FieldError, FieldLabel } from '@postroll/ui/components/field';
 import { Input } from '@postroll/ui/components/input';
+import { IconAlertSquareRounded } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useActionState } from 'react';
 
@@ -63,19 +65,19 @@ export function CreateWorkspaceDialog({ onOpenChange, open }: CreateWorkspaceDia
             {nameError && <FieldError errors={[{ message: nameError }]} />}
           </Field>
           {formError && (
-            <p role="alert" className="text-destructive text-sm">
-              {formError}
-            </p>
+            <Alert variant="destructive">
+              <IconAlertSquareRounded />
+              <AlertTitle>Failed to sign create workspace</AlertTitle>
+              <AlertDescription>{formError}</AlertDescription>
+            </Alert>
           )}
           <DialogFooter>
             <DialogClose
-              render={(props) => {
-                return (
-                  <Button {...props} type="button" variant="outline">
-                    Cancel
-                  </Button>
-                );
-              }}
+              render={(props) => (
+                <Button {...props} type="button" variant="outline">
+                  Cancel
+                </Button>
+              )}
             />
             <PendingButton idle="Create" pendingLabel="Creating" />
           </DialogFooter>

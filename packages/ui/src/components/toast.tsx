@@ -160,21 +160,19 @@ function ToastIcon({ type }: { type: string | undefined }) {
 function ToastList() {
   const { toasts } = ToastPrimitive.useToastManager();
 
-  return toasts.map((toastItem) => {
-    return (
-      <Toast toast={toastItem} key={toastItem.id}>
-        <ToastContent>
-          <ToastIcon type={toastItem.type} />
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <ToastTitle />
-            <ToastDescription />
-          </div>
-          <ToastAction />
-          <ToastClose />
-        </ToastContent>
-      </Toast>
-    );
-  });
+  return toasts.map((toastItem) => (
+    <Toast toast={toastItem} key={toastItem.id}>
+      <ToastContent>
+        <ToastIcon type={toastItem.type} />
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <ToastTitle />
+          <ToastDescription />
+        </div>
+        <ToastAction />
+        <ToastClose />
+      </ToastContent>
+    </Toast>
+  ));
 }
 
 function Toaster({ children, toastManager = toast, ...props }: ToastPrimitive.Provider.Props) {

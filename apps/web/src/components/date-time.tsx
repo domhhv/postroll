@@ -12,12 +12,8 @@ const utcFormat = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle
 export function DateTime({ iso }: { iso: string }) {
   const isClient = useSyncExternalStore(
     noop,
-    () => {
-      return true;
-    },
-    () => {
-      return false;
-    }
+    () => true,
+    () => false
   );
   const date = new Date(iso);
 

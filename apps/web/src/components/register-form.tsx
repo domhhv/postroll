@@ -1,8 +1,10 @@
 'use client';
 
+import { Alert, AlertTitle, AlertDescription } from '@postroll/ui/components/alert';
 import { Field, FieldSet, FieldError, FieldGroup, FieldLabel, FieldDescription } from '@postroll/ui/components/field';
 import { Input } from '@postroll/ui/components/input';
 import { PasswordInput } from '@postroll/ui/components/password-input';
+import { IconAlertSquareRounded } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useActionState } from 'react';
 
@@ -29,6 +31,7 @@ export function RegisterForm() {
             <FieldLabel htmlFor="email">Email</FieldLabel>
             <Input
               required
+              autoFocus
               id="email"
               name="email"
               type="email"
@@ -56,9 +59,11 @@ export function RegisterForm() {
             {passwordError && <FieldError errors={[{ message: passwordError }]} />}
           </Field>
           {state.status === 'error' && !fieldErrors && (
-            <p role="alert" className="text-destructive text-sm">
-              {state.message}
-            </p>
+            <Alert variant="destructive">
+              <IconAlertSquareRounded />
+              <AlertTitle>Failed to create account</AlertTitle>
+              <AlertDescription>{state.message}</AlertDescription>
+            </Alert>
           )}
           <PendingButton size="lg" idle="Create account" pendingLabel="Creating account" />
           <FieldDescription className="text-center">

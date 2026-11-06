@@ -15,22 +15,18 @@ type ExpiresIn = NonNullable<NonNullable<JwtModuleOptions['signOptions']>['expir
   exports: [TokensService],
   providers: [AuthService, TokensService],
   imports: [
-    forwardRef(() => {
-      return UsersModule;
-    }),
+    forwardRef(() => UsersModule),
     JwtModule.registerAsync({
       // Global so JwtAuthGuard can inject JwtService in any controller's module.
       global: true,
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService): JwtModuleOptions => {
-        return {
-          secret: config.getOrThrow<string>('JWT_ACCESS_SECRET'),
-          signOptions: {
-            expiresIn: config.getOrThrow<string>('JWT_ACCESS_TTL') as ExpiresIn,
-          },
-        };
-      },
+      useFactory: (config: ConfigService): JwtModuleOptions => ({
+        secret: config.getOrThrow<string>('JWT_ACCESS_SECRET'),
+        signOptions: {
+          expiresIn: config.getOrThrow<string>('JWT_ACCESS_TTL') as ExpiresIn,
+        },
+      }),
     }),
   ],
 })

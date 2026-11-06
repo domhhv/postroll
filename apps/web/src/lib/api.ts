@@ -292,9 +292,7 @@ export async function removeWorkspaceMember(id: string, userId: string): Promise
  */
 export async function switchWorkspace(workspaceId: string): Promise<WorkspaceDto> {
   const workspaces = await getWorkspaces();
-  const target = workspaces.find((workspace) => {
-    return workspace.id === workspaceId;
-  });
+  const target = workspaces.find((workspace) => workspace.id === workspaceId);
 
   if (!target) {
     throw new GatewayError(403, 'You do not have access to this workspace.');
