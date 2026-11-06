@@ -40,3 +40,19 @@ export function formatLocation({
 export function noop() {
   return () => {};
 }
+
+export function formatRole(role: string): string {
+  return role.charAt(0) + role.slice(1).toLowerCase();
+}
+
+export function getMemberDisplayName({
+  email,
+  name,
+  username,
+}: {
+  email: string;
+  name: string | null;
+  username: string | null;
+}): string {
+  return name ?? username ?? email;
+}

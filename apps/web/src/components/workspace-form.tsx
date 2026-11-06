@@ -49,6 +49,7 @@ export function WorkspaceForm({ workspace }: { workspace: WorkspaceDto }) {
 
   return (
     <form noValidate action={formAction} className="space-y-6">
+      <input type="hidden" name="workspaceId" value={workspace.id} />
       <div className="flex gap-2">
         <PendingButton idle="Save" pendingLabel="Saving" />
         <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
