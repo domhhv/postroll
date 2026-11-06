@@ -24,7 +24,7 @@ export default async function WorkspaceSettingsPage() {
   return (
     <TabsContent value="workspace" className="min-w-0 space-y-10">
       <section className="max-w-md">
-        <WorkspaceForm workspace={workspace} />
+        <WorkspaceForm key={workspace.id} workspace={workspace} />
       </section>
       <section className="space-y-4">
         <h2 className="text-lg font-semibold tracking-tight">Members</h2>

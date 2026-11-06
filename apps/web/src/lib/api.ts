@@ -249,7 +249,8 @@ export async function updateWorkspace(id: string, input: UpdateWorkspaceRequest)
   });
 
   if (!res.ok) {
-    const message = res.status === 403 ? 'Only the workspace owner can update it.' : `Request failed (${res.status}).`;
+    const message =
+      res.status === 403 ? 'Only admins or the owner can update the workspace.' : `Request failed (${res.status}).`;
 
     throw new GatewayError(res.status, message);
   }
