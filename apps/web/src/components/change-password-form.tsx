@@ -55,6 +55,7 @@ export function ChangePasswordForm() {
           <Field data-invalid={currentPasswordError ? true : undefined}>
             <FieldLabel htmlFor="currentPassword">Current password</FieldLabel>
             <PasswordInput
+              autoFocus
               id="currentPassword"
               name="currentPassword"
               placeholder="••••••••"

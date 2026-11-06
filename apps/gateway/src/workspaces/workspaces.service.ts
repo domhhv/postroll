@@ -1,11 +1,15 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import type {
-  WorkspaceDto,
-  WorkspaceRole,
-  WorkspaceList,
-  WorkspaceMemberList,
-  CreateWorkspaceRequest,
-  UpdateWorkspaceRequest,
+import {
+  type WorkspaceDto,
+  type WorkspaceRole,
+  type WorkspaceList,
+  type WorkspaceMemberDto,
+  type WorkspaceMemberList,
+  canManageWorkspaceMember,
+  type CreateWorkspaceRequest,
+  type UpdateWorkspaceRequest,
+  getAssignableWorkspaceRoles,
+  type UpdateWorkspaceMemberRequest,
 } from '@postroll/contracts';
 import type { PrismaClient } from '@postroll/database/prisma';
 
@@ -104,9 +108,47 @@ export class WorkspacesService {
   }
 
   /**
-   * Remove a member from a workspace. Admin+ only. An owner can never be
-   * removed (the workspace must keep an owner), and admins cannot remove other
-   * admins or themselves through this path.
+   * Change another member's role. The owner can assign any role but owner to
+   * anyone else; admins can only move members below admin to roles below admin.
+   */
+  async updateMemberRole(
+    workspaceId: string,
+    callerId: string,
+    callerRole: WorkspaceRole,
+    targetUserId: string,
+    input: UpdateWorkspaceMemberRequest
+  ): Promise<WorkspaceMemberDto> {
+    if (callerId === targetUserId) {
+      throw new ForbiddenException('You cannot change your own role');
+    }
+
+    const target = await this.findMembership(workspaceId, targetUserId);
+
+    if (!getAssignableWorkspaceRoles(callerRole, target.role).includes(input.role)) {
+      throw new ForbiddenException('You do not have permission to assign this role to this member');
+    }
+
+    const membership = await this.prisma.membership.update({
+      data: { role: input.role },
+      include: { user: { omit: { password: true } } },
+      where: { userId_workspaceId: { userId: targetUserId, workspaceId } },
+    });
+
+    return {
+      createdAt: membership.createdAt.toISOString(),
+      email: membership.user.email,
+      id: membership.id,
+      name: membership.user.name,
+      role: membership.role,
+      userId: membership.userId,
+      username: membership.user.username,
+    };
+  }
+
+  /**
+   * Remove a member from a workspace. The owner can remove anyone else; admins
+   * can remove members below admin, or themselves. The owner can never be
+   * removed (the workspace must keep an owner).
    */
   async removeMember(
     workspaceId: string,
@@ -118,25 +160,31 @@ export class WorkspacesService {
       throw new ForbiddenException('Only admins or the owner can remove members');
     }
 
-    const target = await this.prisma.membership.findUnique({
-      select: { role: true },
-      where: { userId_workspaceId: { userId: targetUserId, workspaceId } },
-    });
-
-    if (!target) {
-      throw new NotFoundException('Member not found in this workspace');
-    }
+    const target = await this.findMembership(workspaceId, targetUserId);
 
     if (target.role === 'OWNER') {
       throw new ForbiddenException('The workspace owner cannot be removed');
     }
 
-    if (callerRole === 'ADMIN' && target.role === 'ADMIN' && callerId !== targetUserId) {
+    if (callerId !== targetUserId && !canManageWorkspaceMember(callerRole, target.role)) {
       throw new ForbiddenException('Admins cannot remove other admins');
     }
 
     await this.prisma.membership.delete({
       where: { userId_workspaceId: { userId: targetUserId, workspaceId } },
     });
+  }
+
+  private async findMembership(workspaceId: string, userId: string): Promise<{ role: WorkspaceRole }> {
+    const membership = await this.prisma.membership.findUnique({
+      select: { role: true },
+      where: { userId_workspaceId: { userId, workspaceId } },
+    });
+
+    if (!membership) {
+      throw new NotFoundException('Member not found in this workspace');
+    }
+
+    return membership;
   }
 }

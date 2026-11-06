@@ -17,10 +17,13 @@ import {
   workspaceDtoSchema,
   type WorkspaceList,
   workspaceListSchema,
+  type WorkspaceMemberDto,
   type WorkspaceMemberList,
+  workspaceMemberDtoSchema,
   workspaceMemberListSchema,
   createWorkspaceRequestSchema,
   updateWorkspaceRequestSchema,
+  updateWorkspaceMemberRequestSchema,
 } from '@postroll/contracts';
 
 import { CurrentUser, type RequestUser } from '../auth/decorators/current-user.decorator.js';
@@ -71,6 +74,23 @@ export class WorkspacesController {
     this.assertPathMatchesContext(id, workspace);
 
     return workspaceMemberListSchema.parse(await this.workspaces.listMembers(workspace.workspaceId));
+  }
+
+  @Patch(':id/members/:userId')
+  @UseGuards(JwtAuthGuard, WorkspaceGuard)
+  async updateMemberRole(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Param('userId', new ParseUUIDPipe()) userId: string,
+    @CurrentUser() user: RequestUser,
+    @CurrentWorkspace() workspace: RequestWorkspace,
+    @Body() body: unknown
+  ): Promise<WorkspaceMemberDto> {
+    this.assertPathMatchesContext(id, workspace);
+    const input = updateWorkspaceMemberRequestSchema.parse(body);
+
+    return workspaceMemberDtoSchema.parse(
+      await this.workspaces.updateMemberRole(workspace.workspaceId, user.id, workspace.role, userId, input)
+    );
   }
 
   @Delete(':id/members/:userId')

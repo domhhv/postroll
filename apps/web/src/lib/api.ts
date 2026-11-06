@@ -9,13 +9,16 @@ import {
   type WorkspaceList,
   type LoginResponse,
   workspaceDtoSchema,
+  type WorkspaceRole,
   loginResponseSchema,
   workspaceListSchema,
   type RegisterRequest,
   type RegisterResponse,
   registerResponseSchema,
   type UpdateUserRequest,
+  type WorkspaceMemberDto,
   type WorkspaceMemberList,
+  workspaceMemberDtoSchema,
   workspaceMemberListSchema,
   type ChangePasswordRequest,
   type CreateWorkspaceRequest,
@@ -266,6 +269,31 @@ export async function getWorkspaceMembers(id: string): Promise<WorkspaceMemberLi
   }
 
   return workspaceMemberListSchema.parse(await res.json());
+}
+
+export async function updateWorkspaceMemberRole(
+  id: string,
+  userId: string,
+  role: WorkspaceRole
+): Promise<WorkspaceMemberDto> {
+  const res = await gatewayFetch(`/workspaces/${id}/members/${userId}`, {
+    body: JSON.stringify({ role }),
+    headers: { 'content-type': 'application/json' },
+    method: 'PATCH',
+  });
+
+  if (!res.ok) {
+    const message =
+      res.status === 403
+        ? "You do not have permission to change this member's role."
+        : res.status === 404
+          ? 'Member not found.'
+          : `Request failed (${res.status}).`;
+
+    throw new GatewayError(res.status, message);
+  }
+
+  return workspaceMemberDtoSchema.parse(await res.json());
 }
 
 export async function removeWorkspaceMember(id: string, userId: string): Promise<void> {

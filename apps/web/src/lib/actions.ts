@@ -2,6 +2,7 @@
 
 import {
   loginRequestSchema,
+  workspaceRoleSchema,
   registerRequestSchema,
   type UpdateUserRequest,
   updateUserRequestSchema,
@@ -24,7 +25,9 @@ import {
   createWorkspace,
   switchWorkspace,
   updateWorkspace,
+  removeWorkspaceMember,
   loginAndCreateSession,
+  updateWorkspaceMemberRole,
 } from './api';
 import { readRequestMeta } from './refresh';
 import { deleteSession, readSessionCookie } from './session';
@@ -390,4 +393,42 @@ export async function switchWorkspaceAction(workspaceId: string): Promise<Switch
   revalidatePath('/', 'layout');
 
   return { status: 'success' };
+}
+
+export type MemberActionResult = { status: 'success' } | { message: string; status: 'error' };
+
+async function runMemberAction(action: (workspaceId: string) => Promise<unknown>): Promise<MemberActionResult> {
+  const session = await readSessionCookie();
+
+  if (!session) {
+    return { message: 'No active session.', status: 'error' };
+  }
+
+  try {
+    await action(session.activeWorkspaceId);
+  } catch (error) {
+    if (error instanceof GatewayError) {
+      return { message: error.message, status: 'error' };
+    }
+
+    return { message: 'Something went wrong. Please try again.', status: 'error' };
+  }
+
+  revalidatePath('/settings', 'layout');
+
+  return { status: 'success' };
+}
+
+export async function updateMemberRoleAction(userId: string, role: string): Promise<MemberActionResult> {
+  const parsed = workspaceRoleSchema.safeParse(role);
+
+  if (!parsed.success) {
+    return { message: 'Invalid role.', status: 'error' };
+  }
+
+  return runMemberAction((workspaceId) => updateWorkspaceMemberRole(workspaceId, userId, parsed.data));
+}
+
+export async function removeMemberAction(userId: string): Promise<MemberActionResult> {
+  return runMemberAction((workspaceId) => removeWorkspaceMember(workspaceId, userId));
 }

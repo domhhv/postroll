@@ -49,3 +49,50 @@ export type WorkspaceMemberDto = z.infer<typeof workspaceMemberDtoSchema>;
 export const workspaceMemberListSchema = z.array(workspaceMemberDtoSchema);
 
 export type WorkspaceMemberList = z.infer<typeof workspaceMemberListSchema>;
+
+export const updateWorkspaceMemberRequestSchema = z.object({
+  role: workspaceRoleSchema,
+});
+
+export type UpdateWorkspaceMemberRequest = z.infer<typeof updateWorkspaceMemberRequestSchema>;
+
+/** Every role, in descending privilege. */
+export const WORKSPACE_ROLES = workspaceRoleSchema.options;
+
+/** Positive when `a` is more privileged than `b`. */
+export function compareWorkspaceRoles(a: WorkspaceRole, b: WorkspaceRole): number {
+  return WORKSPACE_ROLES.indexOf(b) - WORKSPACE_ROLES.indexOf(a);
+}
+
+/**
+ * Whether `callerRole` may manage (change the role of, or remove) another
+ * member holding `targetRole`. The owner manages everyone else; admins manage
+ * members below admin; nobody manages the owner.
+ */
+export function canManageWorkspaceMember(callerRole: WorkspaceRole, targetRole: WorkspaceRole): boolean {
+  if (targetRole === 'OWNER') {
+    return false;
+  }
+
+  if (callerRole === 'OWNER') {
+    return true;
+  }
+
+  return callerRole === 'ADMIN' && compareWorkspaceRoles('ADMIN', targetRole) > 0;
+}
+
+/**
+ * Roles `callerRole` may move a `targetRole` member to, excluding the current
+ * one. Ownership can't be granted here, and admins can only assign roles below
+ * admin.
+ */
+export function getAssignableWorkspaceRoles(callerRole: WorkspaceRole, targetRole: WorkspaceRole): WorkspaceRole[] {
+  if (!canManageWorkspaceMember(callerRole, targetRole)) {
+    return [];
+  }
+
+  return WORKSPACE_ROLES.filter(
+    (role) =>
+      role !== 'OWNER' && role !== targetRole && (callerRole === 'OWNER' || compareWorkspaceRoles('ADMIN', role) > 0)
+  );
+}
