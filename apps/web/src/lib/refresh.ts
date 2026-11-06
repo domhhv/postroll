@@ -1,4 +1,4 @@
-import { refreshResponseSchema } from '@postroll/contracts';
+import { workspaceListSchema, refreshResponseSchema } from '@postroll/contracts';
 import { parse as parseSetCookies } from 'set-cookie-parser';
 
 import { getGatewayEnv } from '#env';
@@ -132,4 +132,28 @@ export async function refreshTokens(session: SessionPayload, meta: RequestMeta =
     refreshExpiresAt: cookie.expiresAt,
     refreshToken: cookie.value,
   };
+}
+
+/**
+ * The session's active workspace if the user is still a member of it,
+ * otherwise their first remaining workspace (e.g. after the active one was
+ * deleted or they were removed from it).
+ */
+export async function resolveActiveWorkspaceId(accessToken: string, activeWorkspaceId: string): Promise<string> {
+  const res = await fetch(gatewayUrl('/workspaces'), {
+    cache: 'no-store',
+    headers: { authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!res.ok) {
+    throw new GatewayError(res.status, `workspaces ${res.status}`);
+  }
+
+  const workspaces = workspaceListSchema.parse(await res.json());
+
+  if (workspaces.some((workspace) => workspace.id === activeWorkspaceId)) {
+    return activeWorkspaceId;
+  }
+
+  return workspaces[0]?.id ?? activeWorkspaceId;
 }

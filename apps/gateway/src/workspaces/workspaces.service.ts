@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import {
   type WorkspaceDto,
   type WorkspaceRole,
@@ -86,6 +86,33 @@ export class WorkspacesService {
       role: callerRole,
       slug: workspace.slug,
     };
+  }
+
+  /**
+   * Delete a workspace. Owner only. Memberships go with it via the
+   * `onDelete: Cascade` relation. The caller must keep at least one other
+   * workspace, since login opens a session into an existing membership. The
+   * caller's user row is locked first so concurrent deletions by the same user
+   * run one after another and each sees the other's result.
+   */
+  async remove(workspaceId: string, callerId: string, callerRole: WorkspaceRole): Promise<void> {
+    if (callerRole !== 'OWNER') {
+      throw new ForbiddenException('Only the owner can delete the workspace');
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM users WHERE id = ${callerId}::uuid FOR UPDATE`;
+
+      const otherMemberships = await tx.membership.count({
+        where: { userId: callerId, workspaceId: { not: workspaceId } },
+      });
+
+      if (otherMemberships === 0) {
+        throw new ConflictException('You cannot delete your only workspace');
+      }
+
+      await tx.workspace.delete({ where: { id: workspaceId } });
+    });
   }
 
   /** List the members of a workspace with their user details and roles. */

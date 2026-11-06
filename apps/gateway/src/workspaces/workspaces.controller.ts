@@ -65,6 +65,18 @@ export class WorkspacesController {
     return workspaceDtoSchema.parse(await this.workspaces.update(workspace.workspaceId, workspace.role, input));
   }
 
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, WorkspaceGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @CurrentUser() user: RequestUser,
+    @CurrentWorkspace() workspace: RequestWorkspace
+  ): Promise<void> {
+    this.assertPathMatchesContext(id, workspace);
+    await this.workspaces.remove(workspace.workspaceId, user.id, workspace.role);
+  }
+
   @Get(':id/members')
   @UseGuards(JwtAuthGuard, WorkspaceGuard)
   async listMembers(

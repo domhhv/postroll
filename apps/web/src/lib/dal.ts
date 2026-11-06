@@ -79,3 +79,20 @@ export const getActiveWorkspace = cache(async (): Promise<WorkspaceDto | null> =
 
   return workspaces.find((workspace) => workspace.id === session.activeWorkspaceId) ?? workspaces[0] ?? null;
 });
+
+/**
+ * The active workspace for pages that make workspace-scoped gateway calls.
+ * Those calls send the session's `activeWorkspaceId`, so a stale id (the
+ * workspace was deleted or the user was removed from it) would fail them.
+ * A render can't fix the cookie, so hand off to the refresh Route Handler,
+ * which moves the session onto a remaining workspace and returns to `next`.
+ */
+export async function requireActiveWorkspace(next: string): Promise<WorkspaceDto> {
+  const [session, workspace] = await Promise.all([verifySession(), getActiveWorkspace()]);
+
+  if (!session || !workspace || workspace.id !== session.activeWorkspaceId) {
+    redirectToSessionCheck(next);
+  }
+
+  return workspace;
+}

@@ -21,16 +21,18 @@ import {
   registerUser,
   logoutGateway,
   revokeSession,
+  getWorkspaces,
   updatePassword,
   createWorkspace,
   switchWorkspace,
   updateWorkspace,
+  deleteWorkspace,
   removeWorkspaceMember,
   loginAndCreateSession,
   updateWorkspaceMemberRole,
 } from './api';
 import { readRequestMeta } from './refresh';
-import { deleteSession, readSessionCookie } from './session';
+import { deleteSession, updateSession, readSessionCookie } from './session';
 import { getFormValue } from './utils';
 
 export type AuthFormState =
@@ -383,6 +385,39 @@ export async function updateWorkspaceAction(
   revalidatePath('/', 'layout');
 
   return { status: 'success', values: updated };
+}
+
+export type DeleteWorkspaceResult = { status: 'success' } | { message: string; status: 'error' };
+
+export async function deleteWorkspaceAction(workspaceId: string): Promise<DeleteWorkspaceResult> {
+  const session = await readSessionCookie();
+
+  if (!session) {
+    return { message: 'No active session.', status: 'error' };
+  }
+
+  if (workspaceId !== session.activeWorkspaceId) {
+    return { message: WORKSPACE_MISMATCH_MESSAGE, status: 'error' };
+  }
+
+  try {
+    await deleteWorkspace(workspaceId);
+    const [next] = await getWorkspaces();
+
+    if (next) {
+      await updateSession({ activeWorkspaceId: next.id });
+    }
+  } catch (error) {
+    if (error instanceof GatewayError) {
+      return { message: error.message, status: 'error' };
+    }
+
+    return { message: 'Something went wrong. Please try again.', status: 'error' };
+  }
+
+  revalidatePath('/', 'layout');
+
+  return { status: 'success' };
 }
 
 export type SwitchWorkspaceResult = { status: 'success' } | { message: string; status: 'error' };
