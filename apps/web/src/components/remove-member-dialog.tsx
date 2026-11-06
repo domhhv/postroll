@@ -20,10 +20,11 @@ import { getMemberDisplayName } from '#lib/utils';
 type RemoveMemberDialogProps = {
   member: WorkspaceMemberDto;
   open: boolean;
+  workspaceId: string;
   onOpenChange: (open: boolean) => void;
 };
 
-export function RemoveMemberDialog({ member, onOpenChange, open }: RemoveMemberDialogProps) {
+export function RemoveMemberDialog({ member, onOpenChange, open, workspaceId }: RemoveMemberDialogProps) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -32,7 +33,7 @@ export function RemoveMemberDialog({ member, onOpenChange, open }: RemoveMemberD
   function remove() {
     setError(null);
     startTransition(async () => {
-      const result = await removeMemberAction(member.userId);
+      const result = await removeMemberAction(workspaceId, member.userId);
 
       if (result.status === 'error') {
         setError(result.message);

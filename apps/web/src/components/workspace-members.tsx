@@ -11,9 +11,10 @@ type WorkspaceMembersProps = {
   currentRole: WorkspaceRole;
   currentUserId: string;
   members: WorkspaceMemberList;
+  workspaceId: string;
 };
 
-export function WorkspaceMembers({ currentRole, currentUserId, members }: WorkspaceMembersProps) {
+export function WorkspaceMembers({ currentRole, currentUserId, members, workspaceId }: WorkspaceMembersProps) {
   return (
     <Table>
       <TableHeader>
@@ -48,7 +49,9 @@ export function WorkspaceMembers({ currentRole, currentUserId, members }: Worksp
                 <DateTime iso={member.createdAt} />
               </TableCell>
               <TableCell className="w-10 text-right">
-                {member.userId !== currentUserId && <MemberActions member={member} currentRole={currentRole} />}
+                {member.userId !== currentUserId && (
+                  <MemberActions member={member} currentRole={currentRole} workspaceId={workspaceId} />
+                )}
               </TableCell>
             </TableRow>
           );

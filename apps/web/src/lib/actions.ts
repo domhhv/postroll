@@ -337,6 +337,8 @@ export type WorkspaceFormState =
       values: WorkspaceValues;
     };
 
+const WORKSPACE_MISMATCH_MESSAGE = 'You switched workspaces in another tab. Reload the page to continue.';
+
 export async function updateWorkspaceAction(
   _previous: WorkspaceFormState,
   formData: FormData
@@ -359,10 +361,16 @@ export async function updateWorkspaceAction(
     return { message: 'No active session.', status: 'error', values };
   }
 
+  const workspaceId = getFormValue(formData, 'workspaceId');
+
+  if (workspaceId !== session.activeWorkspaceId) {
+    return { message: WORKSPACE_MISMATCH_MESSAGE, status: 'error', values };
+  }
+
   let updated: WorkspaceValues;
 
   try {
-    const workspace = await updateWorkspace(session.activeWorkspaceId, parsed.data);
+    const workspace = await updateWorkspace(workspaceId, parsed.data);
     updated = { name: workspace.name };
   } catch (error) {
     if (error instanceof GatewayError) {
@@ -397,15 +405,22 @@ export async function switchWorkspaceAction(workspaceId: string): Promise<Switch
 
 export type MemberActionResult = { status: 'success' } | { message: string; status: 'error' };
 
-async function runMemberAction(action: (workspaceId: string) => Promise<unknown>): Promise<MemberActionResult> {
+async function runMemberAction(
+  workspaceId: string,
+  action: (workspaceId: string) => Promise<unknown>
+): Promise<MemberActionResult> {
   const session = await readSessionCookie();
 
   if (!session) {
     return { message: 'No active session.', status: 'error' };
   }
 
+  if (workspaceId !== session.activeWorkspaceId) {
+    return { message: WORKSPACE_MISMATCH_MESSAGE, status: 'error' };
+  }
+
   try {
-    await action(session.activeWorkspaceId);
+    await action(workspaceId);
   } catch (error) {
     if (error instanceof GatewayError) {
       return { message: error.message, status: 'error' };
@@ -419,16 +434,20 @@ async function runMemberAction(action: (workspaceId: string) => Promise<unknown>
   return { status: 'success' };
 }
 
-export async function updateMemberRoleAction(userId: string, role: string): Promise<MemberActionResult> {
+export async function updateMemberRoleAction(
+  workspaceId: string,
+  userId: string,
+  role: string
+): Promise<MemberActionResult> {
   const parsed = workspaceRoleSchema.safeParse(role);
 
   if (!parsed.success) {
     return { message: 'Invalid role.', status: 'error' };
   }
 
-  return runMemberAction((workspaceId) => updateWorkspaceMemberRole(workspaceId, userId, parsed.data));
+  return runMemberAction(workspaceId, (id) => updateWorkspaceMemberRole(id, userId, parsed.data));
 }
 
-export async function removeMemberAction(userId: string): Promise<MemberActionResult> {
-  return runMemberAction((workspaceId) => removeWorkspaceMember(workspaceId, userId));
+export async function removeMemberAction(workspaceId: string, userId: string): Promise<MemberActionResult> {
+  return runMemberAction(workspaceId, (id) => removeWorkspaceMember(id, userId));
 }

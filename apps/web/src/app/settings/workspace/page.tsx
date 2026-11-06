@@ -28,7 +28,12 @@ export default async function WorkspaceSettingsPage() {
       </section>
       <section className="space-y-4">
         <h2 className="text-lg font-semibold tracking-tight">Members</h2>
-        <WorkspaceMembers members={members} currentUserId={user.id} currentRole={workspace.role} />
+        <WorkspaceMembers
+          members={members}
+          currentUserId={user.id}
+          workspaceId={workspace.id}
+          currentRole={workspace.role}
+        />
       </section>
     </TabsContent>
   );

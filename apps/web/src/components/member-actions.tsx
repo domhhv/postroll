@@ -28,9 +28,10 @@ import { formatRole, getMemberDisplayName } from '#lib/utils';
 type MemberActionsProps = {
   currentRole: WorkspaceRole;
   member: WorkspaceMemberDto;
+  workspaceId: string;
 };
 
-export function MemberActions({ currentRole, member }: MemberActionsProps) {
+export function MemberActions({ currentRole, member, workspaceId }: MemberActionsProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -43,7 +44,7 @@ export function MemberActions({ currentRole, member }: MemberActionsProps) {
 
   function changeRole(role: WorkspaceRole) {
     startTransition(async () => {
-      const result = await updateMemberRoleAction(member.userId, role);
+      const result = await updateMemberRoleAction(workspaceId, member.userId, role);
 
       if (result.status === 'error') {
         toast.add({ description: result.message, title: 'Failed to change role', type: 'error' });
@@ -105,7 +106,7 @@ export function MemberActions({ currentRole, member }: MemberActionsProps) {
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-      <RemoveMemberDialog member={member} open={confirmOpen} onOpenChange={setConfirmOpen} />
+      <RemoveMemberDialog member={member} open={confirmOpen} workspaceId={workspaceId} onOpenChange={setConfirmOpen} />
     </>
   );
 }
