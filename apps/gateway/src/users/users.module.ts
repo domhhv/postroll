@@ -8,11 +8,7 @@ import { UsersService } from './users.service.js';
 @Module({
   controllers: [UsersController],
   exports: [UsersService],
+  imports: [forwardRef(() => AuthModule)],
   providers: [UsersService],
-  imports: [
-    forwardRef(() => {
-      return AuthModule;
-    }),
-  ],
 })
 export class UsersModule {}

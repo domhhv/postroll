@@ -175,13 +175,7 @@ export function FieldError({
       return null;
     }
 
-    const uniqueErrors = [
-      ...new Map(
-        errors.map((error) => {
-          return [error?.message, error];
-        })
-      ).values(),
-    ];
+    const uniqueErrors = [...new Map(errors.map((error) => [error?.message, error])).values()];
 
     if (uniqueErrors?.length === 1) {
       return uniqueErrors[0]?.message;
@@ -189,9 +183,7 @@ export function FieldError({
 
     return (
       <ul className="ml-4 flex list-disc flex-col gap-1">
-        {uniqueErrors.map((error, index) => {
-          return error?.message && <li key={index}>{error.message}</li>;
-        })}
+        {uniqueErrors.map((error, index) => error?.message && <li key={index}>{error.message}</li>)}
       </ul>
     );
   }, [children, errors]);

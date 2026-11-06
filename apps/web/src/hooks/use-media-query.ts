@@ -10,20 +10,14 @@ export function useMediaQuery(query: string, serverValue: boolean | null = false
       const media = window.matchMedia(query);
       media.addEventListener('change', onChange);
 
-      return () => {
-        return media.removeEventListener('change', onChange);
-      };
+      return () => media.removeEventListener('change', onChange);
     },
     [query]
   );
 
   return useSyncExternalStore(
     subscribe,
-    () => {
-      return window.matchMedia(query).matches;
-    },
-    () => {
-      return serverValue;
-    }
+    () => window.matchMedia(query).matches,
+    () => serverValue
   );
 }

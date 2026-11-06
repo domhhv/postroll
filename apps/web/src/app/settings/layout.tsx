@@ -33,18 +33,16 @@ export default async function SettingsLayout({ children }: PropsWithChildren) {
       <h1 className="text-3xl leading-10 font-semibold tracking-tight">Settings</h1>
       <SettingsTabsWrapper>
         <TabsList variant="line" className="sm:w-40 sm:shrink-0">
-          {tabs.map((tab) => {
-            return (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
-                nativeButton={false}
-                render={<Link href={`/settings/${tab.value}`} />}
-              >
-                {tab.label}
-              </TabsTrigger>
-            );
-          })}
+          {tabs.map((tab) => (
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
+              nativeButton={false}
+              render={<Link href={`/settings/${tab.value}`} />}
+            >
+              {tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
         {children}
       </SettingsTabsWrapper>

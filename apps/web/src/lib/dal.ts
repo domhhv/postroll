@@ -11,9 +11,7 @@ import { SESSION_REFRESH_PATH } from './session-crypto';
  * Returns the decrypted session. Never pass the raw payload to client
  * components — accessToken / refreshToken are server-only.
  */
-export const verifySession = cache(async (): Promise<SessionPayload | null> => {
-  return readSessionCookie();
-});
+export const verifySession = cache(async (): Promise<SessionPayload | null> => readSessionCookie());
 
 /**
  * For pages whose session cookie exists but the gateway rejected it (e.g. the
@@ -79,11 +77,5 @@ export const getActiveWorkspace = cache(async (): Promise<WorkspaceDto | null> =
 
   const workspaces = await getWorkspaces();
 
-  return (
-    workspaces.find((workspace) => {
-      return workspace.id === session.activeWorkspaceId;
-    }) ??
-    workspaces[0] ??
-    null
-  );
+  return workspaces.find((workspace) => workspace.id === session.activeWorkspaceId) ?? workspaces[0] ?? null;
 });

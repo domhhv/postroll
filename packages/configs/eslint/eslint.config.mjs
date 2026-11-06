@@ -17,7 +17,7 @@ const plugins = {
 const rules = {
   '@stylistic/jsx-curly-brace-presence': ['error', { children: 'never', propElementValues: 'always', props: 'never' }],
   '@typescript-eslint/consistent-type-imports': 'error',
-  'arrow-body-style': ['error', 'always'],
+  'arrow-body-style': ['error', 'as-needed'],
   curly: 'error',
   'func-style': ['error', 'declaration', { allowTypeAnnotation: true }],
   'max-len': 'off',

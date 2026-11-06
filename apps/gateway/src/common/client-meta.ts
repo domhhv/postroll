@@ -80,9 +80,7 @@ export function formatLocation(location: {
     }
   }
 
-  const parts = [location.city, country].filter((part): part is string => {
-    return Boolean(part);
-  });
+  const parts = [location.city, country].filter((part): part is string => Boolean(part));
 
   return parts.length > 0 ? parts.join(', ') : null;
 }

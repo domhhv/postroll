@@ -21,12 +21,8 @@ export function PasswordInput({
           type="button"
           size="icon-xs"
           aria-pressed={visible}
+          onClick={() => setVisible((prev) => !prev)}
           aria-label={visible ? 'Hide password' : 'Show password'}
-          onClick={() => {
-            return setVisible((prev) => {
-              return !prev;
-            });
-          }}
         >
           {visible ? <IconEye /> : <IconEyeOff />}
         </InputGroupButton>

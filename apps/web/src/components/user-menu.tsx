@@ -26,13 +26,11 @@ export function UserMenu({ email }: UserMenuProps) {
     <Popover handle={handle}>
       <PopoverTrigger
         handle={handle}
-        render={(props) => {
-          return (
-            <Button {...props} size="icon" variant="ghost" aria-label="Settings menu" className="max-sm:border-border">
-              <IconUserCircle />
-            </Button>
-          );
-        }}
+        render={(props) => (
+          <Button {...props} size="icon" variant="ghost" aria-label="Settings menu" className="max-sm:border-border">
+            <IconUserCircle />
+          </Button>
+        )}
       />
       <PopoverContent align="end" className="w-56 gap-1 p-2">
         <div className="text-muted-foreground truncate px-2 py-1.5 text-sm">{email}</div>

@@ -5,27 +5,21 @@ import { IconSun, IconMoon, IconDeviceDesktop } from '@tabler/icons-react';
 import { useTheme } from 'next-themes';
 import { useSyncExternalStore } from 'react';
 
+import { noop } from '#lib/utils';
+
 const themes = [
   { icon: IconSun, label: 'Light', value: 'light' },
   { icon: IconDeviceDesktop, label: 'System', value: 'system' },
   { icon: IconMoon, label: 'Dark', value: 'dark' },
 ] as const;
 
-function noopSubscribe() {
-  return () => {};
-}
-
 export function ThemeSwitcher() {
   const { setTheme, theme } = useTheme();
   // The stored theme is only known on the client; render nothing selected until then.
   const isClient = useSyncExternalStore(
-    noopSubscribe,
-    () => {
-      return true;
-    },
-    () => {
-      return false;
-    }
+    noop,
+    () => true,
+    () => false
   );
 
   return (
@@ -44,13 +38,11 @@ export function ThemeSwitcher() {
         }
       }}
     >
-      {themes.map(({ icon: Icon, label, value }) => {
-        return (
-          <ToggleGroupItem key={value} value={value} title={label} aria-label={label}>
-            <Icon />
-          </ToggleGroupItem>
-        );
-      })}
+      {themes.map(({ icon: Icon, label, value }) => (
+        <ToggleGroupItem key={value} value={value} title={label} aria-label={label}>
+          <Icon />
+        </ToggleGroupItem>
+      ))}
     </ToggleGroup>
   );
 }

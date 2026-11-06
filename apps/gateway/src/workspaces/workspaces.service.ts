@@ -28,15 +28,13 @@ export class WorkspacesService {
       where: { userId },
     });
 
-    return memberships.map((membership) => {
-      return {
-        createdAt: membership.workspace.createdAt.toISOString(),
-        id: membership.workspace.id,
-        name: membership.workspace.name,
-        role: membership.role,
-        slug: membership.workspace.slug,
-      };
-    });
+    return memberships.map((membership) => ({
+      createdAt: membership.workspace.createdAt.toISOString(),
+      id: membership.workspace.id,
+      name: membership.workspace.name,
+      role: membership.role,
+      slug: membership.workspace.slug,
+    }));
   }
 
   /** Create a workspace and make the caller its owner, atomically. */
@@ -94,17 +92,15 @@ export class WorkspacesService {
       where: { workspaceId },
     });
 
-    return memberships.map((membership) => {
-      return {
-        createdAt: membership.createdAt.toISOString(),
-        email: membership.user.email,
-        id: membership.id,
-        name: membership.user.name,
-        role: membership.role,
-        userId: membership.userId,
-        username: membership.user.username,
-      };
-    });
+    return memberships.map((membership) => ({
+      createdAt: membership.createdAt.toISOString(),
+      email: membership.user.email,
+      id: membership.id,
+      name: membership.user.name,
+      role: membership.role,
+      userId: membership.userId,
+      username: membership.user.username,
+    }));
   }
 
   /**

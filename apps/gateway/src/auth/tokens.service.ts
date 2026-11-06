@@ -215,9 +215,7 @@ export class TokensService {
       existing.country = row.country;
     }
 
-    return [...families.values()].sort((a, b) => {
-      return b.lastActiveAt.getTime() - a.lastActiveAt.getTime();
-    });
+    return [...families.values()].sort((a, b) => b.lastActiveAt.getTime() - a.lastActiveAt.getTime());
   }
 
   /** Resolve a raw refresh token to its owning family id, if it exists. */
