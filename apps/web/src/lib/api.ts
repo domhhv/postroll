@@ -261,6 +261,21 @@ export async function updateWorkspace(id: string, input: UpdateWorkspaceRequest)
   return workspaceDtoSchema.parse(await res.json());
 }
 
+export async function deleteWorkspace(id: string): Promise<void> {
+  const res = await gatewayFetch(`/workspaces/${id}`, { method: 'DELETE' });
+
+  if (!res.ok) {
+    const message =
+      res.status === 403
+        ? 'Only the owner can delete the workspace.'
+        : res.status === 409
+          ? 'You cannot delete your only workspace.'
+          : `Request failed (${res.status}).`;
+
+    throw new GatewayError(res.status, message);
+  }
+}
+
 export async function getWorkspaceMembers(id: string): Promise<WorkspaceMemberList> {
   const res = await gatewayFetch(`/workspaces/${id}/members`);
 

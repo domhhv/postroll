@@ -9,13 +9,25 @@ type PendingButtonProps = {
   pendingLabel: string;
 } & ButtonProps;
 
-export function PendingButton({ className, idle, pending: parentPending, pendingLabel, ...props }: PendingButtonProps) {
+export function PendingButton({
+  className,
+  disabled,
+  idle,
+  pending: parentPending,
+  pendingLabel,
+  ...props
+}: PendingButtonProps) {
   const { pending: formPending } = useFormStatus();
 
   const pending = parentPending || formPending;
 
   return (
-    <Button {...props} type="submit" disabled={pending} className={cn('flex items-center gap-2', className)}>
+    <Button
+      {...props}
+      type="submit"
+      disabled={pending || disabled}
+      className={cn('flex items-center gap-2', className)}
+    >
       {pending ? pendingLabel : idle}
       {pending && <HourglassLoader />}
     </Button>
