@@ -27,7 +27,7 @@ export class WorkspacesService {
   /** Every workspace the user belongs to, annotated with their role. */
   async listForUser(userId: string): Promise<WorkspaceList> {
     const memberships = await this.prisma.membership.findMany({
-      include: { workspace: true },
+      include: { workspace: { include: { _count: { select: { members: true } } } } },
       orderBy: { createdAt: 'asc' },
       where: { userId },
     });
@@ -35,6 +35,7 @@ export class WorkspacesService {
     return memberships.map((membership) => ({
       createdAt: membership.workspace.createdAt.toISOString(),
       id: membership.workspace.id,
+      memberCount: membership.workspace._count.members,
       name: membership.workspace.name,
       role: membership.role,
       slug: membership.workspace.slug,

@@ -17,6 +17,7 @@ import { z } from 'zod';
 
 import {
   updateMe,
+  deleteMe,
   GatewayError,
   registerUser,
   logoutGateway,
@@ -143,6 +144,23 @@ export async function logoutAction(): Promise<void> {
 
   await deleteSession();
   redirect('/login');
+}
+
+export type DeleteAccountResult = { message: string; status: 'error' };
+
+export async function deleteAccountAction(): Promise<DeleteAccountResult> {
+  try {
+    await deleteMe();
+  } catch (error) {
+    if (error instanceof GatewayError) {
+      return { message: error.message, status: 'error' };
+    }
+
+    return { message: 'Something went wrong. Please try again.', status: 'error' };
+  }
+
+  await deleteSession();
+  redirect('/');
 }
 
 export type RevokeSessionResult = { status: 'success' } | { message: string; status: 'error' };
