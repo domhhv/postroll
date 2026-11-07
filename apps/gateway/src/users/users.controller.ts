@@ -57,6 +57,13 @@ export class UsersController {
     return userDtoSchema.parse(await this.usersService.update(user.id, input));
   }
 
+  @Delete('me')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteMe(@CurrentUser() user: RequestUser): Promise<void> {
+    await this.usersService.remove(user.id);
+  }
+
   @Patch('me/password')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)

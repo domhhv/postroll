@@ -168,6 +168,14 @@ export async function updateMe(input: UpdateUserRequest): Promise<UserDto> {
   return userDtoSchema.parse(await res.json());
 }
 
+export async function deleteMe(): Promise<void> {
+  const res = await gatewayFetch('/users/me', { method: 'DELETE' });
+
+  if (!res.ok) {
+    throw new GatewayError(res.status, `Request failed (${res.status}).`);
+  }
+}
+
 export async function updatePassword(input: ChangePasswordRequest): Promise<void> {
   const session = await readSessionCookie();
   const headers: Record<string, string> = {

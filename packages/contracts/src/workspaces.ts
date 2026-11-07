@@ -16,7 +16,13 @@ export const workspaceDtoSchema = z.object({
 
 export type WorkspaceDto = z.infer<typeof workspaceDtoSchema>;
 
-export const workspaceListSchema = z.array(workspaceDtoSchema);
+export const workspaceListItemSchema = workspaceDtoSchema.extend({
+  memberCount: z.number().int().nonnegative(),
+});
+
+export type WorkspaceListItem = z.infer<typeof workspaceListItemSchema>;
+
+export const workspaceListSchema = z.array(workspaceListItemSchema);
 
 export type WorkspaceList = z.infer<typeof workspaceListSchema>;
 

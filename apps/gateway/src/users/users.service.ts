@@ -54,6 +54,18 @@ export class UsersService {
     }
   }
 
+  /**
+   * Delete the user and every workspace they own. Their memberships in other
+   * workspaces and their refresh tokens go with the user row via
+   * `onDelete: Cascade`, which also ends all of their sessions.
+   */
+  async remove(id: string): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.workspace.deleteMany({ where: { members: { some: { role: 'OWNER', userId: id } } } }),
+      this.prisma.user.delete({ where: { id } }),
+    ]);
+  }
+
   async changePassword(id: string, currentPassword: string, newPassword: string): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { id } });
 
