@@ -20,13 +20,86 @@ defaults:
   run:
     shell: bash
 
+# One production deploy at a time, across all three jobs.
+concurrency: deploy-group
+
 jobs:
-  deploy:
+  # Runs alongside deploy-web, and promote waits for both: the worker always
+  # goes live before the gateway, so a new gateway never publishes a message
+  # the running worker can't read.
+  deploy-worker:
+    name: Deploy emails worker to Render
+    if: >-
+      !contains(github.event.head_commit.message, '[Skip deploy]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+      RENDER_SERVICE_ID: ${{ vars.RENDER_EMAILS_WORKER_SERVICE_ID }}
+    steps:
+      # Render builds the image from this exact commit (auto-deploy is off in
+      # render.yaml). A 202 means the deploy was queued behind another one and
+      # has no body, so the deploy is looked up by its commit instead. A failed
+      # status request doesn't end the wait; only the deploy's status does.
+      - name: Deploy this commit to Render and wait until it's live
+        run: |
+          if [[ -z "$RENDER_API_KEY" || -z "$RENDER_SERVICE_ID" ]]; then
+            echo "::error::Set the RENDER_API_KEY secret and the RENDER_EMAILS_WORKER_SERVICE_ID variable."
+            exit 1
+          fi
+          api="https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys"
+          auth="Authorization: Bearer $RENDER_API_KEY"
+          status=$(curl -sS -o "$RUNNER_TEMP/deploy.json" -w '%{http_code}' -X POST -H "$auth" \
+            -H 'Content-Type: application/json' -d "{\"commitId\": \"$GITHUB_SHA\"}" "$api")
+          echo "Deploy request for $GITHUB_SHA: HTTP $status"
+          id=""
+          if [[ "$status" == 201 ]]; then
+            id=$(jq -r '.id' "$RUNNER_TEMP/deploy.json")
+          elif [[ "$status" == 202 ]]; then
+            for attempt in $(seq 1 6); do
+              id=$(curl -sS --fail-with-body -H "$auth" "$api?limit=20" | jq -r --arg sha "$GITHUB_SHA" \
+                '[.[].deploy | select(.commit.id == $sha)] | sort_by(.createdAt) | last | .id // empty') || id=""
+              if [[ -n "$id" ]]; then
+                break
+              fi
+              sleep 5
+            done
+          else
+            cat "$RUNNER_TEMP/deploy.json"
+            echo
+            echo "::error::Render refused the deploy (HTTP $status). Check RENDER_API_KEY, and that RENDER_EMAILS_WORKER_SERVICE_ID is the worker's srv-… id, not the Blueprint's exs-… id."
+            exit 1
+          fi
+          if [[ -z "$id" ]]; then
+            echo "::error::Could not find the Render deploy for $GITHUB_SHA."
+            exit 1
+          fi
+          echo "Following https://dashboard.render.com/worker/$RENDER_SERVICE_ID/deploys/$id"
+          for attempt in $(seq 1 120); do
+            state=$(curl -sS --fail-with-body -H "$auth" "$api/$id" | jq -r '.status') || state="unknown (request failed)"
+            case "$state" in
+              live)
+                echo "Render deploy $id is live."
+                exit 0
+                ;;
+              build_failed | update_failed | pre_deploy_failed | canceled | deactivated)
+                echo "::error::Render deploy $id ended as $state."
+                exit 1
+                ;;
+            esac
+            echo "Attempt $attempt: Render deploy $id is $state, waiting…"
+            sleep 10
+          done
+          echo "Timed out waiting for Render deploy $id."
+          exit 1
+
+  deploy-web:
     name: Deploy to Neon and Vercel
     if: >-
       !contains(github.event.head_commit.message, '[Skip deploy]')
     runs-on: ubuntu-latest
-    concurrency: deploy-group
+    outputs:
+      id: ${{ steps.deploy.outputs.id }}
     steps:
       - name: Get Code
         uses: actions/checkout@v7.0.1
@@ -85,12 +158,17 @@ jobs:
           done
           exit 1
 
+  promote:
+    name: Promote to production
+    needs: [deploy-worker, deploy-web]
+    runs-on: ubuntu-latest
+    steps:
       # Not `vercel promote`: the CLI looks up the user and team first, which a
       # project-scoped VERCEL_TOKEN isn't allowed to read ("User not found").
       # These REST endpoints are project-level, so the scoped token suffices.
       - name: Promote deployment to production
         env:
-          DEPLOYMENT_ID: ${{ steps.deploy.outputs.id }}
+          DEPLOYMENT_ID: ${{ needs.deploy-web.outputs.id }}
         run: |
           api="https://api.vercel.com"
           project="$api/v9/projects/$VERCEL_PROJECT_ID?teamId=$VERCEL_ORG_ID"
