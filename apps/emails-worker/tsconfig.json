@@ -1,0 +1,9 @@
+{
+  "extends": "@postroll/configs/typescript/nestjs",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "types": ["node"]
+  },
+  "include": ["src/**/*"]
+}

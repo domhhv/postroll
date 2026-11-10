@@ -80,3 +80,20 @@ model Membership {
   @@index([workspaceId])
   @@map("memberships")
 }
+
+/// Transactional outbox: messages written in the same transaction as the change
+/// that caused them, then published to RabbitMQ. `id` is the message id.
+model OutboxEvent {
+  id          String    @id @default(uuid()) @db.Uuid
+  /// Message type, also the routing key, e.g. "email.welcome".
+  type        String
+  /// The full message as published.
+  payload     Json
+  attempts    Int       @default(0)
+  lastError   String?   @map("last_error")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  publishedAt DateTime? @map("published_at") @db.Timestamptz(3)
+
+  @@index([publishedAt, createdAt])
+  @@map("outbox_events")
+}

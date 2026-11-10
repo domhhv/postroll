@@ -14,7 +14,16 @@
     "JWT_ACCESS_SECRET",
     "JWT_ACCESS_TTL",
     "JWT_REFRESH_TTL_DAYS",
-    "COOKIE_SECURE"
+    "COOKIE_SECURE",
+    "AMQP_URL",
+    "APP_URL",
+    "CRON_SECRET",
+    "EMAIL_CONCURRENCY",
+    "EMAIL_FROM",
+    "EMAIL_LOG_SIMULATE",
+    "EMAIL_REPLY_TO",
+    "EMAIL_TRANSPORT",
+    "RESEND_API_KEY"
   ],
   "globalPassThroughEnv": ["ENABLE_EXPERIMENTAL_COREPACK"],
   "tasks": {
@@ -46,7 +55,7 @@
     },
     "sort-package-json:check": {},
     "dev": {
-      "dependsOn": ["^build", "^db:start", "^db:generate"],
+      "dependsOn": ["^build", "^db:start", "^db:generate", "^mq:start"],
       "persistent": true,
       "cache": false
     },
@@ -72,6 +81,12 @@
     "db:reset": {
       "cache": false,
       "dependsOn": ["^build"]
+    },
+    "mq:start": {
+      "cache": false
+    },
+    "mq:stop": {
+      "cache": false
     },
     "studio": {
       "cache": false,

@@ -27,6 +27,10 @@ Source of truth: [`src/env.ts`](src/env.ts). Local values: [`.env.example`](.env
 
 **Required at runtime.** 32+ characters; encrypts the `postroll_session` cookie. Set as a sensitive Vercel env var (different values for Production and Preview). Read through `getSessionEnv()`, which is safe to call from the proxy.
 
+### `CRON_SECRET`
+
+**Required by [`/api/internal/outbox-sweep`](src/app/api/internal/outbox-sweep/route.ts) only.** 16+ characters. The hourly `outbox-sweep` Vercel Schedule in the root [`vercel.json`](../../vercel.json) sends it as `Authorization: Bearer <CRON_SECRET>`; the route compares it in constant time, then asks the gateway (`POST /internal/outbox/sweep`) to re-publish outbox messages that a failed dispatch left behind. Set it as a sensitive Production env var. On previews the route returns 204 before checking the secret and without calling the gateway, since previews have no RabbitMQ and no `CRON_SECRET`. Read through `getCronEnv()`.
+
 ## How validation is wired
 
 See [`@postroll/env`](../../packages/env/README.md) for the model. [`src/env.ts`](src/env.ts) exports two memoized validators that read `process.env` by default:

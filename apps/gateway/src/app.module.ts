@@ -6,6 +6,8 @@ import { AuthModule } from './auth/auth.module.js';
 import { DatabaseModule } from './database/database.module.js';
 import { validateGatewayEnv } from './env.js';
 import { HealthModule } from './health/health.module.js';
+import { MessagingModule } from './messaging/messaging.module.js';
+import { OutboxModule } from './outbox/outbox.module.js';
 import { UsersModule } from './users/users.module.js';
 import { WorkspacesModule } from './workspaces/workspaces.module.js';
 
@@ -38,6 +40,8 @@ const isProduction = process.env['NODE_ENV'] === 'production';
           },
     }),
     DatabaseModule,
+    MessagingModule,
+    OutboxModule,
     HealthModule,
     UsersModule,
     AuthModule,

@@ -9,6 +9,16 @@
         "dev"
       ],
       "port": 3000
+    },
+    {
+      "name": "emails-preview",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@postroll/emails",
+        "preview"
+      ],
+      "port": 3030
     }
   ]
 }

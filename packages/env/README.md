@@ -54,6 +54,16 @@ loadEnvFile({ importMetaUrl: import.meta.url, relativePath: '../.env.local' });
 
 Turns a `ZodError` into a multi-line string with a header, one bullet per issue (`VAR — message`), and an optional footer pointing at the `.env.example`. Used internally by `validateEnv`; exported for consumers that need to throw instead of exit (e.g. the gateway's `validateGatewayEnv` lets NestJS surface the error itself).
 
+### `optionalEnv(schema)`
+
+Wraps a schema as optional and treats an empty value (`KEY=` in a `.env` file, or a blank field in a dashboard) as unset, instead of failing validation on `''`. Used for optional variables such as the gateway's `AMQP_URL` and the worker's `RESEND_API_KEY`.
+
+```ts
+import { optionalEnv } from '@postroll/env';
+
+const schema = z.object({ AMQP_URL: optionalEnv(z.url()) });
+```
+
 ### `postroll-check-env` CLI
 
 A bin script for shell-time gating. Invoked from `pre*` script chains in `package.json`. Self-contained (doesn't depend on the package's built `dist/`), so it can run during CI before any workspace build step.

@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule, type JwtModuleOptions } from '@nestjs/jwt';
 
+import { OutboxModule } from '../outbox/outbox.module.js';
 import { UsersModule } from '../users/users.module.js';
 
 import { AuthController } from './auth.controller.js';
@@ -16,6 +17,7 @@ type ExpiresIn = NonNullable<NonNullable<JwtModuleOptions['signOptions']>['expir
   providers: [AuthService, TokensService],
   imports: [
     forwardRef(() => UsersModule),
+    OutboxModule,
     JwtModule.registerAsync({
       // Global so JwtAuthGuard can inject JwtService in any controller's module.
       global: true,

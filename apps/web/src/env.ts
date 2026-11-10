@@ -17,8 +17,14 @@ export const gatewayEnvSchema = z.object({
   GATEWAY_URL: z.url(),
 });
 
+/** Sent by Vercel Schedules as `Authorization: Bearer <CRON_SECRET>` on path targets. */
+export const cronEnvSchema = z.object({
+  CRON_SECRET: z.string().min(16),
+});
+
 export type SessionEnv = z.infer<typeof sessionEnvSchema>;
 export type GatewayEnv = z.infer<typeof gatewayEnvSchema>;
+export type CronEnv = z.infer<typeof cronEnvSchema>;
 
 function parseEnv<T extends z.ZodType>(schema: T, source: Record<string, unknown>): z.infer<T> {
   const result = schema.safeParse(source);
@@ -37,6 +43,7 @@ function parseEnv<T extends z.ZodType>(schema: T, source: Record<string, unknown
 
 let cachedSession: SessionEnv | undefined;
 let cachedGateway: GatewayEnv | undefined;
+let cachedCron: CronEnv | undefined;
 
 /** Safe to call from the proxy. */
 export function getSessionEnv(source: Record<string, unknown> = process.env): SessionEnv {
@@ -50,4 +57,11 @@ export function getGatewayEnv(source: Record<string, unknown> = process.env): Ga
   cachedGateway ??= parseEnv(gatewayEnvSchema, source);
 
   return cachedGateway;
+}
+
+/** Route Handlers that Vercel Schedules call. */
+export function getCronEnv(source: Record<string, unknown> = process.env): CronEnv {
+  cachedCron ??= parseEnv(cronEnvSchema, source);
+
+  return cachedCron;
 }
