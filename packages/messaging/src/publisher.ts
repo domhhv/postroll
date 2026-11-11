@@ -1,6 +1,7 @@
 import type { EmailMessage } from '@postroll/contracts';
 import type { Connection } from 'rabbitmq-client';
 
+import { createRoutedPublisher } from './routed-publisher.js';
 import { eventsExchange, EVENTS_EXCHANGE } from './topology.js';
 
 export type EventPublisher = {
@@ -9,13 +10,14 @@ export type EventPublisher = {
 };
 
 /**
- * Publishes to the events exchange with publisher confirms, so `publish`
- * resolves only once the broker has taken responsibility for the message.
- * Producers declare only the exchange; queues and bindings belong to their
- * consumers, which deploy first.
+ * Publishes to the events exchange. `publish` resolves only once the broker
+ * has confirmed the message and routed it to a queue; it rejects with
+ * `UnroutableMessageError` when no consumer has bound a queue yet, so the
+ * caller can keep the message instead of losing it. Producers declare only the
+ * exchange; queues and bindings belong to their consumers, which deploy first.
  */
 export function createEventPublisher(connection: Connection, appId: string): EventPublisher {
-  const publisher = connection.createPublisher({ confirm: true, exchanges: [eventsExchange], maxAttempts: 2 });
+  const publisher = createRoutedPublisher(connection, { exchanges: [eventsExchange], maxAttempts: 2 });
 
   return {
     close: () => publisher.close(),

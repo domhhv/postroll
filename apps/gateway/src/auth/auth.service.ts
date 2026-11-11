@@ -2,6 +2,7 @@ import { Injectable, ConflictException } from '@nestjs/common';
 import type { UserDto, LoginResponse, RegisterRequest } from '@postroll/contracts';
 import type { User, PrismaClient } from '@postroll/database/prisma';
 import { hash, compare } from 'bcryptjs';
+import { PinoLogger, InjectPinoLogger } from 'nestjs-pino';
 
 import { InjectPrisma } from '../database/database.module.js';
 import { OutboxService } from '../outbox/outbox.service.js';
@@ -24,7 +25,8 @@ export class AuthService {
   constructor(
     @InjectPrisma() private readonly prisma: PrismaClient,
     private readonly tokens: TokensService,
-    private readonly outbox: OutboxService
+    private readonly outbox: OutboxService,
+    @InjectPinoLogger(AuthService.name) private readonly logger: PinoLogger
   ) {}
 
   async register(input: RegisterRequest): Promise<UserDto> {
@@ -72,6 +74,7 @@ export class AuthService {
         return { user: created, welcomeEventId: eventId };
       });
 
+      this.logger.info({ userId: user.id, welcomeEventId }, 'User registered; welcome email queued in the outbox');
       this.outbox.dispatchAfterCommit([welcomeEventId]);
 
       return toUserDto(user);

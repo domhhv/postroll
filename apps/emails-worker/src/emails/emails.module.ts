@@ -22,11 +22,17 @@ import { ResendTransport } from './transports/resend.transport.js';
           return new LogTransport(logger, config.get('EMAIL_LOG_SIMULATE', { infer: true }));
         }
 
-        return new ResendTransport({
-          apiKey: config.getOrThrow('RESEND_API_KEY', { infer: true }),
-          from: config.get('EMAIL_FROM', { infer: true }),
-          replyTo: config.get('EMAIL_REPLY_TO', { infer: true }),
-        });
+        logger.setContext(ResendTransport.name);
+
+        return new ResendTransport(
+          {
+            apiKey: config.getOrThrow('RESEND_API_KEY', { infer: true }),
+            from: config.get('EMAIL_FROM', { infer: true }),
+            replyTo: config.get('EMAIL_REPLY_TO', { infer: true }),
+            sendsPerSecond: config.get('EMAIL_SENDS_PER_SECOND', { infer: true }),
+          },
+          logger
+        );
       },
     },
   ],

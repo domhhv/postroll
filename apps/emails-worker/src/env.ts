@@ -11,7 +11,9 @@ export const workerEnvSchema = z
     EMAIL_FROM: z.string().min(1),
     EMAIL_LOG_SIMULATE: optionalEnv(z.enum(['permanent', 'retryable'])),
     EMAIL_REPLY_TO: optionalEnv(z.email()),
+    EMAIL_SENDS_PER_SECOND: z.coerce.number().positive().max(100).default(2),
     EMAIL_TRANSPORT: z.enum(['log', 'resend']).default('resend'),
+    LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
     RESEND_API_KEY: optionalEnv(z.string().min(1)),
   })

@@ -14,7 +14,7 @@ Defined once in [`src/topology.ts`](src/topology.ts). `defineWorkQueue()` builds
 | `postroll.dlx`                      | direct exchange         |                                                                                                        | worker             |
 | `emails.send.dlq`                   | classic queue           | bound with `emails.send`; `x-max-length: 1000`, oldest dropped first                                   | worker             |
 
-Producers declare exchanges; consumers declare their queues and bindings. A message published before its consumer has ever declared the queue is dropped as unroutable, which is why the worker always deploys first.
+Producers declare exchanges; consumers declare their queues and bindings, which is why the worker always deploys first. Until a consumer has declared its queue, a message has nowhere to go. Every publish here is `mandatory` (see [Publishing](#publishing)), so the broker returns such a message instead of dropping it, and the publisher rejects with `UnroutableMessageError`.
 
 ## Retries and dead letters
 
@@ -31,10 +31,13 @@ Why it's built this way:
 - **One queue per delay, not per-message TTL.** Classic queues only expire messages at the head, so a long delay would hold up a short one behind it.
 - **Retries go back through the default exchange,** so a retried message never reaches other queues bound to the same routing key.
 - **Retry and DLQ queues are declared on every (re)connect and again right before use.** CloudAMQP's free plan deletes queues idle for 28 days, and the DLQ must exist for alarms to watch it.
+- **If settling fails, the original is requeued after a pause.** When the broker refuses the retry copy or a declare fails, the consumer waits before requeueing: 1 s, doubling with each consecutive failure, up to a minute. A broker problem can't turn into a tight redelivery loop, and the next successful settle resets the pause.
 
 The four retries span about 71 minutes, well inside Resend's 24-hour idempotency window.
 
-[`replayDeadLetters()`](src/dead-letters.ts) moves DLQ messages back to `postroll.events` with a fresh retry budget. It holds messages it can't route (no `type`) unacked while it moves the rest, then returns them to the DLQ, so one unreadable message can't block the others.
+The consumer doesn't log. It reports to its caller through `onReady` (queues declared), `onSettled` (ack, a retry with its queue and delay, or a dead letter), `onSettleFailed` and `onError`, and the worker turns those into log lines.
+
+[`replayDeadLetters()`](src/dead-letters.ts) moves DLQ messages back to `postroll.events` with a fresh retry budget. It holds messages it can't move (no `type`, or no queue bound for it) unacked while it moves the rest, then returns them to the DLQ, so one bad message can't block the others. It returns what it moved and what it kept, with the reason.
 
 ## Publishing
 
@@ -44,14 +47,16 @@ const publisher = createEventPublisher(connection, 'postroll-gateway');
 await publisher.publish(message);
 ```
 
-`publish` resolves once the broker confirms the message. It's persistent, and its `messageId`, `type` and routing key come from the message. `createConnection` requires `onError`, because an unhandled `error` event would crash the process.
+`publish` resolves once the broker confirms the message and has routed it to a queue. It's persistent, and its `messageId`, `type` and routing key come from the message. `createConnection` requires `onError`, because an unhandled `error` event would crash the process.
+
+Both the event publisher and the consumer's retry copies go through [`createRoutedPublisher()`](src/routed-publisher.ts): a confirmed publish with the `mandatory` flag. A confirm alone only says the broker accepted the message, not that any queue got it. With `mandatory`, the broker returns a message no queue is bound to receive, and `send` rejects with `UnroutableMessageError`. Returns are matched to their publish by an `x-publish-id` header. `describeBrokerUrl()` gives the host and vhost of an AMQP URL for logs, without the credentials.
 
 ## Local RabbitMQ
 
-| Script     | What it does                                                                                                                  |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `mq:start` | Checks Docker, then `docker compose up -d --wait`: RabbitMQ with the management UI at http://localhost:15672 (guest / guest). |
-| `mq:stop`  | `docker compose down --volumes`. Queues and messages are discarded, like the local Neon branch.                               |
-| `dev`      | Idles during `pnpm dev`; on Ctrl+C it runs `mq:stop`.                                                                         |
+| Script     | What it does                                                                                                                                                                                              |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mq:start` | Checks Docker, then `docker compose up -d --wait`: RabbitMQ with the management UI at http://localhost:15672 (guest / guest). Both ports are bound to 127.0.0.1 only, since the guest password is public. |
+| `mq:stop`  | `docker compose down --volumes`. Queues and messages are discarded, like the local Neon branch.                                                                                                           |
+| `dev`      | Idles during `pnpm dev`; on Ctrl+C it runs `mq:stop`.                                                                                                                                                     |
 
 `pnpm dev` runs `mq:start` before the gateway and worker start (`^mq:start` in the root `turbo.json`). Root shortcuts: `pnpm mq:start` and `pnpm mq:stop`. Keep the image tag in [`docker-compose.yml`](docker-compose.yml) on the same RabbitMQ version as the CloudAMQP instance. `rabbitmq-client` needs 5.0.3 or later for RabbitMQ 4.1+.

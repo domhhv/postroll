@@ -7,7 +7,7 @@ NestJS background worker that consumes the `emails.send` queue, renders each mes
 [`src/emails/emails.consumer.ts`](src/emails/emails.consumer.ts) does the work, on top of the retry and dead-letter flow in [`@postroll/messaging`](../../packages/messaging/README.md):
 
 1. Parse the raw body and validate it against `emailMessageSchema` from `@postroll/contracts`. A message that doesn't match goes straight to the dead-letter queue.
-2. Render it, then send it with Resend's idempotency key (`welcome-email/<userId>`), so a redelivered or retried message within 24 hours returns the original result instead of sending twice.
+2. Render it, then send it with Resend's idempotency key (`welcome-email/<userId>`), so a redelivered or retried message within 24 hours returns the original result instead of sending twice. Sends are paced to `EMAIL_SENDS_PER_SECOND` across all in-flight messages, so concurrent sends don't burst past Resend's rate limit.
 3. Turn the result into an outcome with [`classifySendError()`](src/emails/classify-send-error.ts):
 
 | Resend result                                                                                  | Outcome                                        |
@@ -17,22 +17,60 @@ NestJS background worker that consumes the `emails.send` queue, renders each mes
 | 409 `invalid_idempotent_request` (key already used with a different payload)                   | ack and warn: Resend already accepted it       |
 | 400/422 validation, 401/403 key or domain problems, daily or monthly quota exceeded            | DLQ: fix the cause, then replay                |
 
-Logs carry the event id, type, attempt, Resend id and outcome, never the recipient address. On SIGTERM, Nest's shutdown hooks stop new deliveries, wait for in-flight sends and then close the connection.
+On SIGTERM, Nest's shutdown hooks stop new deliveries, wait for in-flight sends and then close the connection.
+
+## Tracing an email
+
+Every log line about an email carries its `eventId`. The same id is the outbox row id in the gateway, the AMQP `messageId` and the `event_id` tag on the email in Resend, so one id finds a message in Vercel's logs (gateway and web), Render's logs (this worker) and Resend's dashboard. Logs never contain the recipient address, only `recipientDomain`. In production every line is one JSON object.
+
+A welcome email that goes through on the first try logs these lines in order:
+
+| Service | Message                                               | Fields worth checking                                                  |
+| ------- | ----------------------------------------------------- | ---------------------------------------------------------------------- |
+| gateway | `User registered; welcome email queued in the outbox` | `userId`, `welcomeEventId`                                             |
+| gateway | `Dispatching outbox events after commit`              | `eventIds`                                                             |
+| gateway | `Outbox event published to RabbitMQ`                  | `attempt`, `trigger` (`after-commit` or `sweep`), `ageMs`, `publishMs` |
+| worker  | `Message received`                                    | `attempt`, `redelivered`, `sinceOccurredMs` (time since registration)  |
+| worker  | `Email rendered`                                      | `subject`, `renderMs`                                                  |
+| worker  | `Sending email`                                       | `idempotencyKey`, `recipientDomain`                                    |
+| worker  | `Email sent`                                          | `providerId` (Resend's email id), `sendMs`, `totalMs`                  |
+| worker  | `Message acknowledged`                                |                                                                        |
+
+When something goes wrong:
+
+| Service | Message                                                                                                   | Meaning                                                                                                                                                |
+| ------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| gateway | `Outbox event not published: no queue is bound for it yet (is the worker running?); the sweep will retry` | `unroutable: true`: the worker has never created `emails.send`. Start it; the next sweep publishes the row.                                            |
+| gateway | `Outbox event not published; the sweep will retry it`                                                     | The broker is unreachable or didn't confirm within 5 s. The row keeps `attempts` and `last_error`.                                                     |
+| gateway | `Outbox events have been pending for over an hour; check AMQP_URL, the broker and the worker`             | Logged by the hourly sweep, with the oldest row's age.                                                                                                 |
+| gateway | `Messaging is disabled (no AMQP_URL); leaving outbox events pending`                                      | Expected on previews. In production, `AMQP_URL` is missing.                                                                                            |
+| web     | `Outbox sweep rejected: missing or wrong CRON_SECRET`                                                     | The schedule's bearer token doesn't match `CRON_SECRET`.                                                                                               |
+| web     | `Outbox sweep could not reach the gateway`                                                                | `err.cause.code` says why, e.g. `ECONNREFUSED`.                                                                                                        |
+| worker  | `Message does not match the email contract`                                                               | `issues` names each field and Zod code, never the value. The message goes straight to the DLQ.                                                         |
+| worker  | `Email send failed`                                                                                       | `errorName` and `statusCode` come from Resend; `action` is what happens next: `retry`, `reject` or `already-sent`.                                     |
+| worker  | `Scheduled a retry`                                                                                       | `retryQueue`, `retryInMs` and `nextAttempt`.                                                                                                           |
+| worker  | `Message moved to the dead-letter queue; replay it once the cause is fixed`                               | `reason` says why. The DLQ alarm fires; fix the cause, then run `dlq:replay`.                                                                          |
+| worker  | `Could not ack, retry or dead-letter the message; requeueing it after a pause`                            | The broker refused the retry copy, or a queue couldn't be declared. `pauseMs` starts at 1 s and doubles with each consecutive failure, up to a minute. |
+| both    | `RabbitMQ connection error; reconnecting with backoff`                                                    | `rabbitmq-client` reconnects on its own. If the line keeps repeating, the broker is down or `AMQP_URL` is wrong.                                       |
+
+`LOG_LEVEL=debug` adds `Publishing to RabbitMQ` in the gateway and, here, each Resend response (`statusCode`, `rateLimitRemaining`, `retryAfter`, `durationMs`) and any wait for a send slot. Locally, `EMAIL_LOG_SIMULATE` produces the retry and dead-letter lines.
 
 ## Environment variables
 
 Source of truth: [`src/env.ts`](src/env.ts), validated at boot. Local values: [`.env.example`](.env.example). Empty values count as unset.
 
-| Variable             | Required                    | Notes                                                                                                      |
-| -------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `AMQP_URL`           | Yes                         | CloudAMQP `amqps://` URL in production, `amqp://guest:guest@localhost:5672` locally.                       |
-| `APP_URL`            | Yes                         | Public web URL for links in emails, `https://www.postroll.video` in production.                            |
-| `EMAIL_FROM`         | Yes                         | `Postroll <hello@postroll.video>`. The domain must match the domain verified in Resend exactly.            |
-| `EMAIL_TRANSPORT`    | No, defaults to `resend`    | `log` writes each email's HTML to the OS temp folder instead of sending it.                                |
-| `RESEND_API_KEY`     | With the `resend` transport | A sending-only key restricted to `postroll.video`.                                                         |
-| `EMAIL_REPLY_TO`     | No                          | A monitored inbox. Avoid `noreply@`; people reply to transactional email.                                  |
-| `EMAIL_CONCURRENCY`  | No, defaults to 2           | Messages handled at once (also the prefetch). 2 fits Resend's default rate limit of 2 requests per second. |
-| `EMAIL_LOG_SIMULATE` | No                          | `log` transport only: `retryable` or `permanent` makes every send fail, to exercise retries and the DLQ.   |
+| Variable                 | Required                    | Notes                                                                                                                                          |
+| ------------------------ | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AMQP_URL`               | Yes                         | CloudAMQP `amqps://` URL in production, `amqp://guest:guest@localhost:5672` locally.                                                           |
+| `APP_URL`                | Yes                         | Public web URL for links in emails, `https://www.postroll.video` in production.                                                                |
+| `EMAIL_FROM`             | Yes                         | `Postroll <hello@postroll.video>`. The domain must match the domain verified in Resend exactly.                                                |
+| `EMAIL_TRANSPORT`        | No, defaults to `resend`    | `log` writes each email's HTML to the OS temp folder instead of sending it.                                                                    |
+| `RESEND_API_KEY`         | With the `resend` transport | A sending-only key restricted to `postroll.video`.                                                                                             |
+| `EMAIL_REPLY_TO`         | No                          | A monitored inbox. Avoid `noreply@`; people reply to transactional email.                                                                      |
+| `EMAIL_CONCURRENCY`      | No, defaults to 2           | Messages handled at once (also the prefetch). It doesn't set the send rate; `EMAIL_SENDS_PER_SECOND` does.                                     |
+| `EMAIL_SENDS_PER_SECOND` | No, defaults to 2           | Resend calls per second across all in-flight messages, matching Resend's default limit of 2 per team. Raise it only after Resend raises yours. |
+| `EMAIL_LOG_SIMULATE`     | No                          | `log` transport only: `retryable` or `permanent` makes every send fail, to exercise retries and the DLQ.                                       |
+| `LOG_LEVEL`              | No, defaults to `info`      | `debug` adds each Resend response and any wait for a send slot.                                                                                |
 
 ## Scripts
 

@@ -23,7 +23,9 @@
     "EMAIL_LOG_SIMULATE",
     "EMAIL_REPLY_TO",
     "EMAIL_TRANSPORT",
-    "RESEND_API_KEY"
+    "RESEND_API_KEY",
+    "EMAIL_SENDS_PER_SECOND",
+    "LOG_LEVEL"
   ],
   "globalPassThroughEnv": ["ENABLE_EXPERIMENTAL_COREPACK"],
   "tasks": {

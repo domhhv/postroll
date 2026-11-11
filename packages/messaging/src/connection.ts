@@ -19,3 +19,10 @@ export function createConnection({ connectionName, onError, url }: ConnectionCon
 
   return connection;
 }
+
+/** Host and vhost of a broker URL, without its credentials, for logs. */
+export function describeBrokerUrl(url: string): { host: string; vhost: string } {
+  const { host, pathname } = new URL(url);
+
+  return { host, vhost: decodeURIComponent(pathname.replace(/^\//, '')) || '/' };
+}

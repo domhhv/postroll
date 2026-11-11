@@ -26,6 +26,11 @@ export class LogTransport implements EmailTransport {
 
   async send(email: OutgoingEmail): Promise<SendResult> {
     if (this.simulate) {
+      this.logger.info(
+        { eventId: email.eventId, simulate: this.simulate },
+        'Log transport is simulating a send failure'
+      );
+
       return { error: SIMULATED_ERRORS[this.simulate], status: 'failed' };
     }
 

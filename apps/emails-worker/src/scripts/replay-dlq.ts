@@ -24,11 +24,18 @@ const connection = createConnection({
 
 try {
   const { moved, skipped } = await replayDeadLetters(connection, emailsWorkQueue, limit);
-  console.info(`Moved ${moved} message(s) from ${emailsWorkQueue.deadLetterQueue.queue} back to the events exchange.`);
 
-  if (skipped > 0) {
-    console.warn(`Left ${skipped} message(s) without a routable type in the dead-letter queue.`);
+  for (const message of moved) {
+    console.info(`Moved ${message.messageId ?? '(no message id)'} back with routing key ${message.routingKey}`);
   }
+
+  for (const message of skipped) {
+    console.warn(`Kept ${message.messageId ?? '(no message id)'} in the dead-letter queue: ${message.reason}`);
+  }
+
+  console.info(
+    `Moved ${moved.length} message(s) back to the events exchange; ${skipped.length} stay in ${emailsWorkQueue.deadLetterQueue.queue}.`
+  );
 } finally {
   await connection.close();
 }

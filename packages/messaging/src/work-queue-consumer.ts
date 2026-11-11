@@ -1,8 +1,12 @@
 import { type Envelope, ConsumerStatus, type Connection, type HeaderFields, type AsyncMessage } from 'rabbitmq-client';
 
+import { createRoutedPublisher } from './routed-publisher.js';
 import { eventsExchange, type WorkQueue, deadLetterExchange } from './topology.js';
 
 export const RETRY_COUNT_HEADER = 'x-retry-count';
+
+const SETTLE_PAUSE_BASE_MS = 1_000;
+const SETTLE_PAUSE_MAX_MS = 60_000;
 
 export type WorkOutcome = { type: 'done' } | { reason: string; type: 'reject' } | { reason: string; type: 'retry' };
 
@@ -17,7 +21,24 @@ export type SettledEvent = {
   attempt: number;
   messageId: string | undefined;
   outcome: WorkOutcome;
-  retryQueue?: string;
+  /** Set for `retry`: the queue the copy waits in, and for how long. */
+  retry?: { delayMs: number; queue: string };
+};
+
+export type SettleFailedEvent = {
+  attempt: number;
+  error: unknown;
+  messageId: string | undefined;
+  outcome: WorkOutcome;
+  /** How long the consumer waits before requeueing the original. */
+  pauseMs: number;
+};
+
+export type ReadyEvent = {
+  concurrency: number;
+  deadLetterQueue: string;
+  queue: string;
+  retryQueues: string[];
 };
 
 type WorkQueueConsumerOptions = {
@@ -26,7 +47,9 @@ type WorkQueueConsumerOptions = {
   queue: WorkQueue;
   handle: (context: WorkContext) => Promise<WorkOutcome>;
   onError: (error: unknown) => void;
+  onReady: (event: ReadyEvent) => void;
   onSettled: (event: SettledEvent) => void;
+  onSettleFailed: (event: SettleFailedEvent) => void;
 };
 
 export type WorkQueueConsumer = {
@@ -66,25 +89,47 @@ function describe(error: unknown): string {
  * - `reject`, or `retry` with no tiers left: nack without requeue, which
  *   routes the message to the dead-letter queue.
  *
- * A handler that throws is treated as `retry`. Retry and dead-letter queues are
- * declared on every (re)connect, so alarms can watch them, and again right
- * before use, because CloudAMQP deletes queues that sit idle.
+ * A handler that throws is treated as `retry`. If settling itself fails (the
+ * broker refuses the retry copy, or a queue can't be declared), the original
+ * is requeued after a pause that doubles with each consecutive failure, up to
+ * a minute, so a broker problem can't turn into a tight redelivery loop.
+ *
+ * Retry and dead-letter queues are declared on every (re)connect, so alarms
+ * can watch them, and again right before use, because CloudAMQP deletes
+ * queues that sit idle.
  */
 export function createWorkQueueConsumer({
   concurrency,
   connection,
   handle,
   onError,
+  onReady,
   onSettled,
+  onSettleFailed,
   queue,
 }: WorkQueueConsumerOptions): WorkQueueConsumer {
-  const retryPublisher = connection.createPublisher({
-    confirm: true,
+  const retryPublisher = createRoutedPublisher(connection, {
     exchanges: [deadLetterExchange],
     maxAttempts: 2,
     queueBindings: [queue.deadLetterBinding],
     queues: [queue.deadLetterQueue, ...queue.retryTiers.map((tier) => tier.declaration)],
   });
+  const stopping = new AbortController();
+  let consecutiveSettleFailures = 0;
+
+  function pause(ms: number): Promise<void> {
+    return new Promise((resolve) => {
+      const timer = setTimeout(resolve, ms);
+      stopping.signal.addEventListener(
+        'abort',
+        () => {
+          clearTimeout(timer);
+          resolve();
+        },
+        { once: true }
+      );
+    });
+  }
 
   async function declareDeadLetterQueue() {
     await connection.exchangeDeclare(deadLetterExchange);
@@ -125,7 +170,7 @@ export function createWorkQueueConsumer({
       },
       message.rawBody
     );
-    onSettled({ ...event, action: 'retry', retryQueue: tier.declaration.queue });
+    onSettled({ ...event, action: 'retry', retry: { delayMs: tier.delayMs, queue: tier.declaration.queue } });
 
     return ConsumerStatus.ACK;
   }
@@ -146,17 +191,39 @@ export function createWorkQueueConsumer({
         type: 'retry',
       }));
 
-      return settle(message, attempt, outcome);
+      try {
+        const status = await settle(message, attempt, outcome);
+        consecutiveSettleFailures = 0;
+
+        return status;
+      } catch (error) {
+        consecutiveSettleFailures += 1;
+        const pauseMs = Math.min(SETTLE_PAUSE_MAX_MS, SETTLE_PAUSE_BASE_MS * 2 ** (consecutiveSettleFailures - 1));
+        onSettleFailed({ attempt, error, messageId: message.messageId, outcome, pauseMs });
+        await pause(pauseMs);
+
+        return ConsumerStatus.REQUEUE;
+      }
     }
   );
 
   consumer.on('error', onError);
   consumer.on('ready', () => {
-    void Promise.all([declareDeadLetterQueue(), declareRetryQueues()]).catch(onError);
+    void Promise.all([declareDeadLetterQueue(), declareRetryQueues()])
+      .then(() =>
+        onReady({
+          concurrency,
+          deadLetterQueue: queue.deadLetterQueue.queue,
+          queue: queue.name,
+          retryQueues: queue.retryTiers.map((tier) => tier.declaration.queue),
+        })
+      )
+      .catch(onError);
   });
 
   return {
     close: async () => {
+      stopping.abort();
       await consumer.close();
       await retryPublisher.close();
     },
