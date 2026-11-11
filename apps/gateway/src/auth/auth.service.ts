@@ -2,8 +2,10 @@ import { Injectable, ConflictException } from '@nestjs/common';
 import type { UserDto, LoginResponse, RegisterRequest } from '@postroll/contracts';
 import type { User, PrismaClient } from '@postroll/database/prisma';
 import { hash, compare } from 'bcryptjs';
+import { PinoLogger, InjectPinoLogger } from 'nestjs-pino';
 
 import { InjectPrisma } from '../database/database.module.js';
+import { OutboxService } from '../outbox/outbox.service.js';
 import { toUserDto } from '../users/toUserDto.js';
 import { generateWorkspaceSlug } from '../workspaces/slug.js';
 
@@ -22,7 +24,9 @@ export class AuthService {
 
   constructor(
     @InjectPrisma() private readonly prisma: PrismaClient,
-    private readonly tokens: TokensService
+    private readonly tokens: TokensService,
+    private readonly outbox: OutboxService,
+    @InjectPinoLogger(AuthService.name) private readonly logger: PinoLogger
   ) {}
 
   async register(input: RegisterRequest): Promise<UserDto> {
@@ -31,15 +35,16 @@ export class AuthService {
 
     try {
       /**
-       * Create the user, their personal workspace, and the owner membership
-       * atomically — a half-registered user with no workspace would break
-       * every workspace-scoped flow downstream.
+       * Create the user, their personal workspace, the owner membership and
+       * the welcome email's outbox row atomically — a half-registered user
+       * with no workspace would break every workspace-scoped flow downstream,
+       * and the email must exist exactly when the account does.
        *
-       * No email infrastructure yet, so we auto-verify on signup. When email
-       * verification lands (Phase B), drop `emailVerifiedAt` here and gate it
-       * behind a confirmation link instead.
+       * Email verification doesn't exist yet, so we auto-verify on signup.
+       * When it lands, drop `emailVerifiedAt` here, gate it behind a
+       * confirmation link, and send the welcome email after verification.
        */
-      const user = await this.prisma.$transaction(async (tx) => {
+      const { user, welcomeEventId } = await this.prisma.$transaction(async (tx) => {
         const created = await tx.user.create({
           data: {
             email: input.email,
@@ -61,8 +66,16 @@ export class AuthService {
           },
         });
 
-        return created;
+        const eventId = await this.outbox.enqueue(tx, {
+          data: { name: created.name, to: created.email, userId: created.id, workspaceName },
+          type: 'email.welcome',
+        });
+
+        return { user: created, welcomeEventId: eventId };
       });
+
+      this.logger.info({ userId: user.id, welcomeEventId }, 'User registered; welcome email queued in the outbox');
+      this.outbox.dispatchAfterCommit([welcomeEventId]);
 
       return toUserDto(user);
     } catch (error) {

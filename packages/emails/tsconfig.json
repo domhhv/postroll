@@ -1,0 +1,11 @@
+{
+  "extends": "@postroll/configs/typescript/base",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2023", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["node"]
+  },
+  "include": ["src/**/*"]
+}

@@ -1,0 +1,27 @@
+services:
+  - type: worker
+    name: postroll-emails-worker
+    branch: main
+    runtime: docker
+    region: frankfurt
+    plan: 0.5c-512mb
+    numInstances: 1
+    dockerfilePath: ./apps/emails-worker/Dockerfile
+    dockerContext: .
+    autoDeployTrigger: off
+    maxShutdownDelaySeconds: 60
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: EMAIL_TRANSPORT
+        value: resend
+      - key: EMAIL_FROM
+        value: 'Postroll <hello@postroll.video>'
+      - key: APP_URL
+        value: https://www.postroll.video
+      - key: AMQP_URL
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_REPLY_TO
+        sync: false

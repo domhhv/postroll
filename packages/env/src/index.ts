@@ -39,4 +39,5 @@ export function validateEnv<S extends ZodType>(schema: S, options: ValidateEnvOp
 
 export { formatZodEnvError } from './format.js';
 export { loadEnvFile } from './load.js';
+export { optionalEnv } from './optional.js';
 export { z } from 'zod';

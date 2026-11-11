@@ -1,0 +1,16 @@
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/.vercel
+**/.react-email
+**/.env
+**/.env.*
+!**/.env.example
+.git
+.github
+.agents
+.claude
+.junie
+.idea
+packages/database/src/generated

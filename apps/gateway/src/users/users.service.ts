@@ -2,6 +2,7 @@ import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/co
 import type { UserDto, UpdateUserRequest } from '@postroll/contracts';
 import type { Prisma, PrismaClient } from '@postroll/database/prisma';
 import { hash, compare } from 'bcryptjs';
+import { PinoLogger, InjectPinoLogger } from 'nestjs-pino';
 
 import { InjectPrisma } from '../database/database.module.js';
 
@@ -11,7 +12,10 @@ const BCRYPT_COST = 12;
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectPrisma() private readonly prisma: PrismaClient) {}
+  constructor(
+    @InjectPrisma() private readonly prisma: PrismaClient,
+    @InjectPinoLogger(UsersService.name) private readonly logger: PinoLogger
+  ) {}
 
   async findById(id: string): Promise<UserDto | null> {
     const user = await this.prisma.user.findUnique({
@@ -57,13 +61,20 @@ export class UsersService {
   /**
    * Delete the user and every workspace they own. Their memberships in other
    * workspaces and their refresh tokens go with the user row via
-   * `onDelete: Cascade`, which also ends all of their sessions.
+   * `onDelete: Cascade`, which also ends all of their sessions. Their outbox
+   * events go too: those hold a copy of the email address, and a pending one
+   * would otherwise still be sent by the sweep.
    */
   async remove(id: string): Promise<void> {
-    await this.prisma.$transaction([
+    const [workspaces, outboxEvents] = await this.prisma.$transaction([
       this.prisma.workspace.deleteMany({ where: { members: { some: { role: 'OWNER', userId: id } } } }),
+      this.prisma.outboxEvent.deleteMany({ where: { payload: { equals: id, path: ['data', 'userId'] } } }),
       this.prisma.user.delete({ where: { id } }),
     ]);
+    this.logger.info(
+      { outboxEventsDeleted: outboxEvents.count, userId: id, workspacesDeleted: workspaces.count },
+      'Account deleted'
+    );
   }
 
   async changePassword(id: string, currentPassword: string, newPassword: string): Promise<void> {

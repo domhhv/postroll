@@ -1,14 +1,17 @@
-import { formatZodEnvError } from '@postroll/env';
+import { optionalEnv, formatZodEnvError } from '@postroll/env';
 import { z } from 'zod';
 
 export const envExampleHint = 'apps/gateway/.env.example';
 
 export const gatewayEnvSchema = z.object({
+  /** RabbitMQ (CloudAMQP) URL. Unset on previews: messages stay in the outbox unpublished. */
+  AMQP_URL: optionalEnv(z.url()),
   COOKIE_SECURE: z.stringbool().default(true),
   DATABASE_URL: z.url(),
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_ACCESS_TTL: z.string().default('15m'),
   JWT_REFRESH_TTL_DAYS: z.coerce.number().int().positive().default(30),
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().int().positive().default(8080),
 });

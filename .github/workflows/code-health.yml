@@ -46,3 +46,15 @@ jobs:
       - run: pnpm ${{ matrix.check.command }}
         env:
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
+  worker-image:
+    name: Emails worker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code
+        uses: actions/checkout@v7.0.1
+
+      # Render builds this image after merge; building it here catches a broken
+      # Dockerfile before it can block a production deploy.
+      - name: Build the emails worker image
+        run: docker build -f apps/emails-worker/Dockerfile .

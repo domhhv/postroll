@@ -31,5 +31,11 @@
         "service": "web"
       }
     }
-  ]
+  ],
+  "schedules": {
+    "outbox-sweep": {
+      "schedule": "0 * * * *",
+      "path": "/api/internal/outbox-sweep"
+    }
+  }
 }
