@@ -11,3 +11,4 @@ allowBuilds:
 
 overrides:
   glob: "^12"
+  "node-abort-controller": "-"
