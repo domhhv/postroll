@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Build from the repo root: docker build -f apps/emails-worker/Dockerfile .
-ARG NODE_VERSION=24.22.2
+ARG NODE_VERSION=24.22.3
 
 FROM node:${NODE_VERSION}-slim AS base
 ENV PNPM_HOME=/pnpm \

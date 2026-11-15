@@ -23,11 +23,11 @@
   "dependencies": {
     "@postroll/contracts": "workspace:*",
     "@postroll/env": "workspace:*",
-    "@tabler/icons-react": "^3.50.0",
+    "@tabler/icons-react": "^3.51.0",
     "@vercel/analytics": "^2.0.1",
     "add": "^2.0.9",
-    "jose": "^6.2.14",
-    "next": "^16.4.3",
+    "jose": "^6.2.17",
+    "next": "^16.4.6",
     "next-themes": "^0.4.6",
     "react": "19.3.1",
     "react-dom": "19.3.1",
@@ -37,10 +37,10 @@
   "devDependencies": {
     "@postroll/configs": "workspace:*",
     "@postroll/ui": "workspace:*",
-    "@tailwindcss/postcss": "^4.3.3",
+    "@tailwindcss/postcss": "^4.3.5",
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.5"
   }
 }
